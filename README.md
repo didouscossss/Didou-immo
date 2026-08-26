@@ -22,6 +22,11 @@ Calculateur de rentabilité immobilière, aide à l'achat.
   Firebase pas encore configuré), tout reste local sur l'appareil comme
   avant — l'app ne casse jamais faute de Firebase, voir plus bas
 - Règles de sécurité Firestore prêtes (`firestore.rules`)
+- Projet Firebase "didou-immo" relié : `lib/firebase_options.dart` écrit à
+  la main à partir des valeurs copiées depuis la Console (la CLI
+  `flutterfire configure` n'a pas pu s'authentifier depuis cet
+  environnement — réseau restreint), `google-services.json` en place, et
+  le client OAuth web ajouté dans `web/index.html` pour Google Sign-In
 
 ## Mode local vs mode connecté
 `lib/main.dart` essaie d'initialiser Firebase au démarrage ; si ça échoue
@@ -39,26 +44,19 @@ Android.
 
 ## Ce qu'il reste à faire (dans l'ordre)
 
-### 1. Créer le projet Firebase
-1. Aller sur https://console.firebase.google.com → Créer un projet
-2. Activer **Authentication** (méthodes Email/mot de passe + Google)
-3. Activer **Firestore Database** (mode production)
-4. **Coller le contenu de `firestore.rules`** dans Firestore Database →
+### 1. Finaliser le projet Firebase "didou-immo"
+Le projet est créé et relié (`lib/firebase_options.dart`, `google-services.json`).
+Il reste, dans https://console.firebase.google.com/project/didou-immo :
+1. Activer **Authentication** → méthodes Email/mot de passe + Google, si ce
+   n'est pas déjà fait
+2. Activer **Firestore Database** (mode production) si ce n'est pas déjà fait
+3. **Coller le contenu de `firestore.rules`** dans Firestore Database →
    Règles, puis publier — sans ça, Firestore refuse tout accès par défaut
-   et rien ne fonctionnera (comptes, biens, parrainage)
-5. Ajouter une app Android, package name `com.didouimmo.didou_immo`
-   (voir `android/app/build.gradle.kts`), télécharger `google-services.json`
-   → le placer dans `android/app/`
-6. Ajouter une app Web (pour la version déployée sur GitHub Pages)
-7. `flutterfire configure` à la racine du projet pour relier automatiquement
-   les deux — ça génère `lib/firebase_options.dart` et met à jour
-   `lib/main.dart` pour lui passer les vraies options. **Dès que ce fichier
-   existe avec de vraies clés, les comptes s'activent automatiquement** —
-   aucun autre changement de code n'est nécessaire (voir le mode local
-   défensif dans `main.dart`)
-8. Pour Google Sign-In **sur le web** spécifiquement : Firebase Console →
-   Authentication → Google → récupérer le "Web client ID", puis l'ajouter
-   dans `web/index.html` (`<meta name="google-signin-client_id" content="...">`)
+   et rien ne fonctionnera (comptes, biens, parrainage), même avec la
+   configuration ci-dessus en place
+4. Si tu ajoutes un jour une app iOS/macOS : relancer `flutterfire configure`
+   depuis une machine avec un accès réseau normal (ça régénérera
+   `lib/firebase_options.dart` en gardant Android + Web)
 
 ### 2. Premier compte admin
 Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :

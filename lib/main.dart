@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'firebase_options.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
 import 'state/rendement_state.dart';
@@ -10,14 +11,12 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialisation défensive : tant que le projet Firebase n'est pas créé
-  // et relié (`flutterfire configure`, voir README), cet appel échoue et
-  // l'app démarre en mode local — sans compte, sans limite de biens — au
-  // lieu de planter. Une fois Firebase configuré, les comptes s'activent
-  // automatiquement, sans autre changement de code.
+  // Initialisation défensive : si Firebase refuse de démarrer (options
+  // invalides, projet supprimé...), l'app bascule en mode local — sans
+  // compte, sans limite de biens — au lieu de planter.
   var firebaseReady = false;
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
     firebaseReady = true;
   } catch (_) {
     firebaseReady = false;
