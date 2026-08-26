@@ -1,11 +1,11 @@
 {
-    "name": "didou_immo",
-    "short_name": "didou_immo",
+    "name": "Didou Immo",
+    "short_name": "Didou Immo",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#050C1A",
+    "theme_color": "#050C1A",
+    "description": "Didou Immo — calculateur de rentabilité immobilière, aide à l'achat.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

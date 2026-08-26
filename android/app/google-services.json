@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "561302404630",
+    "project_id": "didou-immo",
+    "storage_bucket": "didou-immo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:561302404630:android:2e61d83d0e5f02cb847f37",
+        "android_client_info": {
+          "package_name": "com.didouimmo.didou_immo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "561302404630-9i8fbs4ntncssru4r8mrue3rvd7cjrvc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0LWds3_zASGtVa8jW4morBviYphRuHvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "561302404630-9i8fbs4ntncssru4r8mrue3rvd7cjrvc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

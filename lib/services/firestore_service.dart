@@ -11,7 +11,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// pas sur l'appareil — sinon désinstaller/réinstaller contournerait la
 /// limite des 3 essais gratuits.
 class FirestoreService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // `late` : ne touche Firebase qu'au premier usage réel, pas à la
+  // construction — indispensable pour que l'app démarre en mode local tant
+  // que Firebase n'est pas initialisé (voir `main.dart`).
+  late final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   static const int freeTrialsLimit = 3;
 
@@ -52,6 +55,18 @@ class FirestoreService {
 
   Future<void> incrementFreeTrialsUsed(String uid) {
     return _userDoc(uid).update({'freeTrialsUsed': FieldValue.increment(1)});
+  }
+
+  /// Marque le compte comme abonné suite à un achat côté client.
+  ///
+  /// ATTENTION : ceci fait confiance à l'app pour débloquer le contenu
+  /// payant, ce que le README déconseille explicitement pour la version
+  /// publiée — un utilisateur pourrait forger cet état sans payer. À
+  /// remplacer par une Cloud Function qui valide le reçu d'achat via les
+  /// Real-time Developer Notifications avant de mettre `isSubscribed` à
+  /// jour côté serveur.
+  Future<void> setSubscribed(String uid, bool value) {
+    return _userDoc(uid).update({'isSubscribed': value});
   }
 
   Future<void> saveProperty(String uid, String propertyId, Map<String, dynamic> data) {

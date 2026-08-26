@@ -3,7 +3,7 @@
 Calculateur de rentabilité immobilière, aide à l'achat.
 
 ## Ce qui est déjà fait
-- Projet Flutter initialisé (Android), dépendances installées
+- Projet Flutter initialisé (Android + Web), dépendances installées
 - Logique de calcul complète en Dart (`lib/utils/calculations.dart`) — portée
   fidèlement depuis le prototype React (`rendement-app.jsx`) : rentabilité,
   régimes fiscaux, score d'investissement, projection patrimoniale, plus-value
@@ -11,34 +11,59 @@ Calculateur de rentabilité immobilière, aide à l'achat.
 - Les 5 écrans du prototype portés en widgets Flutter (`lib/screens/rendement/`) :
   Bien, Marché (recherche de commune via geo.api.gouv.fr), Fiscalité,
   Projection (graphique `fl_chart`), Comparer — plus l'onboarding et le
-  panneau méthodologie
-- Persistance locale des biens enregistrés et du statut d'onboarding
-  (`shared_preferences`)
-- Services Firebase prêts (`lib/services/`) : auth, sauvegarde des biens,
-  compteur d'essais gratuits, achats in-app
-- Écrans suggestions + paywall + parrainage
+  panneau méthodologie (Didou en guide, avec un peu d'animation)
+- **Comptes** (`lib/screens/auth/`, `lib/state/user_account_state.dart`) :
+  inscription/connexion email + Google, écran "Compte" (abonnement,
+  parrainage, déconnexion), paywall après 3 biens gratuits (variable
+  `FirestoreService.freeTrialsLimit`), écran admin pour générer des codes
+  cadeaux (`lib/screens/admin/`)
+- Biens enregistrés synchronisés sur Firestore une fois connecté
+  (`RendementState.attachAccount`) ; en mode invité (pas de compte, ou
+  Firebase pas encore configuré), tout reste local sur l'appareil comme
+  avant — l'app ne casse jamais faute de Firebase, voir plus bas
+- Règles de sécurité Firestore prêtes (`firestore.rules`)
+- Projet Firebase "didou-immo" relié : `lib/firebase_options.dart` écrit à
+  la main à partir des valeurs copiées depuis la Console (la CLI
+  `flutterfire configure` n'a pas pu s'authentifier depuis cet
+  environnement — réseau restreint), `google-services.json` en place, et
+  le client OAuth web ajouté dans `web/index.html` pour Google Sign-In
+
+## Mode local vs mode connecté
+`lib/main.dart` essaie d'initialiser Firebase au démarrage ; si ça échoue
+(projet pas encore créé/configuré), l'app bascule silencieusement en mode
+local : biens enregistrés en illimité sur l'appareil, pas d'écran de
+compte, exactement le comportement d'avant l'ajout des comptes — la version
+déployée sur GitHub Pages continue donc de fonctionner pendant que tu
+configures Firebase. Une fois `flutterfire configure` exécuté avec un vrai
+projet, les comptes s'activent automatiquement au prochain démarrage.
+
+L'abonnement (Google Play Billing) n'a pas d'implémentation web : sur la
+version GitHub Pages, l'écran "Passer en illimité" l'indique clairement
+plutôt que de planter — l'achat réel ne sera possible que depuis l'app
+Android.
 
 ## Ce qu'il reste à faire (dans l'ordre)
 
-### 1. Créer le projet Firebase
-1. Aller sur https://console.firebase.google.com → Créer un projet
-2. Activer **Authentication** (méthodes Email/mot de passe + Google)
-3. Activer **Firestore Database** (mode production)
-4. Ajouter une app Android, package name `com.didouimmo.didou_immo`
-   (voir `android/app/build.gradle.kts`)
-5. Télécharger `google-services.json` → le placer dans `android/app/`
-6. `flutterfire configure` pour relier automatiquement le projet Firebase,
-   puis initialiser Firebase dans `lib/main.dart` (`Firebase.initializeApp()`)
+### 1. Finaliser le projet Firebase "didou-immo"
+Le projet est créé et relié (`lib/firebase_options.dart`, `google-services.json`).
+Il reste, dans https://console.firebase.google.com/project/didou-immo :
+1. Activer **Authentication** → méthodes Email/mot de passe + Google, si ce
+   n'est pas déjà fait
+2. Activer **Firestore Database** (mode production) si ce n'est pas déjà fait
+3. **Coller le contenu de `firestore.rules`** dans Firestore Database →
+   Règles, puis publier — sans ça, Firestore refuse tout accès par défaut
+   et rien ne fonctionnera (comptes, biens, parrainage), même avec la
+   configuration ci-dessus en place
+4. Si tu ajoutes un jour une app iOS/macOS : relancer `flutterfire configure`
+   depuis une machine avec un accès réseau normal (ça régénérera
+   `lib/firebase_options.dart` en gardant Android + Web)
 
-### 2. Relier l'authentification et la sauvegarde cloud
-Les écrans `lib/screens/auth/` et `lib/screens/home/` sont encore à écrire :
-un écran de connexion/inscription (email + Google Sign-In via
-`auth_service.dart`), et un point d'entrée qui bascule entre connexion,
-paywall (`paywall_screen.dart`, au-delà de 3 biens gratuits via
-`firestore_service.dart`) et l'app `RendementHome` actuelle. Une fois
-l'utilisateur connecté, les biens enregistrés peuvent être synchronisés vers
-Firestore (`saveProperty`/`watchProperties`) en plus du stockage local déjà
-en place.
+### 2. Premier compte admin
+Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :
+Firestore Console → collection `users` → ton document (par ton `uid`) →
+ajouter manuellement le champ `isAdmin: true` (booléen). L'écran
+"Administration" (génération de codes cadeaux) apparaît alors dans
+"Mon compte".
 
 ### 3. Configurer Google Play Console
 1. Créer un compte développeur (25$, paiement unique) : https://play.google.com/console

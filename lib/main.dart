@@ -1,27 +1,96 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'firebase_options.dart';
+import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
 import 'state/rendement_state.dart';
+import 'state/user_account_state.dart';
 import 'theme/app_theme.dart';
 
-void main() {
-  runApp(const DidouImmoApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialisation défensive : si Firebase refuse de démarrer (options
+  // invalides, projet supprimé...), l'app bascule en mode local — sans
+  // compte, sans limite de biens — au lieu de planter.
+  var firebaseReady = false;
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    firebaseReady = true;
+  } catch (_) {
+    firebaseReady = false;
+  }
+  runApp(DidouImmoApp(firebaseReady: firebaseReady));
 }
 
 class DidouImmoApp extends StatelessWidget {
-  const DidouImmoApp({super.key});
+  final bool firebaseReady;
+  const DidouImmoApp({super.key, required this.firebaseReady});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => RendementState(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => RendementState()),
+        ChangeNotifierProvider(create: (_) => UserAccountState()),
+      ],
       child: MaterialApp(
         title: 'Rendement',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
-        home: const RendementHome(),
+        home: AppRoot(firebaseReady: firebaseReady),
       ),
     );
+  }
+}
+
+/// Bascule entre mode local (pas de compte) et mode connecté selon
+/// [firebaseReady] et l'état d'authentification, et garde `RendementState`
+/// synchronisé avec le compte courant (voir `RendementState.attachAccount`).
+class AppRoot extends StatefulWidget {
+  final bool firebaseReady;
+  const AppRoot({super.key, required this.firebaseReady});
+
+  @override
+  State<AppRoot> createState() => _AppRootState();
+}
+
+class _AppRootState extends State<AppRoot> {
+  UserAccountState? _account;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.firebaseReady && _account == null) {
+      _account = context.read<UserAccountState>()
+        ..start()
+        ..addListener(_syncAccount);
+    }
+  }
+
+  void _syncAccount() {
+    context.read<RendementState>().attachAccount(_account?.user?.uid);
+  }
+
+  @override
+  void dispose() {
+    _account?.removeListener(_syncAccount);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.firebaseReady) {
+      return const RendementHome(firebaseReady: false);
+    }
+    final account = context.watch<UserAccountState>();
+    if (account.loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (account.user == null) {
+      return const AuthScreen();
+    }
+    return const RendementHome(firebaseReady: true);
   }
 }

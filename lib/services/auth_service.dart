@@ -5,7 +5,10 @@ import 'package:google_sign_in/google_sign_in.dart';
 /// Deux méthodes : email/mot de passe (rapide à intégrer) et Google
 /// Sign-In (zéro friction pour l'utilisateur, recommandé en priorité).
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // `late` : ne touche Firebase qu'au premier usage réel, pas à la
+  // construction — indispensable pour que l'app démarre en mode local tant
+  // que Firebase n'est pas initialisé (voir `main.dart`).
+  late final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();

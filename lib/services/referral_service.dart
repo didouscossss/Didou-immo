@@ -22,7 +22,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 ///       directement dans l'app (plus de contrôle, ex. codes à usage limité
 ///       distribués toi-même) — bascule `grantedFree` sur le compte.
 class ReferralService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // `late` : ne touche Firebase qu'au premier usage réel, pas à la
+  // construction — indispensable pour que l'app démarre en mode local tant
+  // que Firebase n'est pas initialisé (voir `main.dart`).
+  late final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   static const int bonusDaysMonthly = 3; // ~10% de 30 jours
   static const int bonusDaysYearly = 36; // ~10% de 365 jours
