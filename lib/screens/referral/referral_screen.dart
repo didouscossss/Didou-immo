@@ -26,8 +26,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     setState(() => _loadingParrainage = true);
     String? error;
     try {
-      error = await _referral.applyReferralCode(
-          widget.uid, _parrainageController.text);
+      error = await _referral.applyReferralCode(_parrainageController.text);
     } catch (_) {
       error = "Une erreur est survenue, réessaie dans un instant.";
     }

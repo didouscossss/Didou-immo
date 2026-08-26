@@ -42,13 +42,16 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid);
       // Un compte peut modifier son propre document, mais jamais les champs
-      // qui débloquent l'accès payant ou l'administration lui-même — sauf
-      // le cas précis, vérifié ci-dessus, d'une validation de code cadeau
-      // légitime. Le reste (isSubscribed, isAdmin) reste réservé à une
-      // Cloud Function (paiement vérifié via RTDN) ou à un admin.
+      // qui débloquent l'accès payant ou l'administration lui-même, ni ceux
+      // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
+      // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`
+      // ne sont écrits que par la Cloud Function `applyReferralCode` (voir
+      // functions/index.js), qui tourne en admin et contourne ces règles —
+      // elle seule peut créditer le compte d'un AUTRE utilisateur (le
+      // parrain), ce qu'un client ne peut jamais faire de façon sûre.
       allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin']) ||
+          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy']) ||
         isRedeemingValidAccessCode()
       );
 
@@ -60,7 +63,9 @@ service cloud.firestore {
     match /referralCodes/{code} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if isSignedIn(); // incrémente `timesUsed` quand un filleul l'utilise
+      // `timesUsed` n'est incrémenté que par la Cloud Function
+      // `applyReferralCode` (admin, contourne ces règles).
+      allow update: if false;
     }
 
     match /accessCodes/{code} {

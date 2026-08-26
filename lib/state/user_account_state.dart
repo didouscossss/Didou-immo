@@ -95,7 +95,7 @@ class UserAccountState extends ChangeNotifier {
 
   Future<String?> applyReferralCode(String code) async {
     if (user == null) return 'Connecte-toi pour utiliser un code.';
-    final err = await _referral.applyReferralCode(user!.uid, code);
+    final err = await _referral.applyReferralCode(code);
     if (err == null) await refresh();
     return err;
   }
