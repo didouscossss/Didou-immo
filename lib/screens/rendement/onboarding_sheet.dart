@@ -13,10 +13,31 @@ class OnboardingSheet extends StatefulWidget {
   State<OnboardingSheet> createState() => _OnboardingSheetState();
 }
 
-class _OnboardingSheetState extends State<OnboardingSheet> {
+class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProviderStateMixin {
   int _step = 0;
   RentalMode _mode = RentalMode.longue;
   double _budget = 180000;
+
+  late final AnimationController _didouController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  );
+  late final Animation<double> _didouScale =
+      CurvedAnimation(parent: _didouController, curve: Curves.easeOutBack);
+  late final Animation<double> _didouFade =
+      CurvedAnimation(parent: _didouController, curve: const Interval(0, 0.6, curve: Curves.easeOut));
+
+  @override
+  void initState() {
+    super.initState();
+    _didouController.forward();
+  }
+
+  @override
+  void dispose() {
+    _didouController.dispose();
+    super.dispose();
+  }
 
   void _finish() => widget.onFinish(_mode, _budget);
 
@@ -38,8 +59,40 @@ class _OnboardingSheetState extends State<OnboardingSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(_step == 0 ? 'Bienvenue 👋' : 'Ton budget',
-                      style: AppTextStyles.serif(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      FadeTransition(
+                        opacity: _didouFade,
+                        child: ScaleTransition(
+                          scale: _didouScale,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/didou_face.png',
+                              width: 52,
+                              height: 52,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_step == 0 ? 'Bienvenue 👋' : 'Ton budget',
+                                style: AppTextStyles.serif(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                            Text(
+                              _step == 0 ? "Je suis Didou, je t'accompagne" : 'Encore une question et on y est',
+                              style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.5)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   if (_step == 0) ..._buildStepMode() else ..._buildStepBudget(),
                   const SizedBox(height: 24),
