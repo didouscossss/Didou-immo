@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:didou_immo/main.dart';
+import 'package:didou_immo/screens/rendement/onboarding_sheet.dart';
 
 /// Scrolle le `ListView` de l'onglet courant jusqu'à ce que [finder] soit
 /// construit et visible (les onglets sont de longues listes non paresseuses,
@@ -79,6 +80,32 @@ void main() {
     await tester.tap(find.text('Avancé'));
     await tester.pumpAndSettle();
     expect(find.text('Rentabilité nette (%)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets("L'onboarding affiche Didou et se parcourt sans erreur",
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({}); // pas de 'onboarding-done' -> affiché
+
+    await tester.pumpWidget(const DidouImmoApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bienvenue 👋'), findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is Image && w.image is AssetImage &&
+        (w.image as AssetImage).assetName == 'assets/images/didou_face.png'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    final onboarding = find.byType(OnboardingSheet);
+    await tester.tap(find.descendant(of: onboarding, matching: find.text('Courte durée')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ton budget'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text("C'est parti"));
+    await tester.pumpAndSettle();
+    expect(find.text('Bienvenue 👋'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
