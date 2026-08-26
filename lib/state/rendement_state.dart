@@ -134,17 +134,19 @@ class RendementState extends ChangeNotifier {
 
   /// Enregistre le bien courant pour comparaison — équivalent de `handleSave`.
   /// L'appelant (voir `RendementHome`) est responsable d'avoir déjà vérifié
-  /// la capacité d'enregistrement gratuite / l'abonnement au préalable.
-  void saveCurrentProperty() {
+  /// la capacité d'enregistrement gratuite / l'abonnement au préalable, et
+  /// doit attendre ce Future pour savoir si l'enregistrement a réussi avant
+  /// de changer d'écran.
+  Future<void> saveCurrentProperty() async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     if (_uid != null) {
-      _firestore.saveProperty(_uid!, id, form.toJson());
+      await _firestore.saveProperty(_uid!, id, form.toJson());
       return; // le flux Firestore mettra `biens` à jour automatiquement.
     }
     final saved = SavedProperty(id: id, form: form, core: core, regimes: regimes, score: score);
     biens = [...biens, saved];
     notifyListeners();
-    _persistLocalBiens();
+    await _persistLocalBiens();
   }
 
   void deleteProperty(String id) {
