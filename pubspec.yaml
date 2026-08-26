@@ -1,0 +1,43 @@
+name: didou_immo
+description: Didou Immo — calculateur de rentabilité immobilière, aide à l'achat.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # État de l'application
+  provider: ^6.1.2
+
+  # Firebase — compte utilisateur, sauvegarde cloud, suggestions
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  google_sign_in: ^6.2.1
+
+  # Abonnement via Google Play Billing
+  in_app_purchase: ^3.2.0
+
+  # Recherche de communes (geo.api.gouv.fr)
+  http: ^1.2.2
+
+  # UI
+  fl_chart: ^0.69.0          # graphiques (projection patrimoniale)
+  intl: ^0.19.0              # formatage euros / dates
+  google_fonts: ^6.2.1       # Fraunces / Inter / Space Mono
+
+  shared_preferences: ^2.3.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
