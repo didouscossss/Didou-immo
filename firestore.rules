@@ -21,16 +21,39 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // Validation légitime d'un code cadeau : seuls `grantedFree` et
+    // `grantedFreeVia` changent, et le code visé existe, est actif et a
+    // encore des utilisations. `get()` lit l'état du code AVANT cette
+    // transaction (y compris la décrémentation de `usesRemaining` faite en
+    // parallèle sur accessCodes/{code} dans la même transaction), donc ce
+    // contrôle reste correct même si le compte utilise deux codes en
+    // parallèle par accident.
+    function isRedeemingValidAccessCode() {
+      let code = request.resource.data.grantedFreeVia;
+      let codeDoc = get(/databases/$(database)/documents/accessCodes/$(code));
+      return request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['grantedFree', 'grantedFreeVia']) &&
+        request.resource.data.grantedFree == true &&
+        codeDoc.data.active == true &&
+        codeDoc.data.usesRemaining > 0;
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid);
       allow create: if isOwner(uid);
       // Un compte peut modifier son propre document, mais jamais les champs
-      // qui débloquent l'accès payant ou l'administration lui-même : ça,
-      // c'est le rôle d'une Cloud Function (paiement vérifié via RTDN) ou
-      // d'un admin (isAdmin activé manuellement depuis la console).
-      allow update: if isOwner(uid) &&
+      // qui débloquent l'accès payant ou l'administration lui-même, ni ceux
+      // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
+      // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`
+      // ne sont écrits que par la Cloud Function `applyReferralCode` (voir
+      // functions/index.js), qui tourne en admin et contourne ces règles —
+      // elle seule peut créditer le compte d'un AUTRE utilisateur (le
+      // parrain), ce qu'un client ne peut jamais faire de façon sûre.
+      allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin']);
+          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy']) ||
+        isRedeemingValidAccessCode()
+      );
 
       match /properties/{propertyId} {
         allow read, write: if isOwner(uid);
@@ -40,13 +63,21 @@ service cloud.firestore {
     match /referralCodes/{code} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if isSignedIn(); // incrémente `timesUsed` quand un filleul l'utilise
+      // `timesUsed` n'est incrémenté que par la Cloud Function
+      // `applyReferralCode` (admin, contourne ces règles).
+      allow update: if false;
     }
 
     match /accessCodes/{code} {
       allow read: if isSignedIn();
       allow create, delete: if isAdmin();
-      allow update: if isSignedIn(); // décrémente `usesRemaining` lors de la redemption
+      // N'autorise que la décrémentation légitime de 1 d'un code actif —
+      // jamais une réactivation, un reset, ou toucher un autre champ.
+      allow update: if isSignedIn() &&
+        resource.data.active == true &&
+        resource.data.usesRemaining > 0 &&
+        request.resource.data.usesRemaining == resource.data.usesRemaining - 1 &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usesRemaining']);
     }
 
     match /suggestions/{suggestionId} {

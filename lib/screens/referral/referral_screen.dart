@@ -24,8 +24,13 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Future<void> _applyParrainage() async {
     if (_parrainageController.text.trim().isEmpty) return;
     setState(() => _loadingParrainage = true);
-    final error = await _referral.applyReferralCode(
-        widget.uid, _parrainageController.text);
+    String? error;
+    try {
+      error = await _referral.applyReferralCode(_parrainageController.text);
+    } catch (_) {
+      error = "Une erreur est survenue, réessaie dans un instant.";
+    }
+    if (!mounted) return;
     setState(() {
       _loadingParrainage = false;
       _parrainageMessage = error ??
@@ -36,8 +41,14 @@ class _ReferralScreenState extends State<ReferralScreen> {
   Future<void> _applyCadeau() async {
     if (_cadeauController.text.trim().isEmpty) return;
     setState(() => _loadingCadeau = true);
-    final error =
-        await _referral.redeemAccessCode(widget.uid, _cadeauController.text);
+    String? error;
+    try {
+      error =
+          await _referral.redeemAccessCode(widget.uid, _cadeauController.text);
+    } catch (_) {
+      error = "Une erreur est survenue, réessaie dans un instant.";
+    }
+    if (!mounted) return;
     setState(() {
       _loadingCadeau = false;
       _cadeauMessage = error ?? 'App débloquée gratuitement, profite-en !';

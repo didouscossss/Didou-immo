@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 /// Gère deux mécanismes distincts :
 ///
@@ -26,6 +27,7 @@ class ReferralService {
   // construction — indispensable pour que l'app démarre en mode local tant
   // que Firebase n'est pas initialisé (voir `main.dart`).
   late final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   static const int bonusDaysMonthly = 3; // ~10% de 30 jours
   static const int bonusDaysYearly = 36; // ~10% de 365 jours
@@ -65,33 +67,23 @@ class ReferralService {
   /// Applique un code de parrainage saisi par un nouvel utilisateur.
   /// Un code ne peut être appliqué qu'une seule fois par compte.
   /// Retourne un message d'erreur (String) ou null si succès.
-  Future<String?> applyReferralCode(String uid, String enteredCode) async {
+  ///
+  /// Passe par la Cloud Function `applyReferralCode` (voir `functions/index.js`)
+  /// plutôt que d'écrire directement dans Firestore : l'opération crédite
+  /// aussi le compte du PARRAIN (un autre utilisateur), ce que les règles
+  /// Firestore ne peuvent pas autoriser de façon sûre pour un client — voir
+  /// la discussion dans `firestore.rules`. La fonction tourne avec les
+  /// privilèges admin et applique exactement la même logique.
+  Future<String?> applyReferralCode(String enteredCode) async {
     final code = enteredCode.trim().toUpperCase();
-    final userDoc = await _db.collection('users').doc(uid).get();
-    if (userDoc.data()?['referredBy'] != null) {
-      return 'Un code de parrainage a déjà été utilisé sur ce compte.';
+    try {
+      await _functions.httpsCallable('applyReferralCode').call({'code': code});
+      return null; // succès
+    } on FirebaseFunctionsException catch (e) {
+      return e.message ?? 'Une erreur est survenue.';
+    } catch (_) {
+      return 'Une erreur est survenue.';
     }
-
-    final codeDoc = await _db.collection('referralCodes').doc(code).get();
-    if (!codeDoc.exists) return 'Code de parrainage introuvable.';
-    final ownerUid = codeDoc.data()!['ownerUid'] as String;
-    if (ownerUid == uid) return 'Tu ne peux pas utiliser ton propre code.';
-
-    final batch = _db.batch();
-    // Le filleul reçoit son bonus immédiatement (appliqué au prochain abonnement)
-    batch.update(_db.collection('users').doc(uid), {
-      'referredBy': code,
-      'pendingBonusDays': FieldValue.increment(bonusDaysMonthly),
-    });
-    // Le parrain reçoit une récompense équivalente
-    batch.update(_db.collection('users').doc(ownerUid), {
-      'pendingBonusDays': FieldValue.increment(bonusDaysMonthly),
-    });
-    batch.update(_db.collection('referralCodes').doc(code), {
-      'timesUsed': FieldValue.increment(1),
-    });
-    await batch.commit();
-    return null; // succès
   }
 
   /// Codes cadeaux gérés depuis Firestore (option b, voir doc de la classe).

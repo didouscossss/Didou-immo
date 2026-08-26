@@ -27,6 +27,11 @@ Calculateur de rentabilité immobilière, aide à l'achat.
   `flutterfire configure` n'a pas pu s'authentifier depuis cet
   environnement — réseau restreint), `google-services.json` en place, et
   le client OAuth web ajouté dans `web/index.html` pour Google Sign-In
+- Cloud Function `applyReferralCode` écrite (`functions/index.js`) pour
+  créditer le parrain en toute sécurité — **pas encore déployée**, voir
+  "Ce qu'il reste à faire" → étape 1bis. Le parrainage ("J'ai un code de
+  parrainage") ne fonctionnera qu'une fois déployée ; les codes cadeaux
+  (`redeemAccessCode`), eux, marchent déjà via les règles Firestore
 
 ## Mode local vs mode connecté
 `lib/main.dart` essaie d'initialiser Firebase au démarrage ; si ça échoue
@@ -58,6 +63,33 @@ Il reste, dans https://console.firebase.google.com/project/didou-immo :
    depuis une machine avec un accès réseau normal (ça régénérera
    `lib/firebase_options.dart` en gardant Android + Web)
 
+### 1bis. Déployer la Cloud Function de parrainage
+Le parrainage écrit sur le compte d'un AUTRE utilisateur (le parrain) — les
+règles Firestore ne peuvent pas autoriser ça de façon sûre pour un client,
+donc cette opération passe par une Cloud Function (`functions/`), qui
+tourne avec des privilèges admin côté serveur. **Elle n'est pas encore
+déployée** : en attendant, "J'ai un code de parrainage" renverra une
+erreur (comportement voulu, pas de faille de sécurité en attendant).
+
+Impossible de la déployer depuis la Console Firebase seule (pas d'éditeur
+de code pour les Functions dans le navigateur) — il faut une CLI, donc un
+ordinateur (le tien ou celui d'une personne qui t'aide) :
+
+1. **Passer le projet Firebase en plan Blaze** (Firebase Console → ⚙️ →
+   Utilisation et facturation) — obligatoire pour déployer *toute* Cloud
+   Function, même si le volume reste dans le quota gratuit. Il faut une
+   carte bancaire enregistrée, mais l'usage prévu ici (quelques appels de
+   fonction) ne coûtera rien en pratique — voir "Repères de coûts"
+2. Installer les CLI : `npm install -g firebase-tools`, puis
+   `dart pub global activate flutterfire_cli` (déjà fait si tu as suivi
+   l'étape 1 — sinon uniquement `firebase-tools` est nécessaire ici)
+3. `firebase login` (ouvre le navigateur pour se connecter avec le compte
+   Google propriétaire du projet)
+4. Depuis la racine du projet (là où se trouve `firebase.json`) :
+   `firebase deploy --only functions`
+5. Teste "J'ai un code de parrainage" dans l'app — l'erreur doit
+   disparaître
+
 ### 2. Premier compte admin
 Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :
 Firestore Console → collection `users` → ton document (par ton `uid`) →
@@ -83,14 +115,17 @@ ajouter manuellement le champ `isAdmin: true` (booléen). L'écran
 **Pourquoi ce n'est pas une vraie remise Play Store** : Google Play Billing
 fixe les prix au niveau du produit, pas par utilisateur — impossible
 d'appliquer -10 % à un code généré par un utilisateur au moment du paiement.
-Le contournement implémenté (`lib/services/referral_service.dart`) :
+Le contournement implémenté (`lib/services/referral_service.dart` côté
+app, `functions/index.js` → `applyReferralCode` côté serveur, à déployer
+— voir étape 1bis) :
 
 - Chaque compte a un code de parrainage unique (`DIDOU-XXXX`)
 - Un nouveau compte qui saisit un code reçoit `pendingBonusDays` (+3 jours
   pour un mensuel, ou ajuster à +36 jours si tu factures l'annuel — voir
-  constantes `bonusDaysMonthly` / `bonusDaysYearly`) ; le parrain reçoit le
-  même bonus
-- **Ces jours bonus doivent être appliqués par ta Cloud Function** au
+  constantes `bonusDaysMonthly` / `BONUS_DAYS_MONTHLY`, à garder en phase
+  entre le Dart et la Cloud Function) ; le parrain reçoit le même bonus
+- **Ces jours bonus doivent en plus être appliqués par ta Cloud Function
+  de facturation** au
   moment où l'abonnement réel est confirmé via RTDN : additionner
   `pendingBonusDays` à `subscriptionExpiry`, puis remettre
   `pendingBonusDays` à 0. Pseudo-code :
@@ -133,8 +168,11 @@ Le contournement implémenté (`lib/services/referral_service.dart`) :
 
 ## Repères de coûts
 - 25$ compte développeur Google (une fois)
-- Firebase gratuit jusqu'à un volume confortable pour démarrer (plan Spark),
-  passage au plan Blaze (payant à l'usage) seulement si le volume grossit
+- Firebase gratuit jusqu'à un volume confortable pour démarrer, mais le
+  plan **Blaze** (facturation à l'usage) est obligatoire dès qu'une seule
+  Cloud Function est déployée (`applyReferralCode`, étape 1bis) — le quota
+  gratuit du plan Blaze (2 millions d'appels/mois) couvre largement un
+  usage normal, donc en pratique ~0€ tant que le volume reste raisonnable
 - Commission Google Play sur l'abonnement : 15 % (jusqu'à 1M$/an de revenus
   par app, sinon 30 % au-delà) — donc ~4,24€ net sur 4,99€/mois
 
