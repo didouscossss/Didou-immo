@@ -19,6 +19,7 @@ class BiensScreen extends StatelessWidget {
     final biens = state.biens;
 
     if (biens.isEmpty) {
+      final error = state.cloudError;
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -29,11 +30,14 @@ class BiensScreen extends StatelessWidget {
               alignment: Alignment.center,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.layers_outlined, size: 26, color: AppColors.accent),
+              child: Icon(error == null ? Icons.layers_outlined : Icons.error_outline,
+                  size: 26, color: error == null ? AppColors.accent : AppColors.alert),
             ),
-            Text('Aucun bien enregistré', textAlign: TextAlign.center, style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.ink)),
+            Text(error == null ? 'Aucun bien enregistré' : "Impossible de charger tes biens",
+                textAlign: TextAlign.center, style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.ink)),
             const SizedBox(height: 6),
-            Text('Calcule la rentabilité d\'un bien puis enregistre-le pour le comparer ici.',
+            Text(
+                error ?? 'Calcule la rentabilité d\'un bien puis enregistre-le pour le comparer ici.',
                 textAlign: TextAlign.center, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.5))),
           ]),
         ),

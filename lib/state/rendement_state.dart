@@ -32,6 +32,12 @@ class RendementState extends ChangeNotifier {
   bool loaded = false;
   bool showOnboarding = false;
 
+  /// Dernière erreur du flux Firestore des biens enregistrés (diagnostic),
+  /// non null si `watchProperties` a échoué — sans ça, une erreur du flux
+  /// (permissions, index manquant...) restait totalement invisible : la
+  /// liste des biens paraissait juste vide, sans aucun message.
+  String? cloudError;
+
   String? _uid;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _cloudSub;
 
@@ -110,6 +116,7 @@ class RendementState extends ChangeNotifier {
     _uid = uid;
     _cloudSub?.cancel();
     _cloudSub = null;
+    cloudError = null;
     if (uid == null) {
       _loadLocalBiens().then((_) => notifyListeners());
       return;
@@ -118,6 +125,10 @@ class RendementState extends ChangeNotifier {
       biens = snapshot.docs
           .map((doc) => _decodeSaved(doc.id, doc.data()['form'] as Map<String, dynamic>))
           .toList();
+      cloudError = null;
+      notifyListeners();
+    }, onError: (Object e) {
+      cloudError = e.toString();
       notifyListeners();
     });
   }
