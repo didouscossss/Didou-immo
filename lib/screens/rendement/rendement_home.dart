@@ -127,9 +127,15 @@ class _RendementHomeState extends State<RendementHome> {
   /// Enregistre le bien courant — en mode local (pas de compte), c'est
   /// toujours possible ; une fois connecté, ça compte comme un essai
   /// gratuit et bascule sur le paywall au-delà de la limite.
+  ///
+  /// On attend la fin de l'écriture avant de changer d'onglet : sans ça,
+  /// une écriture Firestore qui échoue (réseau, règles) passait inaperçue —
+  /// l'écran basculait sur "Mes projets" alors que rien n'avait été
+  /// enregistré.
   Future<void> _handleSave(RendementState state) async {
     if (!widget.firebaseReady) {
-      state.saveCurrentProperty();
+      await state.saveCurrentProperty();
+      if (!mounted) return;
       setState(() => _active = _Tab.biens);
       return;
     }
@@ -138,7 +144,17 @@ class _RendementHomeState extends State<RendementHome> {
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen()));
       return;
     }
-    state.saveCurrentProperty();
+    try {
+      await state.saveCurrentProperty();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Échec de l'enregistrement, vérifie ta connexion et réessaie."),
+        ),
+      );
+      return;
+    }
     await account.recordFreeSave();
     if (!mounted) return;
     setState(() => _active = _Tab.biens);
