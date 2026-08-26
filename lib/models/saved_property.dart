@@ -3,7 +3,7 @@ import '../utils/calculations.dart';
 /// Un bien enregistré pour comparaison — équivalent d'un élément poussé
 /// dans `biens` (`{...form, id, core, regimes, score}`) dans le prototype.
 class SavedProperty {
-  final int id;
+  final String id;
   final PropertyInput form;
   final CoreResult core;
   final List<RegimeResult> regimes;

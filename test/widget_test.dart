@@ -24,7 +24,7 @@ void main() {
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
-    await tester.pumpWidget(const DidouImmoApp());
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
     expect(find.text('Rendement'), findsOneWidget);
@@ -55,7 +55,7 @@ void main() {
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
-    await tester.pumpWidget(const DidouImmoApp());
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
     // Bien 1 (longue durée, par défaut) — enregistré tel quel. Le bouton est
@@ -87,7 +87,7 @@ void main() {
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({}); // pas de 'onboarding-done' -> affiché
 
-    await tester.pumpWidget(const DidouImmoApp());
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
     expect(find.text('Bienvenue 👋'), findsOneWidget);

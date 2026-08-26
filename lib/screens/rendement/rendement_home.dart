@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/rendement_state.dart';
+import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/niveau_toggle.dart';
+import '../account/account_screen.dart';
+import '../paywall/paywall_screen.dart';
 import 'biens_screen.dart';
 import 'calc_screen.dart';
 import 'fiscalite_screen.dart';
@@ -16,8 +19,13 @@ enum _Tab { calc, marche, fisc, proj, biens }
 
 /// Coquille de l'app — équivalent du composant `RendementApp` (barre du
 /// haut + navigation par onglets + overlays onboarding/méthodologie).
+///
+/// [firebaseReady] indique si un compte est réellement disponible (voir
+/// `main.dart`) : à `false`, l'app tourne en mode local — enregistrement de
+/// biens illimité sur l'appareil, comme avant l'ajout des comptes.
 class RendementHome extends StatefulWidget {
-  const RendementHome({super.key});
+  final bool firebaseReady;
+  const RendementHome({super.key, required this.firebaseReady});
 
   @override
   State<RendementHome> createState() => _RendementHomeState();
@@ -66,6 +74,16 @@ class _RendementHomeState extends State<RendementHome> {
                       ),
                       Row(children: [
                         InkWell(
+                          onTap: _openAccount,
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                            child: const Icon(Icons.person_outline, size: 15, color: AppColors.ink),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
                           onTap: () => setState(() => _showMethodo = true),
                           borderRadius: BorderRadius.circular(999),
                           child: Container(
@@ -96,13 +114,40 @@ class _RendementHomeState extends State<RendementHome> {
     );
   }
 
+  void _openAccount() {
+    if (!widget.firebaseReady) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Compte bientôt disponible sur cette version.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen()));
+  }
+
+  /// Enregistre le bien courant — en mode local (pas de compte), c'est
+  /// toujours possible ; une fois connecté, ça compte comme un essai
+  /// gratuit et bascule sur le paywall au-delà de la limite.
+  Future<void> _handleSave(RendementState state) async {
+    if (!widget.firebaseReady) {
+      state.saveCurrentProperty();
+      setState(() => _active = _Tab.biens);
+      return;
+    }
+    final account = context.read<UserAccountState>();
+    if (!account.canSaveForFree) {
+      await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen()));
+      return;
+    }
+    state.saveCurrentProperty();
+    await account.recordFreeSave();
+    if (!mounted) return;
+    setState(() => _active = _Tab.biens);
+  }
+
   Widget _buildActiveScreen(RendementState state) {
     switch (_active) {
       case _Tab.calc:
-        return CalcScreen(onSave: () {
-          state.saveCurrentProperty();
-          setState(() => _active = _Tab.biens);
-        });
+        return CalcScreen(onSave: () => _handleSave(state));
       case _Tab.marche:
         return const MarcheScreen();
       case _Tab.fisc:
