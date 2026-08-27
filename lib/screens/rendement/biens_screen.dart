@@ -133,7 +133,7 @@ class BiensScreen extends StatelessWidget {
                         const SizedBox(height: 6),
                         InkWell(
                           borderRadius: BorderRadius.circular(999),
-                          onTap: () => state.setPropertyAchete(b.id, !b.form.achete),
+                          onTap: () => _toggleAchete(context, state, b),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -144,11 +144,15 @@ class BiensScreen extends StatelessWidget {
                               Icon(b.form.achete ? Icons.check_circle : Icons.hourglass_top,
                                   size: 11, color: b.form.achete ? AppColors.accent : AppColors.ink.withValues(alpha: 0.45)),
                               const SizedBox(width: 4),
-                              Text(b.form.achete ? 'Acquis' : 'À l\'étude',
-                                  style: AppTextStyles.sans(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: b.form.achete ? AppColors.accent : AppColors.ink.withValues(alpha: 0.5))),
+                              Text(
+                                b.form.achete
+                                    ? 'Acquis${b.form.dateAchat != null ? ' le ${dateFr(b.form.dateAchat!)}' : ''}'
+                                    : 'À l\'étude',
+                                style: AppTextStyles.sans(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: b.form.achete ? AppColors.accent : AppColors.ink.withValues(alpha: 0.5)),
+                              ),
                             ]),
                           ),
                         ),
@@ -226,6 +230,29 @@ class BiensScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// Marquer un bien "acquis" demande la date d'achat (préremplie avec la
+  /// précédente si déjà renseignée) — annuler le sélecteur n'a aucun effet.
+  /// Revenir à "à l'étude" ne demande rien.
+  Future<void> _toggleAchete(BuildContext context, RendementState state, SavedProperty b) async {
+    if (b.form.achete) {
+      state.setPropertyAchete(b.id, false);
+      return;
+    }
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: b.form.dateAchat ?? now,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      helpText: "Date d'achat",
+      cancelText: 'Annuler',
+      confirmText: 'Valider',
+    );
+    if (picked != null) {
+      state.setPropertyAchete(b.id, true, dateAchat: picked);
+    }
   }
 
   Future<void> _exportCsv(BuildContext context, List<SavedProperty> biens) async {

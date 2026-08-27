@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter          # sélecteurs de date/heure natifs en français
 
   # État de l'application
   provider: ^6.1.2
@@ -28,7 +30,7 @@ dependencies:
 
   # UI
   fl_chart: ^0.69.0          # graphiques (projection patrimoniale)
-  intl: ^0.19.0              # formatage euros / dates
+  intl: ^0.20.2              # formatage euros / dates (version imposée par flutter_localizations)
   google_fonts: ^6.2.1       # Fraunces / Inter / Space Mono
   flutter_map: ^7.0.2        # carte de France (onglet Carte)
   latlong2: ^0.9.1           # type LatLng pour flutter_map

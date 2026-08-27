@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'firebase_options.dart';
@@ -44,6 +45,15 @@ class DidouImmoApp extends StatelessWidget {
           title: 'Rendement',
           debugShowCheckedModeBanner: false,
           theme: buildAppTheme(dark: state.darkMode),
+          // Sans ça, les sélecteurs de date natifs (ex. date d'achat d'un
+          // bien) s'affichaient avec les noms de mois/jours en anglais.
+          locale: const Locale('fr', 'FR'),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('fr', 'FR')],
           home: AppRoot(firebaseReady: firebaseReady),
         ),
       ),
