@@ -34,6 +34,7 @@ class _CalcScreenState extends State<CalcScreen> {
   double _stressOccupationPct = 25;
   double _stressTravauxEuros = 5000;
   bool _showVisite = false;
+  bool _showFraisAnnexes = false;
   final Set<int> _visiteChecked = {};
 
   bool get _anyStress => _stressTaux || _stressOccupation || _stressTravaux;
@@ -252,11 +253,40 @@ class _CalcScreenState extends State<CalcScreen> {
         const SizedBox(height: 12),
         NumberField(label: "Capacité d'accueil", value: form.capacite, suffix: 'pers.', hint: 'utile surtout en courte durée', onChanged: (v) => set((f) => f.copyWith(capacite: v))),
         const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: NumberField(label: 'Frais de notaire', value: form.notaire, suffix: '€', onChanged: (v) => set((f) => f.copyWith(notaire: v)))),
-          const SizedBox(width: 12),
-          Expanded(child: NumberField(label: 'Travaux / rénovation', value: form.travaux, suffix: '€', onChanged: (v) => set((f) => f.copyWith(travaux: v)))),
-        ]),
+        if (isNovice) ...[
+          // En novice, ces deux champs restent inclus dans le calcul avec
+          // une estimation raisonnable par défaut — repliés pour ne pas
+          // surcharger l'écran, dépliables si besoin d'un chiffre précis.
+          InkWell(
+            onTap: () => setState(() => _showFraisAnnexes = !_showFraisAnnexes),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Expanded(
+                  child: Text(
+                    'Frais de notaire et travaux — ${eur(form.notaire + form.travaux)} inclus par défaut',
+                    style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.8)),
+                  ),
+                ),
+                Icon(_showFraisAnnexes ? Icons.expand_less : Icons.expand_more, size: 18, color: AppColors.ink.withValues(alpha: 0.5)),
+              ]),
+            ),
+          ),
+          if (_showFraisAnnexes) ...[
+            const SizedBox(height: 8),
+            Row(children: [
+              Expanded(child: NumberField(label: 'Frais de notaire', value: form.notaire, suffix: '€', onChanged: (v) => set((f) => f.copyWith(notaire: v)))),
+              const SizedBox(width: 12),
+              Expanded(child: NumberField(label: 'Travaux / rénovation', value: form.travaux, suffix: '€', onChanged: (v) => set((f) => f.copyWith(travaux: v)))),
+            ]),
+            const Tip('Une estimation raisonnable est déjà incluse dans le calcul (environ 8 % de frais de notaire dans l\'ancien) — ajuste seulement si tu as un chiffre plus précis.'),
+          ],
+        ] else
+          Row(children: [
+            Expanded(child: NumberField(label: 'Frais de notaire', value: form.notaire, suffix: '€', onChanged: (v) => set((f) => f.copyWith(notaire: v)))),
+            const SizedBox(width: 12),
+            Expanded(child: NumberField(label: 'Travaux / rénovation', value: form.travaux, suffix: '€', onChanged: (v) => set((f) => f.copyWith(travaux: v)))),
+          ]),
         const SizedBox(height: 12),
         Text('Diagnostic de performance énergétique (DPE)', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
         const SizedBox(height: 6),
@@ -491,65 +521,68 @@ class _CalcScreenState extends State<CalcScreen> {
           ]),
         ),
 
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.bolt, size: 15, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text('Et si...? (stress-test)', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+        // Réservé au mode Avancé : le VerdictCard (novice, ci-dessus) donne
+        // déjà une lecture qualitative du risque sans avoir à manier des
+        // scénarios chiffrés.
+        if (!isNovice)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(Icons.bolt, size: 15, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text('Et si...? (stress-test)', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              ]),
+              const SizedBox(height: 10),
+              _stressRow("Le taux d'emprunt monte de ${fmt(_stressTauxPts, 1)} point${_stressTauxPts > 1 ? 's' : ''}", _stressTaux, () => setState(() => _stressTaux = !_stressTaux)),
+              if (_stressTaux)
+                _stressAmountField(
+                  label: 'Points de taux en plus',
+                  value: _stressTauxPts,
+                  suffix: 'pt',
+                  onChanged: (v) => setState(() => _stressTauxPts = v.clamp(0, 10)),
+                ),
+              _stressRow("L'occupation baisse de ${fmt(_stressOccupationPct, 0)} %", _stressOccupation, () => setState(() => _stressOccupation = !_stressOccupation)),
+              if (_stressOccupation)
+                _stressAmountField(
+                  label: "Baisse d'occupation",
+                  value: _stressOccupationPct,
+                  suffix: '%',
+                  onChanged: (v) => setState(() => _stressOccupationPct = v.clamp(0, 100)),
+                ),
+              _stressRow('+ ${eur(_stressTravauxEuros)} de travaux imprévus', _stressTravaux, () => setState(() => _stressTravaux = !_stressTravaux)),
+              if (_stressTravaux)
+                _stressAmountField(
+                  label: 'Travaux imprévus en plus',
+                  value: _stressTravauxEuros,
+                  suffix: '€',
+                  onChanged: (v) => setState(() => _stressTravauxEuros = v.clamp(0, 500000)),
+                ),
+              if (_anyStress)
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppColors.alert.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
+                  child: Row(children: [
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('RENTABILITÉ NETTE', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
+                        Text('${fmt(core.net, 1)}% → ${fmt(stressCore.net, 1)}%', style: AppTextStyles.mono(fontSize: 14, color: AppColors.alert)),
+                      ]),
+                    ),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('CASH-FLOW /MOIS', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
+                        Text('${fmt(core.cashflowMensuel)}€ → ${fmt(stressCore.cashflowMensuel)}€',
+                            style: AppTextStyles.mono(fontSize: 14, color: stressCore.cashflowMensuel < 0 ? AppColors.alert : AppColors.ink)),
+                      ]),
+                    ),
+                  ]),
+                ),
             ]),
-            const SizedBox(height: 10),
-            _stressRow("Le taux d'emprunt monte de ${fmt(_stressTauxPts, 1)} point${_stressTauxPts > 1 ? 's' : ''}", _stressTaux, () => setState(() => _stressTaux = !_stressTaux)),
-            if (_stressTaux)
-              _stressAmountField(
-                label: 'Points de taux en plus',
-                value: _stressTauxPts,
-                suffix: 'pt',
-                onChanged: (v) => setState(() => _stressTauxPts = v.clamp(0, 10)),
-              ),
-            _stressRow("L'occupation baisse de ${fmt(_stressOccupationPct, 0)} %", _stressOccupation, () => setState(() => _stressOccupation = !_stressOccupation)),
-            if (_stressOccupation)
-              _stressAmountField(
-                label: "Baisse d'occupation",
-                value: _stressOccupationPct,
-                suffix: '%',
-                onChanged: (v) => setState(() => _stressOccupationPct = v.clamp(0, 100)),
-              ),
-            _stressRow('+ ${eur(_stressTravauxEuros)} de travaux imprévus', _stressTravaux, () => setState(() => _stressTravaux = !_stressTravaux)),
-            if (_stressTravaux)
-              _stressAmountField(
-                label: 'Travaux imprévus en plus',
-                value: _stressTravauxEuros,
-                suffix: '€',
-                onChanged: (v) => setState(() => _stressTravauxEuros = v.clamp(0, 500000)),
-              ),
-            if (_anyStress)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.alert.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10)),
-                child: Row(children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('RENTABILITÉ NETTE', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
-                      Text('${fmt(core.net, 1)}% → ${fmt(stressCore.net, 1)}%', style: AppTextStyles.mono(fontSize: 14, color: AppColors.alert)),
-                    ]),
-                  ),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('CASH-FLOW /MOIS', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
-                      Text('${fmt(core.cashflowMensuel)}€ → ${fmt(stressCore.cashflowMensuel)}€',
-                          style: AppTextStyles.mono(fontSize: 14, color: stressCore.cashflowMensuel < 0 ? AppColors.alert : AppColors.ink)),
-                    ]),
-                  ),
-                ]),
-              ),
-            if (isNovice) const Tip("Si le bien reste correct même dans ce scénario dégradé, c'est bon signe de solidité. S'il devient très négatif, c'est un risque à connaître avant d'acheter."),
-          ]),
-        ),
+          ),
 
         ElevatedButton.icon(
           onPressed: widget.onSave,
