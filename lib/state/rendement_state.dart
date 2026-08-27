@@ -253,8 +253,8 @@ class RendementState extends ChangeNotifier {
       form = form.copyWith(
         mode: mode,
         prix: budget,
-        notaire: (budget * 0.08).roundToDouble(),
-        travaux: (budget * 0.03).roundToDouble(),
+        notaire: defaultNotaire(budget),
+        travaux: defaultTravaux(form.surface),
       );
     }
     showOnboarding = false;
