@@ -5,6 +5,15 @@ import 'dart:math';
 
 const double social = 0.172; // prélèvements sociaux (17,2 %)
 
+// Estimations par défaut pour les frais de notaire et travaux — utilisées
+// tant que l'utilisateur n'a pas saisi son propre chiffre (voir
+// `PropertyInput.notaireAuto` / `travauxAuto`).
+const double notaireDefaultPct = 8; // frais de notaire dans l'ancien, ~7-8 % du prix
+const double travauxDefaultParM2 = 300; // rafraîchissement moyen (peinture, sols...), €/m²
+
+double defaultNotaire(double prix) => (prix * notaireDefaultPct / 100).roundToDouble();
+double defaultTravaux(double surface) => (surface * travauxDefaultParM2).roundToDouble();
+
 // ---------------------------------------------------------------------------
 // Helpers financiers
 // ---------------------------------------------------------------------------
@@ -131,6 +140,11 @@ class PropertyInput {
   final bool meuble;
 
   final double prix, notaire, travaux;
+  /// Tant que `true`, [notaire]/[travaux] se recalculent automatiquement
+  /// (à partir du prix / de la surface) à chaque modification — passe à
+  /// `false` dès que l'utilisateur saisit lui-même le champ, pour ne plus
+  /// écraser sa valeur.
+  final bool notaireAuto, travauxAuto;
 
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
@@ -175,6 +189,8 @@ class PropertyInput {
     required this.prix,
     required this.notaire,
     required this.travaux,
+    this.notaireAuto = true,
+    this.travauxAuto = true,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -218,8 +234,8 @@ class PropertyInput {
         typeBien: 't2',
         capacite: 3,
         prix: 180000,
-        notaire: 14000,
-        travaux: 6000,
+        notaire: 14400, // == defaultNotaire(180000), valeurs littérales requises par `const`
+        travaux: 13500, // == defaultTravaux(45)
         loyer: 850,
         vacancePct: 4,
         chargesCopro: 900,
@@ -264,6 +280,8 @@ class PropertyInput {
     double? prix,
     double? notaire,
     double? travaux,
+    bool? notaireAuto,
+    bool? travauxAuto,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -304,6 +322,8 @@ class PropertyInput {
       prix: prix ?? this.prix,
       notaire: notaire ?? this.notaire,
       travaux: travaux ?? this.travaux,
+      notaireAuto: notaireAuto ?? this.notaireAuto,
+      travauxAuto: travauxAuto ?? this.travauxAuto,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,

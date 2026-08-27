@@ -24,6 +24,8 @@ extension PropertyInputCodec on PropertyInput {
         'prix': prix,
         'notaire': notaire,
         'travaux': travaux,
+        'notaireAuto': notaireAuto,
+        'travauxAuto': travauxAuto,
         'loyer': loyer,
         'vacancePct': vacancePct,
         'chargesCopro': chargesCopro,
@@ -87,6 +89,12 @@ extension PropertyInputCodec on PropertyInput {
       prix: (json['prix'] as num?)?.toDouble() ?? 0,
       notaire: (json['notaire'] as num?)?.toDouble() ?? 0,
       travaux: (json['travaux'] as num?)?.toDouble() ?? 0,
+      // `false` par défaut pour les biens déjà enregistrés avant l'ajout de
+      // ce calcul auto (champ absent du JSON) : on ne veut pas se mettre à
+      // recalculer silencieusement une valeur que l'utilisateur avait
+      // saisie lui-même.
+      notaireAuto: json['notaireAuto'] as bool? ?? false,
+      travauxAuto: json['travauxAuto'] as bool? ?? false,
       loyer: (json['loyer'] as num?)?.toDouble() ?? 0,
       vacancePct: (json['vacancePct'] as num?)?.toDouble() ?? 0,
       chargesCopro: (json['chargesCopro'] as num?)?.toDouble() ?? 0,

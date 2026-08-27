@@ -173,9 +173,26 @@ class _CalcScreenState extends State<CalcScreen> {
         ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
 
         Row(children: [
-          Expanded(child: NumberField(label: "Prix d'achat", value: form.prix, suffix: '€', onChanged: (v) => set((f) => f.copyWith(prix: v)))),
+          Expanded(
+            child: NumberField(
+              label: "Prix d'achat",
+              value: form.prix,
+              suffix: '€',
+              // Tant que les frais de notaire n'ont pas été ajustés à la
+              // main, ils suivent automatiquement le prix (voir
+              // `notaireAuto`).
+              onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: NumberField(label: 'Surface', value: form.surface, suffix: 'm²', onChanged: (v) => set((f) => f.copyWith(surface: v)))),
+          Expanded(
+            child: NumberField(
+              label: 'Surface',
+              value: form.surface,
+              suffix: 'm²',
+              onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
+            ),
+          ),
         ]),
         const SizedBox(height: 12),
         Text('Typologie', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -274,19 +291,11 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
           if (_showFraisAnnexes) ...[
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(child: NumberField(label: 'Frais de notaire', value: form.notaire, suffix: '€', onChanged: (v) => set((f) => f.copyWith(notaire: v)))),
-              const SizedBox(width: 12),
-              Expanded(child: NumberField(label: 'Travaux / rénovation', value: form.travaux, suffix: '€', onChanged: (v) => set((f) => f.copyWith(travaux: v)))),
-            ]),
-            const Tip('Une estimation raisonnable est déjà incluse dans le calcul (environ 8 % de frais de notaire dans l\'ancien) — ajuste seulement si tu as un chiffre plus précis.'),
+            _fraisAnnexesFields(form, set),
+            const Tip('Une estimation raisonnable est déjà incluse dans le calcul (8 % de frais de notaire dans l\'ancien, 300 €/m² de travaux pour un rafraîchissement) — ajuste seulement si tu as un chiffre plus précis.'),
           ],
         ] else
-          Row(children: [
-            Expanded(child: NumberField(label: 'Frais de notaire', value: form.notaire, suffix: '€', onChanged: (v) => set((f) => f.copyWith(notaire: v)))),
-            const SizedBox(width: 12),
-            Expanded(child: NumberField(label: 'Travaux / rénovation', value: form.travaux, suffix: '€', onChanged: (v) => set((f) => f.copyWith(travaux: v)))),
-          ]),
+          _fraisAnnexesFields(form, set),
         const SizedBox(height: 12),
         Text('Diagnostic de performance énergétique (DPE)', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
         const SizedBox(height: 6),
@@ -631,6 +640,53 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
       ],
     );
+  }
+
+  /// Champs "Frais de notaire" / "Travaux" — calculés automatiquement (8 %
+  /// du prix, 300 €/m²) tant que l'utilisateur ne les a pas modifiés à la
+  /// main ; un lien permet de revenir au calcul auto après un ajustement.
+  Widget _fraisAnnexesFields(PropertyInput form, void Function(PropertyInput Function(PropertyInput f) updater) set) {
+    final anyManual = !form.notaireAuto || !form.travauxAuto;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(
+          child: NumberField(
+            label: 'Frais de notaire',
+            value: form.notaire,
+            suffix: '€',
+            hint: form.notaireAuto ? '${notaireDefaultPct.round()} % auto' : null,
+            onChanged: (v) => set((f) => f.copyWith(notaire: v, notaireAuto: false)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: NumberField(
+            label: 'Travaux / rénovation',
+            value: form.travaux,
+            suffix: '€',
+            hint: form.travauxAuto ? '${travauxDefaultParM2.round()} €/m² auto' : null,
+            onChanged: (v) => set((f) => f.copyWith(travaux: v, travauxAuto: false)),
+          ),
+        ),
+      ]),
+      if (anyManual)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: InkWell(
+            onTap: () => set((f) => f.copyWith(
+                  notaireAuto: true,
+                  travauxAuto: true,
+                  notaire: defaultNotaire(f.prix),
+                  travaux: defaultTravaux(f.surface),
+                )),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.refresh, size: 13, color: AppColors.accent),
+              const SizedBox(width: 4),
+              Text('Revenir au calcul automatique', style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.accent)),
+            ]),
+          ),
+        ),
+    ]);
   }
 
   /// Ouvre l'aperçu natif d'impression/partage/enregistrement du PDF,
