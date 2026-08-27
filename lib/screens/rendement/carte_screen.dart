@@ -44,7 +44,7 @@ class _SelCity {
         key: 'pref:${c.name}',
         nom: c.name,
         codeDepartement: c.codeDepartement,
-        codeInsee: '',
+        codeInsee: c.codeInsee,
         lat: c.lat,
         lon: c.lon,
         isPrefecture: true,
