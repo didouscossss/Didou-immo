@@ -149,19 +149,36 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bien actuellement en cours de modification (voir [loadPropertyForEditing]) —
+  /// `null` signifie que le prochain enregistrement crée un nouveau bien.
+  String? editingId;
+
+  /// Recharge un bien déjà enregistré dans le formulaire pour le modifier.
+  /// Le prochain [saveCurrentProperty] mettra à jour ce bien au lieu d'en
+  /// créer un nouveau.
+  void loadPropertyForEditing(SavedProperty b) {
+    form = b.form;
+    editingId = b.id;
+    notifyListeners();
+  }
+
   /// Enregistre le bien courant pour comparaison — équivalent de `handleSave`.
-  /// L'appelant (voir `RendementHome`) est responsable d'avoir déjà vérifié
-  /// la capacité d'enregistrement gratuite / l'abonnement au préalable, et
-  /// doit attendre ce Future pour savoir si l'enregistrement a réussi avant
-  /// de changer d'écran.
+  /// Met à jour le bien en cours d'édition ([editingId]) s'il y en a un, sinon
+  /// en crée un nouveau. L'appelant (voir `RendementHome`) est responsable
+  /// d'avoir déjà vérifié la capacité d'enregistrement gratuite / l'abonnement
+  /// au préalable, et doit attendre ce Future pour savoir si l'enregistrement
+  /// a réussi avant de changer d'écran.
   Future<void> saveCurrentProperty() async {
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    final id = editingId ?? DateTime.now().millisecondsSinceEpoch.toString();
     if (_uid != null) {
       await _firestore.saveProperty(_uid!, id, form.toJson());
+      editingId = null;
       return; // le flux Firestore mettra `biens` à jour automatiquement.
     }
     final saved = SavedProperty(id: id, form: form, core: core, regimes: regimes, score: score);
-    biens = [...biens, saved];
+    final idx = biens.indexWhere((b) => b.id == id);
+    biens = idx == -1 ? [...biens, saved] : [for (final b in biens) if (b.id == id) saved else b];
+    editingId = null;
     notifyListeners();
     await _persistLocalBiens();
   }
