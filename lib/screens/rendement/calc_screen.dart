@@ -27,6 +27,11 @@ class _CalcScreenState extends State<CalcScreen> {
   bool _stressTaux = false;
   bool _stressOccupation = false;
   bool _stressTravaux = false;
+  // Amplitude de chaque scénario — librement réglable au lieu de valeurs
+  // fixes (+1 point, -25 %, +5 000 €).
+  double _stressTauxPts = 1;
+  double _stressOccupationPct = 25;
+  double _stressTravauxEuros = 5000;
   bool _showVisite = false;
   final Set<int> _visiteChecked = {};
 
@@ -42,18 +47,24 @@ class _CalcScreenState extends State<CalcScreen> {
 
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
+    final tauxDelta = _stressTaux ? _stressTauxPts : 0.0;
+    final occDelta = _stressOccupation ? _stressOccupationPct : 0.0;
+    final travauxDelta = _stressTravaux ? _stressTravauxEuros : 0.0;
+    // Même pourcentage de "baisse d'occupation" appliqué de façon cohérente
+    // aux deux modes : en longue durée sur le taux d'occupation déduit de
+    // la vacance, en courte durée directement sur les nuits réservées.
     final stressForm = form.copyWith(
-      tauxPct: _stressTaux ? form.tauxPct + 1 : form.tauxPct,
-      vacancePct: _stressOccupation && form.mode == RentalMode.longue
-          ? (form.vacancePct * 2 + 5).clamp(0, 60).toDouble()
+      tauxPct: form.tauxPct + tauxDelta,
+      vacancePct: form.mode == RentalMode.longue
+          ? (100 - (100 - form.vacancePct) * (1 - occDelta / 100)).clamp(0, 100).toDouble()
           : form.vacancePct,
-      nuitsBasseSaison: _stressOccupation && form.mode == RentalMode.courte
-          ? (form.nuitsBasseSaison * 0.75).round()
+      nuitsBasseSaison: form.mode == RentalMode.courte
+          ? (form.nuitsBasseSaison * (1 - occDelta / 100)).round()
           : form.nuitsBasseSaison,
-      nuitsHauteSaison: _stressOccupation && form.mode == RentalMode.courte
-          ? (form.nuitsHauteSaison * 0.75).round()
+      nuitsHauteSaison: form.mode == RentalMode.courte
+          ? (form.nuitsHauteSaison * (1 - occDelta / 100)).round()
           : form.nuitsHauteSaison,
-      travaux: _stressTravaux ? form.travaux + 5000 : form.travaux,
+      travaux: form.travaux + travauxDelta,
     );
     final stressCore = computeCore(stressForm);
 
@@ -443,9 +454,30 @@ class _CalcScreenState extends State<CalcScreen> {
               Text('Et si...? (stress-test)', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             ]),
             const SizedBox(height: 10),
-            _stressRow("Le taux d'emprunt monte de 1 point", _stressTaux, () => setState(() => _stressTaux = !_stressTaux)),
-            _stressRow(form.mode == RentalMode.longue ? 'La vacance locative double' : "L'occupation baisse de 25 %", _stressOccupation, () => setState(() => _stressOccupation = !_stressOccupation)),
-            _stressRow('+ 5 000 € de travaux imprévus', _stressTravaux, () => setState(() => _stressTravaux = !_stressTravaux)),
+            _stressRow("Le taux d'emprunt monte de ${fmt(_stressTauxPts, 1)} point${_stressTauxPts > 1 ? 's' : ''}", _stressTaux, () => setState(() => _stressTaux = !_stressTaux)),
+            if (_stressTaux)
+              _stressAmountField(
+                label: 'Points de taux en plus',
+                value: _stressTauxPts,
+                suffix: 'pt',
+                onChanged: (v) => setState(() => _stressTauxPts = v.clamp(0, 10)),
+              ),
+            _stressRow("L'occupation baisse de ${fmt(_stressOccupationPct, 0)} %", _stressOccupation, () => setState(() => _stressOccupation = !_stressOccupation)),
+            if (_stressOccupation)
+              _stressAmountField(
+                label: "Baisse d'occupation",
+                value: _stressOccupationPct,
+                suffix: '%',
+                onChanged: (v) => setState(() => _stressOccupationPct = v.clamp(0, 100)),
+              ),
+            _stressRow('+ ${eur(_stressTravauxEuros)} de travaux imprévus', _stressTravaux, () => setState(() => _stressTravaux = !_stressTravaux)),
+            if (_stressTravaux)
+              _stressAmountField(
+                label: 'Travaux imprévus en plus',
+                value: _stressTravauxEuros,
+                suffix: '€',
+                onChanged: (v) => setState(() => _stressTravauxEuros = v.clamp(0, 500000)),
+              ),
             if (_anyStress)
               Container(
                 margin: const EdgeInsets.only(top: 8),
@@ -567,6 +599,21 @@ class _CalcScreenState extends State<CalcScreen> {
           const SizedBox(width: 10),
           Expanded(child: Text(label, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink))),
         ]),
+      ),
+    );
+  }
+
+  Widget _stressAmountField({
+    required String label,
+    required double value,
+    required String suffix,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 28, bottom: 10),
+      child: SizedBox(
+        width: 160,
+        child: NumberField(label: label, value: value, suffix: suffix, onChanged: onChanged),
       ),
     );
   }
