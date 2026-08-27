@@ -51,9 +51,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.paper,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -104,7 +104,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
                           onPressed: () => setState(() => _step -= 1),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.ink,
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: AppColors.border),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
                           ),
                           child: const Text('Retour'),
@@ -164,7 +164,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: active ? AppColors.accent : Colors.white,
+          color: active ? AppColors.accent : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: active ? AppColors.accent : AppColors.border, width: 1.5),
         ),
@@ -186,7 +186,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
       ),
       Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
         child: Column(children: [
           Slider(
             value: _budget,

@@ -8,14 +8,14 @@ enum ReadoutSize { lg, md, sm }
 class DigitReadout extends StatelessWidget {
   final double value;
   final String suffix;
-  final Color accent;
+  final Color? accent;
   final ReadoutSize size;
 
   const DigitReadout({
     super.key,
     required this.value,
     this.suffix = '%',
-    this.accent = AppColors.accent,
+    this.accent,
     this.size = ReadoutSize.lg,
   });
 
@@ -23,7 +23,7 @@ class DigitReadout extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNeg = value < 0;
     final display = '${isNeg ? '-' : ''}${fmt(value.abs(), 2)}';
-    final color = isNeg ? AppColors.alert : accent;
+    final color = isNeg ? AppColors.alert : (accent ?? AppColors.accent);
     final fontSize = switch (size) {
       ReadoutSize.lg => 44.0,
       ReadoutSize.md => 24.0,

@@ -65,7 +65,7 @@ class BiensScreen extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('VUE CONSOLIDÉE · ${biens.length} BIEN${biens.length > 1 ? 'S' : ''}', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),

@@ -153,7 +153,7 @@ class _CommunePickerState extends State<CommunePicker> {
       ),
       if (commune != null)
         Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, runSpacing: 4, children: [
-          const Icon(Icons.location_on_outlined, size: 14, color: AppColors.accent),
+          Icon(Icons.location_on_outlined, size: 14, color: AppColors.accent),
           Text(commune.nom, style: AppTextStyles.sans(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.ink)),
           Text(commune.departement, style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
           if (ref?.tension == true)

@@ -53,7 +53,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: active ? AppColors.accent : Colors.white,
+                      color: active ? AppColors.accent : AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.border),
                     ),
@@ -76,7 +76,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('PATRIMOINE NET APRÈS ${form.dureeProjection} ANS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
@@ -89,7 +89,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         Container(
           padding: const EdgeInsets.fromLTRB(8, 12, 16, 8),
           margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(children: [
             SizedBox(height: 200, child: _buildChart(projection)),
             const SizedBox(height: 4),
@@ -105,10 +105,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             margin: EdgeInsets.only(bottom: _showAmortissement ? 0 : 24),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Row(children: [
-                const Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
+                Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
                 const SizedBox(width: 8),
                 Text("Tableau d'amortissement du prêt", style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
               ]),
@@ -131,7 +131,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(children: [
             if (!isNovice) ...[
               _reventeRow('Prix de vente net (frais agence déduits)', eur(revente.prixVenteNet), AppColors.ink),
@@ -197,7 +197,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         ),
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => Colors.white,
+            getTooltipColor: (_) => AppColors.surface,
             getTooltipItems: (spots) => spots
                 .map((s) => LineTooltipItem('${eur(s.y)}\nAnnée ${s.x.toInt()}', AppTextStyles.sans(fontSize: 11, color: AppColors.ink)))
                 .toList(),
@@ -225,7 +225,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       return Container(
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Text("Renseigne un montant emprunté et un taux pour voir le détail année par année.",
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
       );
@@ -243,7 +243,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         );
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(12),

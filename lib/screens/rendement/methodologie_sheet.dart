@@ -41,9 +41,9 @@ class MethodologieSheet extends StatelessWidget {
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.paper,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -57,8 +57,8 @@ class MethodologieSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                           child: Container(
                             padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.border),
-                            child: const Icon(Icons.close, size: 15, color: AppColors.ink),
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.border),
+                            child: Icon(Icons.close, size: 15, color: AppColors.ink),
                           ),
                         ),
                       ]),

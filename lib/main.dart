@@ -35,11 +35,17 @@ class DidouImmoApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RendementState()),
         ChangeNotifierProvider(create: (_) => UserAccountState()),
       ],
-      child: MaterialApp(
-        title: 'Rendement',
-        debugShowCheckedModeBanner: false,
-        theme: buildAppTheme(),
-        home: AppRoot(firebaseReady: firebaseReady),
+      // `Consumer` plutôt que `theme: buildAppTheme()` directement : le
+      // thème Material (fond de Scaffold, AppBar...) doit se reconstruire
+      // quand `darkMode` change, pas seulement les widgets qui lisent
+      // `AppColors.xxx` à chaque rebuild.
+      child: Consumer<RendementState>(
+        builder: (context, state, _) => MaterialApp(
+          title: 'Rendement',
+          debugShowCheckedModeBanner: false,
+          theme: buildAppTheme(dark: state.darkMode),
+          home: AppRoot(firebaseReady: firebaseReady),
+        ),
       ),
     );
   }

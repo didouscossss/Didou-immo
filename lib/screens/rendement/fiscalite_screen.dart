@@ -47,14 +47,14 @@ class FiscaliteScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 24),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.accent)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.accent)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Container(
                   width: 20,
                   height: 20,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.gold),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.gold),
                   child: const Icon(Icons.check, size: 12, color: Colors.white),
                 ),
                 const SizedBox(width: 8),
@@ -84,7 +84,7 @@ class FiscaliteScreen extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: r.eligible ? 1 : 0.45),
+                    color: AppColors.surface.withValues(alpha: r.eligible ? 1 : 0.45),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border),
                   ),
@@ -97,7 +97,7 @@ class FiscaliteScreen extends StatelessWidget {
                             height: 20,
                             margin: const EdgeInsets.only(right: 8),
                             alignment: Alignment.center,
-                            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.gold),
+                            decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.gold),
                             child: const Icon(Icons.check, size: 12, color: Colors.white),
                           ),
                         Text(r.label, style: AppTextStyles.sans(fontSize: 14.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -124,7 +124,7 @@ class FiscaliteScreen extends StatelessWidget {
             ),
           ),
         Row(children: [
-          const Icon(Icons.fact_check_outlined, size: 17, color: AppColors.accent),
+          Icon(Icons.fact_check_outlined, size: 17, color: AppColors.accent),
           const SizedBox(width: 8),
           Text('Documents & démarches', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
         ]),
@@ -132,7 +132,7 @@ class FiscaliteScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(
             children: checklist
                 .map((item) => Padding(
@@ -152,7 +152,7 @@ class FiscaliteScreen extends StatelessWidget {
           ),
         ),
         Row(children: [
-          const Icon(Icons.calendar_today_outlined, size: 17, color: AppColors.accent),
+          Icon(Icons.calendar_today_outlined, size: 17, color: AppColors.accent),
           const SizedBox(width: 8),
           Text('Échéances récurrentes', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
         ]),
@@ -160,7 +160,7 @@ class FiscaliteScreen extends StatelessWidget {
         ...deadlines.map((d) => Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Row(children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -173,7 +173,7 @@ class FiscaliteScreen extends StatelessWidget {
             )),
         const SizedBox(height: 8),
         Row(children: [
-          const Icon(Icons.account_balance_outlined, size: 17, color: AppColors.accent),
+          Icon(Icons.account_balance_outlined, size: 17, color: AppColors.accent),
           const SizedBox(width: 8),
           Text('Structure de détention', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
         ]),
@@ -182,7 +182,7 @@ class FiscaliteScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Text(
               "Pour un premier investissement, l'achat en nom propre est en général le plus simple à démarrer. Des structures comme la SCI deviennent surtout utiles pour acheter à plusieurs ou préparer une transmission. Passe en mode avancé pour comparer les options en détail.",
               style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.75)),
@@ -192,7 +192,7 @@ class FiscaliteScreen extends StatelessWidget {
           ...structures.map((s) => Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+                decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(s.label, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
                   Text(s.subtitle, style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -202,7 +202,7 @@ class FiscaliteScreen extends StatelessWidget {
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Container(width: 4, height: 4, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.accent)),
+                            child: Container(width: 4, height: 4, decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.accent)),
                           ),
                           const SizedBox(width: 8),
                           Expanded(child: Text(p, style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.75)))),
