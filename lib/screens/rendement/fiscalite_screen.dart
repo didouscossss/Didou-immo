@@ -24,7 +24,15 @@ class FiscaliteScreen extends StatelessWidget {
     final sorted = [...regimes]..sort((a, b) => b.netNetPct.compareTo(a.netNetPct));
     final top = sorted.firstWhere((r) => r.eligible, orElse: () => sorted.first);
     final checklist = form.mode == RentalMode.longue ? checklistLongue : checklistCourte;
-    final deadlines = form.mode == RentalMode.longue ? deadlinesLongue : deadlinesCourte;
+    // La CFE (Cotisation Foncière des Entreprises) concerne l'activité de
+    // location meublée (LMNP) — absente des listes de base car elle ne
+    // s'applique pas à la location nue, sauf exonérations courantes (1ère
+    // année d'activité, très faibles recettes).
+    final deadlines = [
+      ...form.mode == RentalMode.longue ? deadlinesLongue : deadlinesCourte,
+      if (form.mode == RentalMode.courte || form.meuble)
+        const Deadline('Décembre', 'CFE (Cotisation Foncière des Entreprises) — activité meublée, sauf exonération 1ère année ou faibles recettes'),
+    ];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
