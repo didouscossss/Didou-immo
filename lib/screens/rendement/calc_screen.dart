@@ -201,6 +201,52 @@ class _CalcScreenState extends State<CalcScreen> {
             );
           }).toList(),
         ),
+        if (form.mode == RentalMode.longue) ...[
+          const SizedBox(height: 12),
+          Text('Location', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+          const SizedBox(height: 6),
+          Row(children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => set((f) => f.copyWith(meuble: false)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: !form.meuble ? AppColors.accent : Colors.white,
+                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                    border: Border.all(color: !form.meuble ? AppColors.accent : AppColors.border),
+                  ),
+                  child: Text('Nu', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: !form.meuble ? Colors.white : AppColors.ink)),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => set((f) => f.copyWith(meuble: true)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: form.meuble ? AppColors.accent : Colors.white,
+                    borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                    border: Border.all(color: form.meuble ? AppColors.accent : AppColors.border),
+                  ),
+                  child: Text('Meublé', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: form.meuble ? Colors.white : AppColors.ink)),
+                ),
+              ),
+            ),
+          ]),
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              form.meuble
+                  ? 'Détermine les régimes fiscaux éligibles (LMNP micro-BIC / réel) dans l\'onglet Fiscalité.'
+                  : 'Détermine les régimes fiscaux éligibles (micro-foncier / réel foncier) dans l\'onglet Fiscalité.',
+              style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         NumberField(label: "Capacité d'accueil", value: form.capacite, suffix: 'pers.', hint: 'utile surtout en courte durée', onChanged: (v) => set((f) => f.copyWith(capacite: v))),
         const SizedBox(height: 12),
