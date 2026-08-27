@@ -72,10 +72,17 @@ class _AuthScreenState extends State<AuthScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ClipOval(
-                  child: Image.asset('assets/images/didou_face.png', width: 72, height: 72, fit: BoxFit.cover),
+                Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.asset('assets/icon/app_icon.png', width: 56, height: 56, fit: BoxFit.cover),
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
+                Center(
+                  child: Image.asset('assets/images/didou.png', height: 150, fit: BoxFit.contain),
+                ),
+                const SizedBox(height: 12),
                 Text(
                   _isSignUp ? 'Créer un compte' : 'Content de te revoir',
                   textAlign: TextAlign.center,
