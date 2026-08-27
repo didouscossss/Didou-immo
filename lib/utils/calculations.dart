@@ -880,6 +880,13 @@ const List<Typology> typologies = [
 /// mensuel supérieur à un bail classique — coefficient indicatif.
 const double primeCourteDuree = 1.8;
 
+/// Un meublé se loue en général plus cher qu'un nu à surface égale, en
+/// longue durée — coefficient indicatif. Ne s'applique qu'à la comparaison
+/// longue durée : la courte durée a déjà son propre coefficient
+/// ([primeCourteDuree]), qui intègre implicitement le fait d'être meublée —
+/// cumuler les deux fausserait la référence.
+const double primeMeuble = 1.12;
+
 class ReferenceResult {
   final double prixM2, loyerM2, loyerMensuelRef, nuiteeRef;
   const ReferenceResult({
@@ -890,12 +897,19 @@ class ReferenceResult {
   });
 }
 
-ReferenceResult? computeReferences(RefInfo? refInfo, Typology typology, double surface) {
+ReferenceResult? computeReferences(
+  RefInfo? refInfo,
+  Typology typology,
+  double surface, {
+  required RentalMode mode,
+  required bool meuble,
+}) {
   if (refInfo == null) return null;
   final prixM2 = refInfo.ref.prixM2 * typology.coefPrixM2;
-  final loyerM2 = refInfo.ref.loyerM2 * typology.coefLoyerM2;
+  final loyerM2Base = refInfo.ref.loyerM2 * typology.coefLoyerM2;
+  final loyerM2 = mode == RentalMode.longue && meuble ? loyerM2Base * primeMeuble : loyerM2Base;
   final loyerMensuelRef = surface > 0 ? loyerM2 * surface : 0.0;
-  final nuiteeRef = surface > 0 ? (loyerM2 * surface * primeCourteDuree) / 30 : 0.0;
+  final nuiteeRef = surface > 0 ? (loyerM2Base * surface * primeCourteDuree) / 30 : 0.0;
   return ReferenceResult(
     prixM2: prixM2,
     loyerM2: loyerM2,

@@ -91,13 +91,16 @@ class MarcheScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              live != null
-                  ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''} (${live.annee})'
-                      '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
-                      ' — source VALORIS / DVF, Licence Ouverte (Etalab). Loyer toujours indicatif (DVF ne couvre que les ventes).'
-                  : refInfo?.precise == true
-                      ? 'Donnée rattachée directement à ${ref!.name} (repère indicatif).'
-                      : "Pas de moyenne fiable pour une commune de cette taille — repère basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local ou l'observatoire des loyers du secteur.",
+              (live != null
+                      ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''} (${live.annee})'
+                          '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
+                          ' — source VALORIS / DVF, Licence Ouverte (Etalab). Loyer toujours indicatif (DVF ne couvre que les ventes).'
+                      : refInfo?.precise == true
+                          ? 'Donnée rattachée directement à ${ref!.name} (repère indicatif).'
+                          : "Pas de moyenne fiable pour une commune de cette taille — repère basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local ou l'observatoire des loyers du secteur.") +
+                  (form.mode == RentalMode.longue && form.meuble
+                      ? ' Loyer repère majoré de ${((primeMeuble - 1) * 100).round()}% (meublé).'
+                      : ''),
               style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
             ),
           ),
