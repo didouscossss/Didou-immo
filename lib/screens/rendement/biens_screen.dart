@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/saved_property.dart';
+import '../../services/csv_export_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
@@ -157,7 +159,38 @@ class BiensScreen extends StatelessWidget {
             ),
           ),
         ]),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(Icons.table_view_outlined, size: 15, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Text('Exporter en CSV', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+            ]),
+            const SizedBox(height: 6),
+            Text(
+              "Génère un fichier avec tous tes biens enregistrés, un par ligne — à ouvrir dans un tableur pour croiser ou retravailler les chiffres toi-même.",
+              style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _exportCsv(context, biens),
+              icon: const Icon(Icons.ios_share, size: 15),
+              label: const Text('Générer le CSV'),
+            ),
+          ]),
+        ),
       ],
+    );
+  }
+
+  Future<void> _exportCsv(BuildContext context, List<SavedProperty> biens) async {
+    final ok = await CsvExportService.exportBiens(biens);
+    if (!context.mounted || ok) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Export CSV indisponible sur cette plateforme pour l'instant.")),
     );
   }
 
