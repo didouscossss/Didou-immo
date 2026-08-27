@@ -49,10 +49,14 @@ class BiensScreen extends StatelessWidget {
     }
 
     final sorted = [...biens]..sort((a, b) => b.score.score.compareTo(a.score.score));
-    final totalPatrimoine = biens.fold<double>(0, (s, b) => s + b.core.prixTotal);
-    final totalDette = biens.fold<double>(0, (s, b) => s + b.core.montantEmprunte);
-    final totalCashflow = biens.fold<double>(0, (s, b) => s + b.core.cashflowMensuel);
-    final scoreMoyen = (biens.fold<int>(0, (s, b) => s + b.score.score) / biens.length).round();
+    // La vue consolidée ne compte que les biens marqués "acquis" — un projet
+    // encore à l'étude ne fait pas (encore) partie du patrimoine réel.
+    final achetes = biens.where((b) => b.form.achete).toList();
+    final enEtude = biens.length - achetes.length;
+    final totalPatrimoine = achetes.fold<double>(0, (s, b) => s + b.core.prixTotal);
+    final totalDette = achetes.fold<double>(0, (s, b) => s + b.core.montantEmprunte);
+    final totalCashflow = achetes.fold<double>(0, (s, b) => s + b.core.cashflowMensuel);
+    final scoreMoyen = achetes.isEmpty ? null : (achetes.fold<int>(0, (s, b) => s + b.score.score) / achetes.length).round();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -62,26 +66,42 @@ class BiensScreen extends StatelessWidget {
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 16),
+          margin: EdgeInsets.only(bottom: enEtude > 0 ? 6 : 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('VUE CONSOLIDÉE · ${biens.length} BIEN${biens.length > 1 ? 'S' : ''}', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _statBlock('Patrimoine total', eur(totalPatrimoine))),
-              Expanded(child: _statBlock('Dette totale', eur(totalDette))),
-            ]),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _statBlock('Cash-flow cumulé /mois', '${totalCashflow >= 0 ? '+' : ''}${fmt(totalCashflow)} €',
-                  color: totalCashflow >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4))),
-              Expanded(child: _statBlock('Score moyen', '$scoreMoyen')),
-            ]),
-          ]),
+          child: achetes.isEmpty
+              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('PATRIMOINE ACQUIS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Aucun bien encore marqué comme acquis — tape sur le badge d'un bien ci-dessous une fois l'achat conclu.",
+                    style: AppTextStyles.sans(fontSize: 12.5, color: Colors.white70),
+                  ),
+                ])
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('PATRIMOINE ACQUIS · ${achetes.length} BIEN${achetes.length > 1 ? 'S' : ''}',
+                      style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: _statBlock('Patrimoine total', eur(totalPatrimoine))),
+                    Expanded(child: _statBlock('Dette totale', eur(totalDette))),
+                  ]),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: _statBlock('Cash-flow cumulé /mois', '${totalCashflow >= 0 ? '+' : ''}${fmt(totalCashflow)} €',
+                        color: totalCashflow >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4))),
+                    Expanded(child: _statBlock('Score moyen', '$scoreMoyen')),
+                  ]),
+                ]),
         ),
+        if (enEtude > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Text('+ $enEtude bien${enEtude > 1 ? 's' : ''} à l\'étude, pas encore comptabilisé${enEtude > 1 ? 's' : ''} dans le patrimoine ci-dessus.',
+                style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+          ),
         ...sorted.map((b) => InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
@@ -108,6 +128,28 @@ class BiensScreen extends StatelessWidget {
                         ]),
                         Text('${b.form.commune?.nom ?? '—'} · ${eur(b.form.prix)} · net ${fmt(b.core.net, 1)}%',
                             style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
+                        const SizedBox(height: 6),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(999),
+                          onTap: () => state.setPropertyAchete(b.id, !b.form.achete),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: b.form.achete ? AppColors.accent.withValues(alpha: 0.12) : AppColors.border,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(b.form.achete ? Icons.check_circle : Icons.hourglass_top,
+                                  size: 11, color: b.form.achete ? AppColors.accent : AppColors.ink.withValues(alpha: 0.45)),
+                              const SizedBox(width: 4),
+                              Text(b.form.achete ? 'Acquis' : 'À l\'étude',
+                                  style: AppTextStyles.sans(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: b.form.achete ? AppColors.accent : AppColors.ink.withValues(alpha: 0.5))),
+                            ]),
+                          ),
+                        ),
                       ]),
                     ),
                   ]),

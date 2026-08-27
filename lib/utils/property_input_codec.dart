@@ -26,6 +26,7 @@ extension PropertyInputCodec on PropertyInput {
         'travaux': travaux,
         'notaireAuto': notaireAuto,
         'travauxAuto': travauxAuto,
+        'achete': achete,
         'loyer': loyer,
         'vacancePct': vacancePct,
         'chargesCopro': chargesCopro,
@@ -95,6 +96,7 @@ extension PropertyInputCodec on PropertyInput {
       // saisie lui-même.
       notaireAuto: json['notaireAuto'] as bool? ?? false,
       travauxAuto: json['travauxAuto'] as bool? ?? false,
+      achete: json['achete'] as bool? ?? false,
       loyer: (json['loyer'] as num?)?.toDouble() ?? 0,
       vacancePct: (json['vacancePct'] as num?)?.toDouble() ?? 0,
       chargesCopro: (json['chargesCopro'] as num?)?.toDouble() ?? 0,
