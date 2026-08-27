@@ -434,7 +434,10 @@ class _CalcScreenState extends State<CalcScreen> {
             Expanded(child: _statBlock('Mensualité calculée', eur(core.mensualite), AppColors.accent)),
           ]),
         ),
-        const SizedBox(height: 24),
+        const Tip(
+          "Avant de signer, vérifie que le TAEG proposé reste sous le taux d'usure en vigueur (plafond légal, publié chaque trimestre par la Banque de France) — une banque n'a pas le droit de prêter au-dessus, même si l'offre te semble avantageuse.",
+        ),
+        const SizedBox(height: 12),
 
         if (state.niveau == NiveauMode.avance) ...[
           const SectionTitle('Comparer des offres de prêt'),
