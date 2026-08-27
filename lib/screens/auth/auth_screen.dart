@@ -74,13 +74,17 @@ class _AuthScreenState extends State<AuthScreen> {
               children: [
                 Center(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset('assets/icon/app_icon.png', width: 56, height: 56, fit: BoxFit.cover),
+                    borderRadius: BorderRadius.circular(16),
+                    // Recadré autour du texte (le fichier source d'origine,
+                    // carré, laissait une grande marge vide au-dessus et en
+                    // dessous qui rendait "Didou-immo" minuscule et illisible
+                    // une fois réduit à la taille d'un logo d'écran).
+                    child: Image.asset('assets/images/didou_logo.png', width: 220, fit: BoxFit.contain),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Center(
-                  child: Image.asset('assets/images/didou.png', height: 150, fit: BoxFit.contain),
+                  child: Image.asset('assets/images/didou.png', height: 130, fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 12),
                 Text(
