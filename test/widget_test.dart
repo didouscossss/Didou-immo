@@ -51,6 +51,22 @@ void main() {
     }
   });
 
+  testWidgets('L\'onglet Carte se construit sans erreur', (WidgetTester tester) async {
+    // Séparé du test ci-dessus : la carte charge des tuiles réseau
+    // (OpenStreetMap), donc on évite `pumpAndSettle` (qui attendrait le
+    // règlement complet des requêtes réseau) et on se contente de vérifier
+    // que le premier rendu ne lève aucune exception synchrone.
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Carte'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Basculer en courte durée, enregistrer deux biens, comparer',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
