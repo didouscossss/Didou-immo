@@ -63,7 +63,8 @@ class RendementState extends ChangeNotifier {
   RefInfo? get refInfo => nearestReference(form.commune);
   Typology get typology =>
       typologies.firstWhere((t) => t.id == form.typeBien, orElse: () => typologies[2]);
-  ReferenceResult? get refs => computeReferences(refInfo, typology, form.surface);
+  ReferenceResult? get refs =>
+      computeReferences(refInfo, typology, form.surface, mode: form.mode, meuble: form.meuble);
 
   /// Repère ajusté par typologie — équivalent de `refInfoAjuste` du prototype.
   RefInfo? get refInfoAjuste {
