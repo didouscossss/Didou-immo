@@ -5,6 +5,7 @@ import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/commune_picker.dart';
 import '../../widgets/digit_readout.dart';
 import '../../widgets/mode_toggle.dart';
 import '../../widgets/number_field.dart';
@@ -59,6 +60,14 @@ class _CalcScreenState extends State<CalcScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        // Localisation — en premier, avant même les caractéristiques du
+        // bien : c'est elle qui détermine les repères de prix/marché.
+        const SectionTitle('Localisation'),
+        Text("Recherche n'importe quelle commune de France",
+            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
+        const SizedBox(height: 12),
+        const CommunePicker(),
+        const SizedBox(height: 20),
         // Checklist de visite
         InkWell(
           onTap: () => setState(() => _showVisite = !_showVisite),

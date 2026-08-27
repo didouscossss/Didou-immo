@@ -61,7 +61,7 @@ class RendementState extends ChangeNotifier {
     final r = refs;
     if (ri == null || r == null) return ri;
     return RefInfo(
-      ref: CityRef(ri.ref.name, r.prixM2, r.loyerM2, ri.ref.tension),
+      ref: CityRef(ri.ref.name, r.prixM2, r.loyerM2, ri.ref.tension, ri.ref.lat, ri.ref.lon),
       precise: ri.precise,
     );
   }

@@ -9,13 +9,14 @@ import '../account/account_screen.dart';
 import '../paywall/paywall_screen.dart';
 import 'biens_screen.dart';
 import 'calc_screen.dart';
+import 'carte_screen.dart';
 import 'fiscalite_screen.dart';
 import 'marche_screen.dart';
 import 'methodologie_sheet.dart';
 import 'onboarding_sheet.dart';
 import 'projection_screen.dart';
 
-enum _Tab { calc, marche, fisc, proj, biens }
+enum _Tab { calc, marche, carte, fisc, proj, biens }
 
 /// Coquille de l'app — équivalent du composant `RendementApp` (barre du
 /// haut + navigation par onglets + overlays onboarding/méthodologie).
@@ -38,6 +39,7 @@ class _RendementHomeState extends State<RendementHome> {
   static const _tabs = [
     (tab: _Tab.calc, label: 'Bien', icon: Icons.home_outlined),
     (tab: _Tab.marche, label: 'Marché', icon: Icons.location_on_outlined),
+    (tab: _Tab.carte, label: 'Carte', icon: Icons.map_outlined),
     (tab: _Tab.fisc, label: 'Fiscalité', icon: Icons.account_balance_outlined),
     (tab: _Tab.proj, label: 'Projection', icon: Icons.trending_up),
     (tab: _Tab.biens, label: 'Comparer', icon: Icons.layers_outlined),
@@ -171,7 +173,9 @@ class _RendementHomeState extends State<RendementHome> {
       case _Tab.calc:
         return CalcScreen(onSave: () => _handleSave(state));
       case _Tab.marche:
-        return const MarcheScreen();
+        return MarcheScreen(onGoToBien: () => setState(() => _active = _Tab.calc));
+      case _Tab.carte:
+        return const CarteScreen();
       case _Tab.fisc:
         return const FiscaliteScreen();
       case _Tab.proj:
