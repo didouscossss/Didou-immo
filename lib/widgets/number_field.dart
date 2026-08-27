@@ -75,7 +75,7 @@ class _NumberFieldState extends State<NumberField> {
               Text(widget.hint!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.4))),
+                  style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.6))),
             ],
           ],
         ),
