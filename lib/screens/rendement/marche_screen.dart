@@ -141,7 +141,7 @@ class MarcheScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(color: AppColors.paper, borderRadius: BorderRadius.circular(8)),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('LOYER REPÈRE (LONGUE)', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.5))),
+                        Text('LOYER REPÈRE (LONGUE)', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
                         Text('${eur(refs.loyerMensuelRef)}/mois', style: AppTextStyles.mono(fontSize: 15, color: AppColors.ink)),
                         if (form.mode == RentalMode.longue)
                           Padding(
@@ -158,7 +158,7 @@ class MarcheScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(color: AppColors.paper, borderRadius: BorderRadius.circular(8)),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('NUITÉE REPÈRE (COURTE)', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.5))),
+                        Text('NUITÉE REPÈRE (COURTE)', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
                         Text('${eur(refs.nuiteeRef)}/nuit', style: AppTextStyles.mono(fontSize: 15, color: AppColors.ink)),
                         if (form.mode == RentalMode.courte && (core.prixNuitMoyen ?? 0) > 0)
                           Padding(
@@ -233,7 +233,7 @@ class MarcheScreen extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+        Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.65))),
         const SizedBox(height: 4),
         Text(value, style: AppTextStyles.mono(fontSize: 17, color: AppColors.ink)),
       ]),

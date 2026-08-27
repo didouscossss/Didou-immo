@@ -17,7 +17,7 @@ class NiveauToggle extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.border),
       ),

@@ -94,7 +94,7 @@ class _NumberFieldState extends State<NumberField> {
                   focusNode: _focusNode,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                  style: AppTextStyles.mono(fontSize: 15, color: AppColors.ink),
+                  style: AppTextStyles.mono(fontSize: 15, color: const Color(0xFF16211C)),
                   decoration: const InputDecoration(
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -112,7 +112,7 @@ class _NumberFieldState extends State<NumberField> {
                   decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.border))),
                   height: 44,
                   alignment: Alignment.center,
-                  child: Text(widget.suffix!, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.5))),
+                  child: Text(widget.suffix!, style: AppTextStyles.sans(fontSize: 13, color: const Color(0xFF16211C).withValues(alpha: 0.55))),
                 ),
             ],
           ),

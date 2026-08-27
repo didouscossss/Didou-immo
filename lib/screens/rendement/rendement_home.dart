@@ -203,7 +203,7 @@ class _RendementHomeState extends State<RendementHome> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: _tabs.map((t) {
           final active = _active == t.tab;
-          final color = active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.35);
+          final color = active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.62);
           return InkWell(
             onTap: () => setState(() => _active = t.tab),
             borderRadius: BorderRadius.circular(10),
