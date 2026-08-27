@@ -146,6 +146,11 @@ class PropertyInput {
   /// écraser sa valeur.
   final bool notaireAuto, travauxAuto;
 
+  /// `true` une fois l'achat conclu — distingue, dans les biens enregistrés,
+  /// le patrimoine réellement détenu des projets encore à l'étude/en
+  /// standby. N'affecte aucun calcul, uniquement l'affichage.
+  final bool achete;
+
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
 
@@ -191,6 +196,7 @@ class PropertyInput {
     required this.travaux,
     this.notaireAuto = true,
     this.travauxAuto = true,
+    this.achete = false,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -282,6 +288,7 @@ class PropertyInput {
     double? travaux,
     bool? notaireAuto,
     bool? travauxAuto,
+    bool? achete,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -324,6 +331,7 @@ class PropertyInput {
       travaux: travaux ?? this.travaux,
       notaireAuto: notaireAuto ?? this.notaireAuto,
       travauxAuto: travauxAuto ?? this.travauxAuto,
+      achete: achete ?? this.achete,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,
