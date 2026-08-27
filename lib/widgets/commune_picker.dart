@@ -86,6 +86,8 @@ class _CommunePickerState extends State<CommunePicker> {
               codePostal: c.codesPostaux.isNotEmpty ? c.codesPostaux.first : '',
               departement: c.departementNom ?? '',
               population: c.population,
+              codeInsee: c.code,
+              codeDepartement: c.departementCode ?? '',
             ),
           ));
       setState(() => _open = false);

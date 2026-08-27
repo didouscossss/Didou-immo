@@ -67,12 +67,20 @@ class CommuneRef {
   final String codePostal;
   final String departement;
   final int population;
+  /// Code INSEE de la commune (ex. "75056") — permet d'interroger l'API
+  /// VALORIS (prix médian réel, voir `services/valoris_service.dart`)
+  /// sans repasser par une recherche.
+  final String codeInsee;
+  /// Code numérique du département (ex. "75"), nécessaire pour VALORIS.
+  final String codeDepartement;
 
   const CommuneRef({
     required this.nom,
     this.codePostal = '',
     this.departement = '',
     this.population = 0,
+    this.codeInsee = '',
+    this.codeDepartement = '',
   });
 }
 
@@ -893,7 +901,11 @@ class CityRef {
   final double prixM2, loyerM2;
   final bool tension;
   final double lat, lon;
-  const CityRef(this.name, this.prixM2, this.loyerM2, this.tension, this.lat, this.lon);
+  /// Code numérique du département (ex. "75") — permet d'interroger l'API
+  /// VALORIS (prix médian réel, voir `services/valoris_service.dart`).
+  /// Vide pour [nationalAvg], qui n'est rattachée à aucun département.
+  final String codeDepartement;
+  const CityRef(this.name, this.prixM2, this.loyerM2, this.tension, this.lat, this.lon, [this.codeDepartement = '']);
 }
 
 /// Repère de prix : pas de données fiables gratuites au niveau du village
@@ -906,106 +918,107 @@ const CityRef nationalAvg = CityRef('Moyenne nationale', 3000, 14, false, 46.6, 
 /// valeurs indicatives et arrondies, pas une donnée officielle temps réel
 /// (voir l'avertissement affiché avec, dans l'onglet Marché/Carte). Alimente
 /// à la fois le rattachement de commune (onglet Marché) et la carte de
-/// France (onglet Carte).
+/// France (onglet Carte) ; le code département permet en plus d'aller
+/// chercher le vrai prix médian (VALORIS/DVF) à la demande.
 const List<CityRef> frenchCities = [
-  CityRef('Paris', 9500, 32, true, 48.8566, 2.3522),
-  CityRef('Lyon', 5200, 16, true, 45.7640, 4.8357),
-  CityRef('Marseille', 3400, 14, true, 43.2965, 5.3698),
-  CityRef('Toulouse', 3600, 13.5, true, 43.6047, 1.4442),
-  CityRef('Nice', 5300, 18, true, 43.7102, 7.2620),
-  CityRef('Nantes', 3700, 13, true, 47.2184, -1.5536),
-  CityRef('Strasbourg', 3300, 12.5, true, 48.5734, 7.7521),
-  CityRef('Montpellier', 3600, 14, true, 43.6108, 3.8767),
-  CityRef('Bordeaux', 4600, 15, true, 44.8378, -0.5792),
-  CityRef('Lille', 3200, 13, true, 50.6292, 3.0573),
-  CityRef('Rennes', 3500, 13, true, 48.1173, -1.6778),
-  CityRef('Reims', 2400, 11, false, 49.2583, 4.0317),
-  CityRef('Le Havre', 2100, 10, false, 49.4944, 0.1079),
-  CityRef('Saint-Étienne', 1300, 8.5, false, 45.4397, 4.3872),
-  CityRef('Toulon', 3300, 14, false, 43.1242, 5.9280),
-  CityRef('Angers', 2900, 11.5, false, 47.4784, -0.5632),
-  CityRef('Dijon', 2700, 11, false, 47.3220, 5.0415),
-  CityRef('Limoges', 1600, 9, false, 45.8336, 1.2611),
-  CityRef('Clermont-Ferrand', 2100, 10.5, false, 45.7772, 3.0870),
-  CityRef('Le Mans', 1900, 9.5, false, 48.0061, 0.1996),
-  CityRef('Bourg-en-Bresse', 2300, 10.5, false, 46.2058, 5.2255),
-  CityRef('Laon', 1500, 8.5, false, 49.5642, 3.6203),
-  CityRef('Moulins', 1400, 8, false, 46.5654, 3.3327),
-  CityRef('Digne-les-Bains', 2100, 10, false, 44.0917, 6.2358),
-  CityRef('Gap', 2400, 10.5, false, 44.5594, 6.0790),
-  CityRef('Privas', 1700, 9, false, 44.7350, 4.5985),
-  CityRef('Charleville-Mézières', 1400, 8, false, 49.7738, 4.7196),
-  CityRef('Foix', 1600, 8.5, false, 42.9647, 1.6053),
-  CityRef('Troyes', 1900, 9.5, false, 48.2973, 4.0744),
-  CityRef('Carcassonne', 1900, 9.5, false, 43.2130, 2.3491),
-  CityRef('Rodez', 1700, 8.5, false, 44.3506, 2.5744),
-  CityRef('Caen', 2900, 12, true, 49.1829, -0.3707),
-  CityRef('Aurillac', 1400, 8, false, 44.9245, 2.4433),
-  CityRef('Angoulême', 1700, 9, false, 45.6484, 0.1560),
-  CityRef('La Rochelle', 4600, 15, true, 46.1603, -1.1511),
-  CityRef('Bourges', 1500, 8.5, false, 47.0810, 2.3988),
-  CityRef('Tulle', 1300, 8, false, 45.2671, 1.7716),
-  CityRef('Ajaccio', 3800, 14, true, 41.9192, 8.7386),
-  CityRef('Bastia', 3200, 13, true, 42.7028, 9.4508),
-  CityRef('Saint-Brieuc', 2100, 9.5, false, 48.5136, -2.7652),
-  CityRef('Guéret', 1000, 7, false, 46.1667, 1.8667),
-  CityRef('Périgueux', 1700, 9, false, 45.1847, 0.7214),
-  CityRef('Besançon', 2400, 11, false, 47.2378, 6.0241),
-  CityRef('Valence', 2200, 10.5, false, 44.9334, 4.8924),
-  CityRef('Évreux', 1900, 10, false, 49.0270, 1.1510),
-  CityRef('Chartres', 2300, 11, false, 48.4439, 1.4890),
-  CityRef('Quimper', 2600, 10.5, false, 47.9960, -4.0972),
-  CityRef('Nîmes', 2600, 12, true, 43.8367, 4.3601),
-  CityRef('Auch', 1600, 8.5, false, 43.6459, 0.5860),
-  CityRef('Châteauroux', 1200, 7.5, false, 46.8098, 1.6960),
-  CityRef('Tours', 3000, 12, true, 47.3941, 0.6848),
-  CityRef('Grenoble', 3100, 13.5, true, 45.1885, 5.7245),
-  CityRef('Lons-le-Saunier', 1800, 9, false, 46.6742, 5.5522),
-  CityRef('Mont-de-Marsan', 2000, 9.5, false, 43.8898, -0.4989),
-  CityRef('Blois', 2000, 9.5, false, 47.5861, 1.3359),
-  CityRef('Le Puy-en-Velay', 1500, 8, false, 45.0430, 3.8850),
-  CityRef('Orléans', 2700, 11.5, true, 47.9029, 1.9093),
-  CityRef('Cahors', 1700, 8.5, false, 44.4477, 1.4372),
-  CityRef('Agen', 1700, 9, false, 44.2049, 0.6212),
-  CityRef('Mende', 1500, 8, false, 44.5178, 3.5000),
-  CityRef('Saint-Lô', 1700, 9, false, 49.1147, -1.0899),
-  CityRef('Châlons-en-Champagne', 1700, 9, false, 48.9560, 4.3630),
-  CityRef('Chaumont', 1300, 7.5, false, 48.1113, 5.1391),
-  CityRef('Laval', 1900, 9.5, false, 48.0698, -0.7700),
-  CityRef('Nancy', 2600, 11.5, true, 48.6921, 6.1844),
-  CityRef('Bar-le-Duc', 1200, 7.5, false, 48.7714, 5.1608),
-  CityRef('Vannes', 3600, 12.5, true, 47.6582, -2.7603),
-  CityRef('Metz', 2300, 11, false, 49.1193, 6.1757),
-  CityRef('Nevers', 1300, 8, false, 46.9896, 3.1590),
-  CityRef('Beauvais', 2000, 10, false, 49.4295, 2.0807),
-  CityRef('Alençon', 1500, 8, false, 48.4322, 0.0900),
-  CityRef('Arras', 2300, 10.5, false, 50.2910, 2.7807),
-  CityRef('Pau', 2600, 11, false, 43.2951, -0.3708),
-  CityRef('Tarbes', 1700, 8.5, false, 43.2327, 0.0781),
-  CityRef('Perpignan', 2400, 11.5, true, 42.6986, 2.8954),
-  CityRef('Colmar', 3200, 12, true, 48.0794, 7.3585),
-  CityRef('Vesoul', 1400, 8, false, 47.6167, 6.1546),
-  CityRef('Mâcon', 2200, 10.5, false, 46.3067, 4.8283),
-  CityRef('Chambéry', 3400, 13.5, true, 45.5646, 5.9178),
-  CityRef('Annecy', 5300, 17, true, 45.8992, 6.1294),
-  CityRef('Rouen', 2700, 11.5, true, 49.4431, 1.0993),
-  CityRef('Melun', 3200, 13.5, true, 48.5389, 2.6600),
-  CityRef('Versailles', 6500, 22, true, 48.8049, 2.1204),
-  CityRef('Niort', 2100, 10, false, 46.3239, -0.4587),
-  CityRef('Amiens', 2400, 11, false, 49.8941, 2.2958),
-  CityRef('Albi', 1900, 9.5, false, 43.9298, 2.1480),
-  CityRef('Montauban', 2100, 10, false, 44.0175, 1.3547),
-  CityRef('Avignon', 2900, 12.5, true, 43.9493, 4.8055),
-  CityRef('La Roche-sur-Yon', 2100, 10, false, 46.6705, -1.4266),
-  CityRef('Poitiers', 2400, 11, false, 46.5802, 0.3404),
-  CityRef('Épinal', 1500, 8, false, 48.1735, 6.4457),
-  CityRef('Auxerre', 1800, 9, false, 47.7982, 3.5730),
-  CityRef('Belfort', 1900, 9.5, false, 47.6379, 6.8630),
-  CityRef('Évry-Courcouronnes', 3500, 15, true, 48.6303, 2.4406),
-  CityRef('Nanterre', 6500, 24, true, 48.8924, 2.2065),
-  CityRef('Bobigny', 4000, 17, true, 48.9092, 2.4394),
-  CityRef('Créteil', 4500, 18, true, 48.7904, 2.4556),
-  CityRef('Cergy', 3600, 15, true, 49.0364, 2.0770),
+  CityRef('Paris', 9500, 32, true, 48.8566, 2.3522, '75'),
+  CityRef('Lyon', 5200, 16, true, 45.7640, 4.8357, '69'),
+  CityRef('Marseille', 3400, 14, true, 43.2965, 5.3698, '13'),
+  CityRef('Toulouse', 3600, 13.5, true, 43.6047, 1.4442, '31'),
+  CityRef('Nice', 5300, 18, true, 43.7102, 7.2620, '06'),
+  CityRef('Nantes', 3700, 13, true, 47.2184, -1.5536, '44'),
+  CityRef('Strasbourg', 3300, 12.5, true, 48.5734, 7.7521, '67'),
+  CityRef('Montpellier', 3600, 14, true, 43.6108, 3.8767, '34'),
+  CityRef('Bordeaux', 4600, 15, true, 44.8378, -0.5792, '33'),
+  CityRef('Lille', 3200, 13, true, 50.6292, 3.0573, '59'),
+  CityRef('Rennes', 3500, 13, true, 48.1173, -1.6778, '35'),
+  CityRef('Reims', 2400, 11, false, 49.2583, 4.0317, '51'),
+  CityRef('Le Havre', 2100, 10, false, 49.4944, 0.1079, '76'),
+  CityRef('Saint-Étienne', 1300, 8.5, false, 45.4397, 4.3872, '42'),
+  CityRef('Toulon', 3300, 14, false, 43.1242, 5.9280, '83'),
+  CityRef('Angers', 2900, 11.5, false, 47.4784, -0.5632, '49'),
+  CityRef('Dijon', 2700, 11, false, 47.3220, 5.0415, '21'),
+  CityRef('Limoges', 1600, 9, false, 45.8336, 1.2611, '87'),
+  CityRef('Clermont-Ferrand', 2100, 10.5, false, 45.7772, 3.0870, '63'),
+  CityRef('Le Mans', 1900, 9.5, false, 48.0061, 0.1996, '72'),
+  CityRef('Bourg-en-Bresse', 2300, 10.5, false, 46.2058, 5.2255, '01'),
+  CityRef('Laon', 1500, 8.5, false, 49.5642, 3.6203, '02'),
+  CityRef('Moulins', 1400, 8, false, 46.5654, 3.3327, '03'),
+  CityRef('Digne-les-Bains', 2100, 10, false, 44.0917, 6.2358, '04'),
+  CityRef('Gap', 2400, 10.5, false, 44.5594, 6.0790, '05'),
+  CityRef('Privas', 1700, 9, false, 44.7350, 4.5985, '07'),
+  CityRef('Charleville-Mézières', 1400, 8, false, 49.7738, 4.7196, '08'),
+  CityRef('Foix', 1600, 8.5, false, 42.9647, 1.6053, '09'),
+  CityRef('Troyes', 1900, 9.5, false, 48.2973, 4.0744, '10'),
+  CityRef('Carcassonne', 1900, 9.5, false, 43.2130, 2.3491, '11'),
+  CityRef('Rodez', 1700, 8.5, false, 44.3506, 2.5744, '12'),
+  CityRef('Caen', 2900, 12, true, 49.1829, -0.3707, '14'),
+  CityRef('Aurillac', 1400, 8, false, 44.9245, 2.4433, '15'),
+  CityRef('Angoulême', 1700, 9, false, 45.6484, 0.1560, '16'),
+  CityRef('La Rochelle', 4600, 15, true, 46.1603, -1.1511, '17'),
+  CityRef('Bourges', 1500, 8.5, false, 47.0810, 2.3988, '18'),
+  CityRef('Tulle', 1300, 8, false, 45.2671, 1.7716, '19'),
+  CityRef('Ajaccio', 3800, 14, true, 41.9192, 8.7386, '2A'),
+  CityRef('Bastia', 3200, 13, true, 42.7028, 9.4508, '2B'),
+  CityRef('Saint-Brieuc', 2100, 9.5, false, 48.5136, -2.7652, '22'),
+  CityRef('Guéret', 1000, 7, false, 46.1667, 1.8667, '23'),
+  CityRef('Périgueux', 1700, 9, false, 45.1847, 0.7214, '24'),
+  CityRef('Besançon', 2400, 11, false, 47.2378, 6.0241, '25'),
+  CityRef('Valence', 2200, 10.5, false, 44.9334, 4.8924, '26'),
+  CityRef('Évreux', 1900, 10, false, 49.0270, 1.1510, '27'),
+  CityRef('Chartres', 2300, 11, false, 48.4439, 1.4890, '28'),
+  CityRef('Quimper', 2600, 10.5, false, 47.9960, -4.0972, '29'),
+  CityRef('Nîmes', 2600, 12, true, 43.8367, 4.3601, '30'),
+  CityRef('Auch', 1600, 8.5, false, 43.6459, 0.5860, '32'),
+  CityRef('Châteauroux', 1200, 7.5, false, 46.8098, 1.6960, '36'),
+  CityRef('Tours', 3000, 12, true, 47.3941, 0.6848, '37'),
+  CityRef('Grenoble', 3100, 13.5, true, 45.1885, 5.7245, '38'),
+  CityRef('Lons-le-Saunier', 1800, 9, false, 46.6742, 5.5522, '39'),
+  CityRef('Mont-de-Marsan', 2000, 9.5, false, 43.8898, -0.4989, '40'),
+  CityRef('Blois', 2000, 9.5, false, 47.5861, 1.3359, '41'),
+  CityRef('Le Puy-en-Velay', 1500, 8, false, 45.0430, 3.8850, '43'),
+  CityRef('Orléans', 2700, 11.5, true, 47.9029, 1.9093, '45'),
+  CityRef('Cahors', 1700, 8.5, false, 44.4477, 1.4372, '46'),
+  CityRef('Agen', 1700, 9, false, 44.2049, 0.6212, '47'),
+  CityRef('Mende', 1500, 8, false, 44.5178, 3.5000, '48'),
+  CityRef('Saint-Lô', 1700, 9, false, 49.1147, -1.0899, '50'),
+  CityRef('Châlons-en-Champagne', 1700, 9, false, 48.9560, 4.3630, '51'),
+  CityRef('Chaumont', 1300, 7.5, false, 48.1113, 5.1391, '52'),
+  CityRef('Laval', 1900, 9.5, false, 48.0698, -0.7700, '53'),
+  CityRef('Nancy', 2600, 11.5, true, 48.6921, 6.1844, '54'),
+  CityRef('Bar-le-Duc', 1200, 7.5, false, 48.7714, 5.1608, '55'),
+  CityRef('Vannes', 3600, 12.5, true, 47.6582, -2.7603, '56'),
+  CityRef('Metz', 2300, 11, false, 49.1193, 6.1757, '57'),
+  CityRef('Nevers', 1300, 8, false, 46.9896, 3.1590, '58'),
+  CityRef('Beauvais', 2000, 10, false, 49.4295, 2.0807, '60'),
+  CityRef('Alençon', 1500, 8, false, 48.4322, 0.0900, '61'),
+  CityRef('Arras', 2300, 10.5, false, 50.2910, 2.7807, '62'),
+  CityRef('Pau', 2600, 11, false, 43.2951, -0.3708, '64'),
+  CityRef('Tarbes', 1700, 8.5, false, 43.2327, 0.0781, '65'),
+  CityRef('Perpignan', 2400, 11.5, true, 42.6986, 2.8954, '66'),
+  CityRef('Colmar', 3200, 12, true, 48.0794, 7.3585, '68'),
+  CityRef('Vesoul', 1400, 8, false, 47.6167, 6.1546, '70'),
+  CityRef('Mâcon', 2200, 10.5, false, 46.3067, 4.8283, '71'),
+  CityRef('Chambéry', 3400, 13.5, true, 45.5646, 5.9178, '73'),
+  CityRef('Annecy', 5300, 17, true, 45.8992, 6.1294, '74'),
+  CityRef('Rouen', 2700, 11.5, true, 49.4431, 1.0993, '76'),
+  CityRef('Melun', 3200, 13.5, true, 48.5389, 2.6600, '77'),
+  CityRef('Versailles', 6500, 22, true, 48.8049, 2.1204, '78'),
+  CityRef('Niort', 2100, 10, false, 46.3239, -0.4587, '79'),
+  CityRef('Amiens', 2400, 11, false, 49.8941, 2.2958, '80'),
+  CityRef('Albi', 1900, 9.5, false, 43.9298, 2.1480, '81'),
+  CityRef('Montauban', 2100, 10, false, 44.0175, 1.3547, '82'),
+  CityRef('Avignon', 2900, 12.5, true, 43.9493, 4.8055, '84'),
+  CityRef('La Roche-sur-Yon', 2100, 10, false, 46.6705, -1.4266, '85'),
+  CityRef('Poitiers', 2400, 11, false, 46.5802, 0.3404, '86'),
+  CityRef('Épinal', 1500, 8, false, 48.1735, 6.4457, '88'),
+  CityRef('Auxerre', 1800, 9, false, 47.7982, 3.5730, '89'),
+  CityRef('Belfort', 1900, 9.5, false, 47.6379, 6.8630, '90'),
+  CityRef('Évry-Courcouronnes', 3500, 15, true, 48.6303, 2.4406, '91'),
+  CityRef('Nanterre', 6500, 24, true, 48.8924, 2.2065, '92'),
+  CityRef('Bobigny', 4000, 17, true, 48.9092, 2.4394, '93'),
+  CityRef('Créteil', 4500, 18, true, 48.7904, 2.4556, '94'),
+  CityRef('Cergy', 3600, 15, true, 49.0364, 2.0770, '95'),
 ];
 
 class RefInfo {
@@ -1028,6 +1041,90 @@ RefInfo? nearestReference(CommuneRef? commune) {
     }
   }
   return const RefInfo(ref: nationalAvg, precise: false);
+}
+
+// ---------------------------------------------------------------------------
+// Score d'investissement d'une VILLE (onglet Carte) — équivalent, à l'échelle
+// d'une ville plutôt que d'un bien précis, du score de `computeScore` :
+// calculé par règles à partir de chiffres (rendement locatif théorique,
+// écart au prix moyen national, dynamisme du marché), jamais par IA — pour
+// rester gratuit et cohérent avec le reste de l'app.
+// ---------------------------------------------------------------------------
+
+class CityInvestScore {
+  final int score;
+  final String label;
+  final String colorHex;
+  final List<String> raisons;
+  const CityInvestScore({
+    required this.score,
+    required this.label,
+    required this.colorHex,
+    required this.raisons,
+  });
+}
+
+/// [evolution1AnPct] : évolution des prix sur 1 an, si disponible (donnée
+/// réelle VALORIS/DVF) — sinon ce facteur reste neutre plutôt que d'inventer
+/// une valeur.
+CityInvestScore computeCityInvestScore(CityRef city, {double? evolution1AnPct}) {
+  final raisons = <String>[];
+
+  // Rendement locatif brut théorique (loyer annuel / prix d'achat), 0-50 pts.
+  final rendementBrut = city.prixM2 > 0 ? (city.loyerM2 * 12 / city.prixM2) * 100 : 0.0;
+  final ptsRendement = min(50.0, max(0.0, (rendementBrut / 8) * 50));
+  raisons.add('Rendement locatif brut théorique : ${rendementBrut.toStringAsFixed(1)} %'
+      '${rendementBrut >= 6 ? ' (au-dessus de la moyenne)' : rendementBrut < 4 ? ' (plutôt faible)' : ''}');
+
+  // Écart au prix moyen national, 0-25 pts (moins cher = mieux, dans une limite raisonnable).
+  final ecartPct = ((city.prixM2 - nationalAvg.prixM2) / nationalAvg.prixM2) * 100;
+  final ptsAccessibilite = min(25.0, max(0.0, 25 - (ecartPct.clamp(-50, 150) / 150) * 25));
+  raisons.add(ecartPct <= 0
+      ? 'Prix ${(-ecartPct).toStringAsFixed(0)} % en dessous de la moyenne nationale (~${nationalAvg.prixM2.round()} €/m²)'
+      : 'Prix ${ecartPct.toStringAsFixed(0)} % au-dessus de la moyenne nationale (~${nationalAvg.prixM2.round()} €/m²)');
+
+  // Dynamisme du marché, 0-25 pts — neutre si la donnée réelle n'est pas
+  // disponible (pas de valeur inventée).
+  double ptsDynamisme;
+  if (evolution1AnPct != null) {
+    if (evolution1AnPct >= 0 && evolution1AnPct <= 5) {
+      ptsDynamisme = 25;
+    } else if (evolution1AnPct <= 10) {
+      ptsDynamisme = 18;
+    } else if (evolution1AnPct > 10) {
+      ptsDynamisme = 10;
+    } else if (evolution1AnPct >= -5) {
+      ptsDynamisme = 15;
+    } else {
+      ptsDynamisme = 5;
+    }
+    raisons.add('Évolution des prix sur 1 an : ${evolution1AnPct > 0 ? '+' : ''}${evolution1AnPct.toStringAsFixed(1)} %'
+        '${evolution1AnPct > 10 ? ' (hausse marquée, risque de marché tendu)' : evolution1AnPct < -5 ? ' (marché en repli)' : ''}');
+  } else {
+    ptsDynamisme = 12.5;
+  }
+
+  if (city.tension) {
+    raisons.add('Zone tendue : forte demande locative, mais concurrence à l\'achat plus vive.');
+  }
+
+  final total = ptsRendement + ptsAccessibilite + ptsDynamisme;
+  final score = total.round().clamp(0, 100);
+
+  final String label;
+  final String colorHex;
+  if (score >= 65) {
+    label = 'Prometteur';
+    colorHex = _accentHex;
+  } else if (score >= 45) {
+    label = 'Correct';
+    colorHex = _goldHex;
+  } else {
+    label = 'Peu favorable';
+    colorHex = _alertHex;
+  }
+
+  return CityInvestScore(score: score, label: label, colorHex: colorHex, raisons: raisons);
 }
 
 // ---------------------------------------------------------------------------
