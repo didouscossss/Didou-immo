@@ -34,6 +34,7 @@ dependencies:
   latlong2: ^0.9.1           # type LatLng pour flutter_map
   pdf: ^3.11.1                # génération du PDF exporté
   printing: ^5.13.4           # aperçu/partage/impression du PDF (web + Android)
+  web: ^1.1.1                 # déclenche le téléchargement des exports CSV (web)
 
   shared_preferences: ^2.3.2
 
