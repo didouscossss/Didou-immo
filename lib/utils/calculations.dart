@@ -5,6 +5,38 @@ import 'dart:math';
 
 const double social = 0.172; // prélèvements sociaux (17,2 %)
 
+// ---------------------------------------------------------------------------
+// Encadrement des loyers
+// ---------------------------------------------------------------------------
+
+/// Villes où l'encadrement des loyers (plafond légal) est en vigueur — liste
+/// volontairement restreinte aux cas les mieux établis, PAS exhaustive : le
+/// dispositif s'applique aussi dans d'autres communes de certaines métropoles
+/// (ex. Plaine Commune, Est Ensemble en Seine-Saint-Denis) et peut évoluer
+/// (renouvellement des arrêtés, nouvelles zones). Toujours vérifier sur
+/// service-public.fr avant de fixer un loyer.
+const _villesEncadrementLoyers = {
+  'paris',
+  'lille',
+  'hellemmes',
+  'lomme',
+  'lyon',
+  'villeurbanne',
+  'montpellier',
+  'bordeaux',
+};
+
+bool isVilleEncadrementLoyers(String? nomCommune) {
+  if (nomCommune == null || nomCommune.isEmpty) return false;
+  final normalized = nomCommune
+      .toLowerCase()
+      .trim()
+      .replaceAll(RegExp('[éèêë]'), 'e')
+      .replaceAll(RegExp('[àâ]'), 'a')
+      .replaceAll(RegExp('[ôö]'), 'o');
+  return _villesEncadrementLoyers.contains(normalized);
+}
+
 // Estimations par défaut pour les frais de notaire et travaux — utilisées
 // tant que l'utilisateur n'a pas saisi son propre chiffre (voir
 // `PropertyInput.notaireAuto` / `travauxAuto`).

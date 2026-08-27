@@ -77,6 +77,22 @@ class MarcheScreen extends StatelessWidget {
                 child: Text('Zone tendue possible', style: AppTextStyles.sans(fontSize: 10, color: AppColors.alert)),
               ),
           ]),
+          if (isVilleEncadrementLoyers(commune.nom))
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: AppColors.alert.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(8)),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.alert)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "${commune.nom} applique l'encadrement des loyers : un plafond légal limite le loyer au m² selon le quartier et le type de logement. Vérifie le plafond applicable sur service-public.fr avant de fixer ton loyer — le dépasser expose à une amende et à devoir rembourser le trop-perçu.",
+                    style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.alert),
+                  ),
+                ),
+              ]),
+            ),
           const SizedBox(height: 16),
           Row(children: [
             Expanded(
