@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/saved_property.dart';
 import '../services/firestore_service.dart';
+import '../services/valoris_service.dart';
 import '../utils/calculations.dart';
 import '../utils/property_input_codec.dart';
 
@@ -25,12 +26,21 @@ const _onboardingKey = 'onboarding-done';
 /// toujours local à l'appareil.
 class RendementState extends ChangeNotifier {
   final FirestoreService _firestore = FirestoreService();
+  final ValorisService _valoris = ValorisService();
 
   PropertyInput form = PropertyInput.defaultForm();
   NiveauMode niveau = NiveauMode.novice;
   List<SavedProperty> biens = [];
   bool loaded = false;
   bool showOnboarding = false;
+
+  /// Prix médian réel (VALORIS/DVF) pour la commune actuellement choisie
+  /// dans le formulaire — `null` tant qu'il n'a pas été chargé ou si aucune
+  /// donnée n'est disponible pour cette commune (repli sur le repère
+  /// indicatif statique, voir `refInfoAjuste`).
+  ValorisPrice? liveMarketPrice;
+  bool loadingLiveMarketPrice = false;
+  String? _lastLiveFetchKey;
 
   /// Dernière erreur du flux Firestore des biens enregistrés (diagnostic),
   /// non null si `watchProperties` a échoué — sans ça, une erreur du flux
@@ -61,7 +71,7 @@ class RendementState extends ChangeNotifier {
     final r = refs;
     if (ri == null || r == null) return ri;
     return RefInfo(
-      ref: CityRef(ri.ref.name, r.prixM2, r.loyerM2, ri.ref.tension, ri.ref.lat, ri.ref.lon),
+      ref: CityRef(ri.ref.name, r.prixM2, r.loyerM2, ri.ref.tension, ri.ref.lat, ri.ref.lon, ri.ref.codeDepartement),
       precise: ri.precise,
     );
   }
@@ -142,6 +152,36 @@ class RendementState extends ChangeNotifier {
   void updateForm(PropertyInput Function(PropertyInput current) updater) {
     form = updater(form);
     notifyListeners();
+    _maybeRefreshLiveMarketPrice();
+  }
+
+  /// Récupère le prix médian réel (VALORIS/DVF) pour la commune du
+  /// formulaire, uniquement quand elle change (jamais en boucle) — l'API
+  /// est limitée à 100 requêtes/jour par IP, donc on ne l'interroge que
+  /// pour LA commune que l'utilisateur regarde vraiment, pas en masse.
+  void _maybeRefreshLiveMarketPrice() {
+    final c = form.commune;
+    if (c == null || c.codeDepartement.isEmpty) {
+      if (_lastLiveFetchKey != null) {
+        _lastLiveFetchKey = null;
+        liveMarketPrice = null;
+        loadingLiveMarketPrice = false;
+        notifyListeners();
+      }
+      return;
+    }
+    final key = '${c.codeDepartement}:${c.codeInsee}';
+    if (key == _lastLiveFetchKey) return;
+    _lastLiveFetchKey = key;
+    liveMarketPrice = null;
+    loadingLiveMarketPrice = true;
+    notifyListeners();
+    _valoris.fetchPrixMedian(codeDepartement: c.codeDepartement, codeInsee: c.codeInsee).then((price) {
+      if (_lastLiveFetchKey != key) return; // la commune a re-changé entre-temps
+      liveMarketPrice = price;
+      loadingLiveMarketPrice = false;
+      notifyListeners();
+    });
   }
 
   void setNiveau(NiveauMode n) {

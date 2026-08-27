@@ -11,6 +11,7 @@ class CommuneResult {
   final List<String> codesPostaux;
   final int population;
   final String? departementNom;
+  final String? departementCode;
 
   const CommuneResult({
     required this.nom,
@@ -18,15 +19,18 @@ class CommuneResult {
     required this.codesPostaux,
     required this.population,
     this.departementNom,
+    this.departementCode,
   });
 
   factory CommuneResult.fromJson(Map<String, dynamic> json) {
+    final departement = json['departement'] as Map<String, dynamic>?;
     return CommuneResult(
       nom: json['nom'] as String? ?? '',
       code: json['code'] as String? ?? '',
       codesPostaux: (json['codesPostaux'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       population: (json['population'] as num?)?.toInt() ?? 0,
-      departementNom: (json['departement'] as Map<String, dynamic>?)?['nom'] as String?,
+      departementNom: departement?['nom'] as String?,
+      departementCode: departement?['code'] as String?,
     );
   }
 }
