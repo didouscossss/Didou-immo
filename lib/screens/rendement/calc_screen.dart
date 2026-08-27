@@ -464,8 +464,8 @@ class _CalcScreenState extends State<CalcScreen> {
 
         ElevatedButton.icon(
           onPressed: widget.onSave,
-          icon: const Icon(Icons.add),
-          label: const Text('Enregistrer ce bien'),
+          icon: Icon(context.watch<RendementState>().editingId == null ? Icons.add : Icons.save_outlined),
+          label: Text(context.watch<RendementState>().editingId == null ? 'Enregistrer ce bien' : 'Mettre à jour ce bien'),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accent,
             foregroundColor: Colors.white,

@@ -133,6 +133,12 @@ class _RendementHomeState extends State<RendementHome> {
   /// l'écran basculait sur "Mes projets" alors que rien n'avait été
   /// enregistré.
   Future<void> _handleSave(RendementState state) async {
+    // Modifier un bien déjà enregistré (voir `loadPropertyForEditing`) ne
+    // doit ni consommer un essai gratuit, ni être bloqué par le paywall —
+    // seule la création d'un NOUVEAU bien compte. `saveCurrentProperty`
+    // remet `editingId` à null une fois l'enregistrement fait, donc on
+    // capture cette info avant de l'appeler.
+    final isNewProperty = state.editingId == null;
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
       if (!mounted) return;
@@ -140,7 +146,7 @@ class _RendementHomeState extends State<RendementHome> {
       return;
     }
     final account = context.read<UserAccountState>();
-    if (!account.canSaveForFree) {
+    if (isNewProperty && !account.canSaveForFree) {
       await Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen()));
       return;
     }
@@ -155,7 +161,7 @@ class _RendementHomeState extends State<RendementHome> {
       );
       return;
     }
-    await account.recordFreeSave();
+    if (isNewProperty) await account.recordFreeSave();
     if (!mounted) return;
     setState(() => _active = _Tab.biens);
   }
@@ -171,7 +177,7 @@ class _RendementHomeState extends State<RendementHome> {
       case _Tab.proj:
         return const ProjectionScreen();
       case _Tab.biens:
-        return const BiensScreen();
+        return BiensScreen(onEdit: () => setState(() => _active = _Tab.calc));
     }
   }
 

@@ -11,7 +11,11 @@ import '../../widgets/section_title.dart';
 
 /// Onglet "Comparer" — équivalent de `BiensScreen` du prototype.
 class BiensScreen extends StatelessWidget {
-  const BiensScreen({super.key});
+  /// Appelé quand on tape sur un bien pour le recharger dans le calculateur
+  /// (voir `RendementState.loadPropertyForEditing`) — l'appelant (voir
+  /// `RendementHome`) est responsable de basculer sur l'onglet "Bien".
+  final VoidCallback? onEdit;
+  const BiensScreen({super.key, this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +82,13 @@ class BiensScreen extends StatelessWidget {
             ]),
           ]),
         ),
-        ...sorted.map((b) => Container(
+        ...sorted.map((b) => InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                state.loadPropertyForEditing(b);
+                onEdit?.call();
+              },
+              child: Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
@@ -108,6 +118,7 @@ class BiensScreen extends StatelessWidget {
                   color: AppColors.ink.withValues(alpha: 0.3),
                 ),
               ]),
+              ),
             )),
         const SizedBox(height: 6),
         if (state.niveau == NiveauMode.avance && biens.length > 1)
