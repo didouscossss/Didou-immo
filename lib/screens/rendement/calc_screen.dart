@@ -160,6 +160,7 @@ class _CalcScreenState extends State<CalcScreen> {
           onChanged: (v) => set((f) => f.copyWith(nom: v)),
           decoration: InputDecoration(
             hintText: 'Nom du bien — ex. T2 Rue des Lilas',
+            hintStyle: AppTextStyles.sans(fontSize: 15, color: AppColors.ink.withValues(alpha: 0.45)),
             filled: true,
             fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
