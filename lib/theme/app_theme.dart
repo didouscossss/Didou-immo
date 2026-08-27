@@ -4,14 +4,26 @@ import 'package:google_fonts/google_fonts.dart';
 /// Jetons de design — portés depuis le prototype React (rendement-app.jsx).
 /// bg #F4F0E6 · ink #16211C · accent #2F5D50 · gold #B8935A · alert #B3452C
 /// Display: Fraunces · Body: Inter · Chiffres: Space Mono
+///
+/// Champs calculés (pas `const`) plutôt que fixes, pour pouvoir s'adapter au
+/// mode nuit (voir [setDark], piloté par `RendementState.darkMode`) sans
+/// avoir à passer le thème explicitement à chaque écran — tout le reste de
+/// l'app lit ces couleurs directement (`AppColors.ink`, etc.).
 class AppColors {
-  static const ink = Color(0xFF16211C);
-  static const accent = Color(0xFF2F5D50);
-  static const gold = Color(0xFFB8935A);
-  static const alert = Color(0xFFB3452C);
-  static const border = Color(0xFFE4DDC9);
-  static const paper = Color(0xFFF4F0E6);
-  static const good = Color(0xFF4A7C59);
+  static bool _dark = false;
+  static void setDark(bool value) => _dark = value;
+  static bool get isDark => _dark;
+
+  static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
+  static Color get accent => _dark ? const Color(0xFF4FA88A) : const Color(0xFF2F5D50);
+  static Color get gold => const Color(0xFFB8935A);
+  static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
+  static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
+  static Color get paper => _dark ? const Color(0xFF10170F) : const Color(0xFFF4F0E6);
+  /// Fond des cartes/encadrés — `Colors.white` en clair, une surface
+  /// légèrement plus claire que [paper] en sombre.
+  static Color get surface => _dark ? const Color(0xFF1B241C) : const Color(0xFFFFFFFF);
+  static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
 }
 
 /// Convertit un hex `#RRGGBB` (tel que renvoyé par `calculations.dart`,
@@ -30,16 +42,29 @@ class AppTextStyles {
       GoogleFonts.spaceMono(fontSize: fontSize, fontWeight: fontWeight, color: color, letterSpacing: letterSpacing, decoration: decoration);
 }
 
-ThemeData buildAppTheme() {
-  final base = ThemeData(useMaterial3: true, scaffoldBackgroundColor: AppColors.paper);
+/// [dark] doit refléter `RendementState.darkMode` — appelé à chaque
+/// changement (voir `main.dart`), pour que le thème Material lui-même
+/// (fond de Scaffold, AppBar...) suive le mode nuit, pas seulement les
+/// widgets qui lisent `AppColors.xxx` directement à chaque rebuild.
+ThemeData buildAppTheme({required bool dark}) {
+  AppColors.setDark(dark);
+  final base = ThemeData(
+    useMaterial3: true,
+    brightness: dark ? Brightness.dark : Brightness.light,
+    scaffoldBackgroundColor: AppColors.paper,
+  );
   return base.copyWith(
     colorScheme: base.colorScheme.copyWith(
       primary: AppColors.accent,
       secondary: AppColors.gold,
       error: AppColors.alert,
       surface: AppColors.paper,
+      onSurface: AppColors.ink,
     ),
-    textTheme: GoogleFonts.interTextTheme(base.textTheme),
+    textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
+      bodyColor: AppColors.ink,
+      displayColor: AppColors.ink,
+    ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.paper,
       foregroundColor: AppColors.ink,

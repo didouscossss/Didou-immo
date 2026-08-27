@@ -87,7 +87,7 @@ class _CalcScreenState extends State<CalcScreen> {
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
@@ -95,7 +95,7 @@ class _CalcScreenState extends State<CalcScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(children: [
-                  const Icon(Icons.fact_check_outlined, size: 15, color: AppColors.accent),
+                  Icon(Icons.fact_check_outlined, size: 15, color: AppColors.accent),
                   const SizedBox(width: 8),
                   Text('Checklist de visite',
                       style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -110,7 +110,7 @@ class _CalcScreenState extends State<CalcScreen> {
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
@@ -161,9 +161,9 @@ class _CalcScreenState extends State<CalcScreen> {
           decoration: InputDecoration(
             hintText: 'Nom du bien — ex. T2 Rue des Lilas',
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.surface,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
           ),
           style: AppTextStyles.sans(fontSize: 15, color: AppColors.ink),
         ),
@@ -190,7 +190,7 @@ class _CalcScreenState extends State<CalcScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: active ? AppColors.accent : Colors.white,
+                      color: active ? AppColors.accent : AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: active ? AppColors.accent : AppColors.border),
                     ),
@@ -214,7 +214,7 @@ class _CalcScreenState extends State<CalcScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: !form.meuble ? AppColors.accent : Colors.white,
+                    color: !form.meuble ? AppColors.accent : AppColors.surface,
                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
                     border: Border.all(color: !form.meuble ? AppColors.accent : AppColors.border),
                   ),
@@ -229,7 +229,7 @@ class _CalcScreenState extends State<CalcScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: form.meuble ? AppColors.accent : Colors.white,
+                    color: form.meuble ? AppColors.accent : AppColors.surface,
                     borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
                     border: Border.all(color: form.meuble ? AppColors.accent : AppColors.border),
                   ),
@@ -274,7 +274,7 @@ class _CalcScreenState extends State<CalcScreen> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: active ? color : Colors.white,
+                        color: active ? color : AppColors.surface,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: color, width: 1.5),
                       ),
@@ -292,7 +292,7 @@ class _CalcScreenState extends State<CalcScreen> {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(color: AppColors.alert.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(8)),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Padding(padding: EdgeInsets.only(top: 2), child: Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.alert)),
+              Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.alert)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('${dpeInfo[form.dpe]!.banIssue}. Vérifie si des travaux de rénovation énergétique sont nécessaires avant de pouvoir louer.',
@@ -334,7 +334,7 @@ class _CalcScreenState extends State<CalcScreen> {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -388,7 +388,7 @@ class _CalcScreenState extends State<CalcScreen> {
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Row(children: [
             Expanded(child: _statBlock('Montant emprunté', eur(core.montantEmprunte), AppColors.ink)),
             Expanded(child: _statBlock('Mensualité calculée', eur(core.mensualite), AppColors.accent)),
@@ -413,7 +413,7 @@ class _CalcScreenState extends State<CalcScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: core.capaciteOk ? AppColors.border : AppColors.alert),
           ),
@@ -442,7 +442,7 @@ class _CalcScreenState extends State<CalcScreen> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
@@ -468,10 +468,10 @@ class _CalcScreenState extends State<CalcScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              const Icon(Icons.repeat, size: 15, color: AppColors.accent),
+              Icon(Icons.repeat, size: 15, color: AppColors.accent),
               const SizedBox(width: 8),
               Text('Longue durée vs courte durée', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             ]),
@@ -493,10 +493,10 @@ class _CalcScreenState extends State<CalcScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              const Icon(Icons.bolt, size: 15, color: AppColors.accent),
+              Icon(Icons.bolt, size: 15, color: AppColors.accent),
               const SizedBox(width: 8),
               Text('Et si...? (stress-test)', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             ]),
@@ -575,10 +575,10 @@ class _CalcScreenState extends State<CalcScreen> {
         const SizedBox(height: 20),
         Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              const Icon(Icons.picture_as_pdf_outlined, size: 15, color: AppColors.accent),
+              Icon(Icons.picture_as_pdf_outlined, size: 15, color: AppColors.accent),
               const SizedBox(width: 8),
               Text('Exporter en PDF', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             ]),
@@ -680,7 +680,7 @@ class _CalcScreenState extends State<CalcScreen> {
             width: 18,
             height: 18,
             decoration: BoxDecoration(
-              color: checked ? AppColors.alert : Colors.white,
+              color: checked ? AppColors.alert : AppColors.surface,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: checked ? AppColors.alert : AppColors.border, width: 1.5),
             ),
@@ -728,7 +728,7 @@ class _CalcScreenState extends State<CalcScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isBest ? AppColors.accent : AppColors.border),
         ),

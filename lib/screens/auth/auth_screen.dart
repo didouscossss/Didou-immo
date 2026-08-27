@@ -123,7 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   label: const Text('Continuer avec Google'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.ink,
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: AppColors.border),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
@@ -147,7 +147,7 @@ class _AuthScreenState extends State<AuthScreen> {
   InputDecoration _decoration(String label) => InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+        fillColor: AppColors.surface,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.border)),
       );
 }

@@ -14,6 +14,7 @@ enum NiveauMode { novice, avance }
 
 const _biensKey = 'biens-list';
 const _onboardingKey = 'onboarding-done';
+const _darkModeKey = 'dark-mode';
 
 /// État global de l'app — équivalent des `useState`/`useMemo` du composant
 /// `RendementApp` du prototype.
@@ -33,6 +34,7 @@ class RendementState extends ChangeNotifier {
   List<SavedProperty> biens = [];
   bool loaded = false;
   bool showOnboarding = false;
+  bool darkMode = false;
 
   /// Prix médian réel (VALORIS/DVF) pour la commune actuellement choisie
   /// dans le formulaire — `null` tant qu'il n'a pas été chargé ou si aucune
@@ -87,11 +89,19 @@ class RendementState extends ChangeNotifier {
       await _loadLocalBiens();
       final prefs = await SharedPreferences.getInstance();
       showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
+      darkMode = prefs.getBool(_darkModeKey) ?? false;
     } catch (_) {
       showOnboarding = true;
     }
     loaded = true;
     notifyListeners();
+  }
+
+  Future<void> toggleDarkMode() async {
+    darkMode = !darkMode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_darkModeKey, darkMode);
   }
 
   Future<void> _loadLocalBiens() async {

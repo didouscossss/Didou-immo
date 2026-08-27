@@ -76,12 +76,22 @@ class _RendementHomeState extends State<RendementHome> {
                       ),
                       Row(children: [
                         InkWell(
+                          onTap: state.toggleDarkMode,
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            padding: const EdgeInsets.all(9),
+                            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                            child: Icon(state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 15, color: AppColors.ink),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        InkWell(
                           onTap: _openAccount,
                           borderRadius: BorderRadius.circular(999),
                           child: Container(
                             padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                            child: const Icon(Icons.person_outline, size: 15, color: AppColors.ink),
+                            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                            child: Icon(Icons.person_outline, size: 15, color: AppColors.ink),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -90,8 +100,8 @@ class _RendementHomeState extends State<RendementHome> {
                           borderRadius: BorderRadius.circular(999),
                           child: Container(
                             padding: const EdgeInsets.all(9),
-                            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                            child: const Icon(Icons.help_outline, size: 15, color: AppColors.ink),
+                            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                            child: Icon(Icons.help_outline, size: 15, color: AppColors.ink),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -187,7 +197,7 @@ class _RendementHomeState extends State<RendementHome> {
 
   Widget _buildTabBar() {
     return Container(
-      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppColors.border))),
+      decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
       padding: const EdgeInsets.only(top: 8, bottom: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

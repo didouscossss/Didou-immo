@@ -55,7 +55,7 @@ class AccountScreen extends StatelessWidget {
             label: const Text('Parrainage & codes cadeaux'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
-              side: const BorderSide(color: AppColors.border),
+              side: BorderSide(color: AppColors.border),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -68,7 +68,7 @@ class AccountScreen extends StatelessWidget {
               label: const Text('Administration'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.gold,
-                side: const BorderSide(color: AppColors.gold),
+                side: BorderSide(color: AppColors.gold),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),

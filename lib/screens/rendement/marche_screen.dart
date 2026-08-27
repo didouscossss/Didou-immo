@@ -51,7 +51,7 @@ class MarcheScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Aucune commune renseignée', style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
               const SizedBox(height: 4),
@@ -67,7 +67,7 @@ class MarcheScreen extends StatelessWidget {
           ),
         if (commune != null) ...[
           Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, runSpacing: 4, children: [
-            const Icon(Icons.location_on_outlined, size: 14, color: AppColors.accent),
+            Icon(Icons.location_on_outlined, size: 14, color: AppColors.accent),
             Text(commune.nom, style: AppTextStyles.sans(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.ink)),
             Text(commune.departement, style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
             if (ref?.tension == true)
@@ -107,7 +107,7 @@ class MarcheScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Ton bien vs le repère', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
               const SizedBox(height: 10),
@@ -124,7 +124,7 @@ class MarcheScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Expanded(child: Text('Repère par typologie — ${typology.label}', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink))),
@@ -183,7 +183,7 @@ class MarcheScreen extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
@@ -231,7 +231,7 @@ class MarcheScreen extends StatelessWidget {
   Widget _statCard(String label, String value) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
         const SizedBox(height: 4),
@@ -260,7 +260,7 @@ class MarcheScreen extends StatelessWidget {
             child: LinearProgressIndicator(
               value: (value / max).clamp(0.0, 1.0),
               backgroundColor: Colors.white.withValues(alpha: 0.15),
-              valueColor: const AlwaysStoppedAnimation(AppColors.gold),
+              valueColor: AlwaysStoppedAnimation(AppColors.gold),
               minHeight: 6,
             ),
           ),

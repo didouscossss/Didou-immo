@@ -203,7 +203,7 @@ class _CarteScreenState extends State<CarteScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(children: [
-              const Icon(Icons.push_pin_outlined, size: 13, color: AppColors.gold),
+              Icon(Icons.push_pin_outlined, size: 13, color: AppColors.gold),
               const SizedBox(width: 6),
               Expanded(
                 child: Text('Repère du bien en cours : ${refCity.name} (entouré en doré sur la carte)',
@@ -314,7 +314,7 @@ class _CarteScreenState extends State<CarteScreen> {
           if (selectedCities.any((c) => _effectivePrixM2(c) != null))
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 CompareBar(
                   label: 'Prix au m² (€)',
@@ -364,7 +364,7 @@ class _CarteScreenState extends State<CarteScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Row(children: [
           Text(c.nom, style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
           const SizedBox(width: 8),
@@ -382,7 +382,7 @@ class _CarteScreenState extends State<CarteScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           ScoreBadge(score: invest.score, label: invest.label, color: colorFromHex(invest.colorHex), size: BadgeSize.sm),
