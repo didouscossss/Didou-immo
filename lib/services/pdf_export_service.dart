@@ -34,7 +34,12 @@ class PdfExportService {
     List<AmortissementRow> amortissement,
     ScoreResult score,
   ) async {
-    final doc = pw.Document();
+    // Les polices de base du PDF (Helvetica) n'ont pas le glyphe "€" —
+    // sans police Unicode, il s'affichait comme un carré vide. NotoSans le
+    // couvre, comme la plupart des caractères latins étendus.
+    final baseFont = await PdfGoogleFonts.notoSansRegular();
+    final boldFont = await PdfGoogleFonts.notoSansBold();
+    final doc = pw.Document(theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont));
     final accent = PdfColor.fromHex('#2F5D50');
     final ink = PdfColor.fromHex('#16211C');
     final border = PdfColor.fromHex('#E4DDC9');
