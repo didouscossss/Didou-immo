@@ -14,16 +14,17 @@ import '../../widgets/score_badge.dart';
 import '../../widgets/section_title.dart';
 
 /// Point sélectionnable sur la carte — unifie les 96 préfectures
-/// (`CityRef`, avec un repère de prix indicatif codé en dur) et les
-/// communes ≥1500 habitants du catalogue (`CommunePoint`, sans repère —
-/// seul un vrai prix VALORIS, chargé à la demande, peut les colorer).
+/// (`CityRef`) et les communes ≥1500 habitants du catalogue
+/// (`CommunePoint`). Aucune des deux ne porte de prix inventé : seul un
+/// vrai prix VALORIS/DVF, chargé à la demande au tap, peut colorer un
+/// point — avant ça, tous les points sont neutres, préfectures comprises.
 class _SelCity {
   final String key;
   final String nom;
   final String codeDepartement;
   final String codeInsee;
   final double lat, lon;
-  final double? staticPrixM2;
+  final bool isPrefecture;
   final double? staticLoyerM2;
   final bool tension;
 
@@ -34,7 +35,7 @@ class _SelCity {
     required this.codeInsee,
     required this.lat,
     required this.lon,
-    this.staticPrixM2,
+    required this.isPrefecture,
     this.staticLoyerM2,
     this.tension = false,
   });
@@ -46,7 +47,10 @@ class _SelCity {
         codeInsee: '',
         lat: c.lat,
         lon: c.lon,
-        staticPrixM2: c.prixM2,
+        isPrefecture: true,
+        // Le loyer n'a pas d'équivalent DVF (qui ne couvre que les ventes) :
+        // pas de source gratuite temps réel, on garde cette estimation
+        // indicative, toujours clairement labellisée comme telle dans l'UI.
         staticLoyerM2: c.loyerM2,
         tension: c.tension,
       );
@@ -58,20 +62,20 @@ class _SelCity {
         codeInsee: p.codeInsee,
         lat: p.lat,
         lon: p.lon,
+        isPrefecture: false,
         staticLoyerM2: loyerM2Estime,
       );
 }
 
-/// Onglet "Carte" — carte de France interactive avec un repère de prix par
+/// Onglet "Carte" — carte de France interactive avec un repère par
 /// département (préfectures) et, en zoomant, toutes les communes ≥1500
 /// habitants (catalogue chargé une fois, voir `commune_catalog_service.dart`).
 ///
-/// Le prix réel (VALORIS/DVF) n'est chargé qu'à la demande, pour une ville
-/// tapée sur la carte — l'API est limitée à 100 requêtes/jour par IP, donc
-/// hors de question de l'interroger pour des milliers de points d'un coup.
-/// Sans cette donnée live (échec, département non couvert...), le repère
-/// indicatif statique reste affiché quand il existe (préfectures) ; les
-/// autres communes restent neutres tant qu'on n'a pas tapé dessus.
+/// Aucun prix n'est affiché par défaut : le prix réel (VALORIS/DVF) n'est
+/// chargé qu'à la demande, pour une ville tapée sur la carte — l'API est
+/// limitée à 100 requêtes/jour par IP, donc hors de question de
+/// l'interroger pour des milliers de points d'un coup. Tant qu'on n'a pas
+/// tapé sur un point, il reste neutre (aucune estimation inventée).
 class CarteScreen extends StatefulWidget {
   const CarteScreen({super.key});
 
@@ -135,7 +139,7 @@ class _CarteScreenState extends State<CarteScreen> {
     });
   }
 
-  double? _effectivePrixM2(_SelCity c) => _live[c.key]?.prixMedianM2 ?? c.staticPrixM2;
+  double? _effectivePrixM2(_SelCity c) => _live[c.key]?.prixMedianM2;
 
   /// Estimation de loyer pour une commune du catalogue (sans repère propre) :
   /// reprend celui de la préfecture de son département, sinon la moyenne
@@ -191,7 +195,7 @@ class _CarteScreenState extends State<CarteScreen> {
         Text(
           _catalogLoading
               ? 'Chargement des communes de France (une fois, mis en cache ensuite)...'
-              : 'Un repère par département — zoome pour voir les communes (≥1500 hab.), tape un point pour comparer',
+              : 'Tape un point pour charger son vrai prix (VALORIS / DVF) — zoome pour voir les communes (≥1500 hab.)',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45)),
         ),
         const SizedBox(height: 12),
@@ -230,8 +234,7 @@ class _CarteScreenState extends State<CarteScreen> {
                   markers: villes.map((c) {
                     final selected = _selected.contains(c.key);
                     final isRef = refCity != null && refCity.name == c.nom;
-                    final isPrefecture = c.staticPrixM2 != null;
-                    final size = selected ? 22.0 : (isPrefecture ? 14.0 : 9.0);
+                    final size = selected ? 22.0 : (c.isPrefecture ? 14.0 : 9.0);
                     return Marker(
                       point: LatLng(c.lat, c.lon),
                       width: 32,
@@ -343,8 +346,8 @@ class _CarteScreenState extends State<CarteScreen> {
           Expanded(
             child: Text(
               anyLiveData
-                  ? 'Prix marqués ✓ : données réelles VALORIS / DVF — Licence Ouverte (Etalab). Loyers et villes non marquées : repères indicatifs et arrondis. Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.'
-                  : 'Repères de prix indicatifs et arrondis pour les préfectures — tape une commune pour charger son prix réel. Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.',
+                  ? 'Prix marqués ✓ : données réelles VALORIS / DVF — Licence Ouverte (Etalab). Loyers : estimation indicative (DVF ne couvre que les ventes, pas les locations). Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.'
+                  : 'Aucun prix affiché par défaut — tape une ville pour charger son vrai prix (VALORIS / DVF, données réelles des ventes notariées). Fond de carte © OpenStreetMap contributors.',
               style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
             ),
           ),
