@@ -122,10 +122,16 @@ class RendementState extends ChangeNotifier {
       return;
     }
     _cloudSub = _firestore.watchProperties(uid).listen((snapshot) {
-      biens = snapshot.docs
-          .map((doc) => _decodeSaved(doc.id, doc.data()['form'] as Map<String, dynamic>))
-          .toList();
-      cloudError = null;
+      // `FirestoreService.saveProperty` écrit les champs du formulaire à
+      // plat sur le document (`{...data, 'updatedAt': ...}`), contrairement
+      // à la sauvegarde locale qui les imbrique sous `form` — `doc.data()`
+      // est donc directement le bon shape ici, sans clé `form` à extraire.
+      try {
+        biens = snapshot.docs.map((doc) => _decodeSaved(doc.id, doc.data())).toList();
+        cloudError = null;
+      } catch (e) {
+        cloudError = e.toString();
+      }
       notifyListeners();
     }, onError: (Object e) {
       cloudError = e.toString();
