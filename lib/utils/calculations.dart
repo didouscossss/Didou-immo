@@ -567,6 +567,46 @@ List<ProjectionPoint> buildProjection(
 }
 
 // ---------------------------------------------------------------------------
+// Tableau d'amortissement du prêt
+// ---------------------------------------------------------------------------
+
+class AmortissementRow {
+  final int annee;
+  final double mensualite, capitalRembourse, interets, capitalRestant;
+  const AmortissementRow({
+    required this.annee,
+    required this.mensualite,
+    required this.capitalRembourse,
+    required this.interets,
+    required this.capitalRestant,
+  });
+}
+
+/// Détail année par année du remboursement du prêt (hors assurance) —
+/// réutilise [monthlyPayment]/[remainingBalance], déjà utilisées pour la
+/// mensualité et la projection patrimoniale.
+List<AmortissementRow> computeAmortissementSchedule(double principal, double tauxPct, int dureeAns) {
+  if (principal <= 0 || dureeAns <= 0) return [];
+  final mensualite = monthlyPayment(principal, tauxPct, dureeAns);
+  final rows = <AmortissementRow>[];
+  var capitalDebut = principal;
+  for (var y = 1; y <= dureeAns; y++) {
+    final capitalFin = remainingBalance(principal, tauxPct, dureeAns, y.toDouble());
+    final capitalRembourse = max(0, capitalDebut - capitalFin).toDouble();
+    final interets = max(0, mensualite * 12 - capitalRembourse).toDouble();
+    rows.add(AmortissementRow(
+      annee: y,
+      mensualite: mensualite,
+      capitalRembourse: capitalRembourse,
+      interets: interets,
+      capitalRestant: capitalFin,
+    ));
+    capitalDebut = capitalFin;
+  }
+  return rows;
+}
+
+// ---------------------------------------------------------------------------
 // Score d'investissement
 // ---------------------------------------------------------------------------
 

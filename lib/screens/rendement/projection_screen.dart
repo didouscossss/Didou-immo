@@ -11,8 +11,15 @@ import '../../widgets/section_title.dart';
 import '../../widgets/tip.dart';
 
 /// Onglet "Projection" — équivalent de `ProjectionScreen` du prototype.
-class ProjectionScreen extends StatelessWidget {
+class ProjectionScreen extends StatefulWidget {
   const ProjectionScreen({super.key});
+
+  @override
+  State<ProjectionScreen> createState() => _ProjectionScreenState();
+}
+
+class _ProjectionScreenState extends State<ProjectionScreen> {
+  bool _showAmortissement = false;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +100,23 @@ class ProjectionScreen extends StatelessWidget {
             ]),
           ]),
         ),
+        InkWell(
+          onTap: () => setState(() => _showAmortissement = !_showAmortissement),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            margin: EdgeInsets.only(bottom: _showAmortissement ? 0 : 24),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Row(children: [
+                const Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text("Tableau d'amortissement du prêt", style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              ]),
+              Icon(_showAmortissement ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
+            ]),
+          ),
+        ),
+        if (_showAmortissement) _buildAmortissementTable(state.amortissement),
         const SectionTitle('Simulation de revente'),
         if (isNovice)
           Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
@@ -194,6 +218,55 @@ class ProjectionScreen extends StatelessWidget {
       const SizedBox(width: 6),
       Text(label, style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.6))),
     ]);
+  }
+
+  Widget _buildAmortissementTable(List<AmortissementRow> rows) {
+    if (rows.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        child: Text("Renseigne un montant emprunté et un taux pour voir le détail année par année.",
+            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
+      );
+    }
+    const colWidth = 84.0;
+    Widget cell(String text, {bool header = false}) => SizedBox(
+          width: colWidth,
+          child: Text(
+            text,
+            textAlign: TextAlign.right,
+            style: header
+                ? AppTextStyles.sans(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.ink.withValues(alpha: 0.5))
+                : AppTextStyles.mono(fontSize: 11.5, color: AppColors.ink),
+          ),
+        );
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.all(12),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            SizedBox(width: 40, child: Text('AN', style: AppTextStyles.sans(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.ink.withValues(alpha: 0.5)))),
+            cell('Intérêts', header: true),
+            cell('Capital', header: true),
+            cell('Restant dû', header: true),
+          ]),
+          Container(margin: const EdgeInsets.symmetric(vertical: 6), height: 1, color: AppColors.border),
+          ...rows.map((r) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(children: [
+                  SizedBox(width: 40, child: Text('${r.annee}', style: AppTextStyles.mono(fontSize: 11.5, color: AppColors.ink))),
+                  cell(eur(r.interets)),
+                  cell(eur(r.capitalRembourse)),
+                  cell(eur(r.capitalRestant)),
+                ]),
+              )),
+        ]),
+      ),
+    );
   }
 
   Widget _reventeRow(String label, String value, Color color) {

@@ -60,6 +60,8 @@ class RendementState extends ChangeNotifier {
         form.croissanceLoyer,
         form.croissanceValeur,
       );
+  List<AmortissementRow> get amortissement =>
+      computeAmortissementSchedule(core.montantEmprunte, form.tauxPct, form.dureePretAns);
   RefInfo? get refInfo => nearestReference(form.commune);
   Typology get typology =>
       typologies.firstWhere((t) => t.id == form.typeBien, orElse: () => typologies[2]);
