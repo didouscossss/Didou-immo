@@ -76,7 +76,16 @@ class AccountScreen extends StatelessWidget {
           ],
           const SizedBox(height: 28),
           TextButton(
-            onPressed: () => account.signOut(),
+            onPressed: () async {
+              // Cet écran est poussé au-dessus de `AppRoot` (qui bascule
+              // déjà tout seul sur AuthScreen dès que `user` devient null) —
+              // sans le pop, la route restait affichée par-dessus, avec le
+              // `SizedBox.shrink()` ci-dessus : une page blanche.
+              await account.signOut();
+              if (context.mounted && Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              }
+            },
             child: Text('Se déconnecter', style: AppTextStyles.sans(fontSize: 13, color: AppColors.alert)),
           ),
         ],
