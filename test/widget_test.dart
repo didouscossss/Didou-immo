@@ -16,6 +16,11 @@ Future<void> _scrollToAndTap(WidgetTester tester, Finder finder) async {
     await tester.pump();
   }
   await tester.pumpAndSettle();
+  // Le widget peut exister dans l'arbre sans être entièrement visible (donc
+  // pas fiablement "hit-testable") — `ensureVisible` scrolle le strict
+  // nécessaire pour l'amener dans le viewport avant de taper dessus.
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
   await tester.tap(finder);
 }
 

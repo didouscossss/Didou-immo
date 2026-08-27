@@ -1251,3 +1251,73 @@ CompareResult compareModes(PropertyInput form) {
       longue.net.abs() > 0.01 ? ((courte.net - longue.net) / longue.net.abs()) * 100 : 0.0;
   return CompareResult(longue: longue, courte: courte, gagnant: gagnant, ecartPct: ecartPct);
 }
+
+// ---------------------------------------------------------------------------
+// TRI (taux de rendement interne) — rentabilité annualisée de l'argent
+// réellement investi, en tenant compte de l'effet de levier et de la
+// revente finale (contrairement au rendement net qui ne regarde qu'une
+// année type).
+// ---------------------------------------------------------------------------
+
+/// Résout `r` tel que la somme des flux actualisés soit nulle, par
+/// bissection — robuste pour une série de flux classique (une sortie
+/// initiale, puis des flux qui changent de signe au plus une fois), qui est
+/// le cas de tous les scénarios immobiliers réalistes traités ici.
+double? _solveIrr(List<double> cashFlows) {
+  if (cashFlows.isEmpty || cashFlows.first >= 0) return null;
+
+  double npv(double r) {
+    var sum = 0.0;
+    for (var t = 0; t < cashFlows.length; t++) {
+      sum += cashFlows[t] / pow(1 + r, t);
+    }
+    return sum;
+  }
+
+  var lo = -0.99, hi = 5.0;
+  final npvLo = npv(lo), npvHi = npv(hi);
+  if (npvLo.isNaN || npvHi.isNaN || npvLo.sign == npvHi.sign) return null;
+  for (var i = 0; i < 100; i++) {
+    final mid = (lo + hi) / 2;
+    final npvMid = npv(mid);
+    if (npvMid.abs() < 1e-6) return mid;
+    if (npvMid.sign == npv(lo).sign) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  return (lo + hi) / 2;
+}
+
+class TriResult {
+  /// Taux annuel, en pourcentage (8.2 == 8,2 %) — `null` si non calculable
+  /// (pas d'apport réel investi, ou série de flux dégénérée).
+  final double? tauxPct;
+  final List<double> cashFlows;
+  const TriResult({required this.tauxPct, required this.cashFlows});
+}
+
+/// TRI sur la durée de détention [years] (par défaut celle du formulaire) :
+/// flux 0 = -apport réellement décaissé, flux 1..N-1 = cash-flow annuel
+/// courant, flux N = cash-flow + capital net récupéré à la revente (prix
+/// net d'agence et d'impôt sur la plus-value, remboursement du capital
+/// restant dû déduit).
+TriResult computeTri(PropertyInput f, CoreResult core, {int? years}) {
+  final n = years ?? f.dureeProjection;
+  if (core.apport <= 0 || n <= 0) return const TriResult(tauxPct: null, cashFlows: []);
+
+  final cashFlowAnnuel = core.cashflowMensuel * 12;
+  final flows = <double>[-core.apport];
+  for (var y = 1; y < n; y++) {
+    flows.add(cashFlowAnnuel);
+  }
+  final valeurRevente = core.prixTotal * pow(1 + f.croissanceValeur / 100, n);
+  final pv = computePlusValue(f, core, valeurRevente, n);
+  final capitalRestant = remainingBalance(core.montantEmprunte, f.tauxPct, f.dureePretAns, n.toDouble());
+  final netRevente = pv.plusValueNette + core.prixTotal - capitalRestant;
+  flows.add(cashFlowAnnuel + netRevente);
+
+  final r = _solveIrr(flows);
+  return TriResult(tauxPct: r == null ? null : r * 100, cashFlows: flows);
+}

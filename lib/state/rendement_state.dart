@@ -84,6 +84,7 @@ class RendementState extends ChangeNotifier {
 
   ScoreResult get score => computeScore(form, core, refInfoAjuste);
   CompareResult get comparaison => compareModes(form);
+  TriResult get tri => computeTri(form, core);
 
   Future<void> load() async {
     try {

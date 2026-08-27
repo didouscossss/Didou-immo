@@ -33,6 +33,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final first = projection.first;
     final plusValueEquity = last.equity - first.equity;
     final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
+    final tri = state.tri;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -146,6 +147,36 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             ]),
           ]),
         ),
+        if (!isNovice)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Icon(Icons.insights_outlined, size: 15, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Text('TRI sur ${form.dureeProjection} ans', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              ]),
+              const SizedBox(height: 10),
+              if (tri.tauxPct == null)
+                Text(
+                  form.apport <= 0
+                      ? 'Renseigne un apport (onglet Bien) pour calculer le taux de rendement interne.'
+                      : "Le taux de rendement interne n'a pas pu être calculé avec ces paramètres.",
+                  style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5)),
+                )
+              else ...[
+                Text('${fmt(tri.tauxPct!, 1)} %',
+                    style: AppTextStyles.mono(fontSize: 28, color: tri.tauxPct! >= 0 ? AppColors.accent : AppColors.alert)),
+                const SizedBox(height: 6),
+                Text(
+                  "Rentabilité annualisée de l'argent réellement investi (l'apport), effet de levier bancaire inclus — cash-flows sur la période puis revente nette d'impôt et de capital restant dû. C'est le chiffre à comparer à d'autres placements (assurance-vie, bourse...), contrairement au rendement net qui ne regarde qu'une année type.",
+                  style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55)),
+                ),
+              ],
+            ]),
+          ),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
           const SizedBox(width: 8),
