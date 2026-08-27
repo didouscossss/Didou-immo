@@ -32,6 +32,8 @@ dependencies:
   google_fonts: ^6.2.1       # Fraunces / Inter / Space Mono
   flutter_map: ^7.0.2        # carte de France (onglet Carte)
   latlong2: ^0.9.1           # type LatLng pour flutter_map
+  pdf: ^3.11.1                # génération du PDF exporté
+  printing: ^5.13.4           # aperçu/partage/impression du PDF (web + Android)
 
   shared_preferences: ^2.3.2
 

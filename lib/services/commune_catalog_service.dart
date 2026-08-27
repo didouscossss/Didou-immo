@@ -36,8 +36,11 @@ class CommunePoint {
 }
 
 const _minPopulation = 1500;
-const _cacheKey = 'commune-catalog-v1';
-const _cacheDateKey = 'commune-catalog-v1-date';
+// v2 : coordonnées de la mairie plutôt que le centroïde géométrique de la
+// commune (souvent décalé du bourg pour les communes au territoire étalé) —
+// bump de version pour invalider l'ancien cache v1.
+const _cacheKey = 'commune-catalog-v2';
+const _cacheDateKey = 'commune-catalog-v2-date';
 const _cacheMaxAge = Duration(days: 30);
 
 /// Charge la liste des communes de France (≥1500 habitants) pour l'onglet
@@ -73,7 +76,10 @@ class CommuneCatalogService {
 
   Future<List<CommunePoint>> _fetchAndCache(SharedPreferences prefs) async {
     final uri = Uri.https('geo.api.gouv.fr', '/communes', {
-      'fields': 'nom,code,centre,population,departement',
+      // 'mairie' (coordonnées de la mairie) plutôt que 'centre' (centroïde
+      // géométrique du territoire communal, parfois décalé du bourg réel
+      // pour les petites communes) — plus fiable visuellement sur la carte.
+      'fields': 'nom,code,mairie,population,departement',
       'format': 'json',
     });
     try {
@@ -85,7 +91,7 @@ class CommuneCatalogService {
         final j = raw as Map<String, dynamic>;
         final population = (j['population'] as num?)?.toInt() ?? 0;
         if (population < _minPopulation) continue;
-        final coords = (j['centre'] as Map<String, dynamic>?)?['coordinates'] as List?;
+        final coords = (j['mairie'] as Map<String, dynamic>?)?['coordinates'] as List?;
         if (coords == null || coords.length < 2) continue;
         final departement = j['departement'] as Map<String, dynamic>?;
         result.add(CommunePoint(
