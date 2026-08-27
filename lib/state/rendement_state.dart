@@ -241,10 +241,10 @@ class RendementState extends ChangeNotifier {
   /// Marque un bien enregistré comme acheté (ou revient en arrière) —
   /// indépendant du formulaire en cours d'édition, met à jour directement
   /// le bien correspondant dans [biens].
-  Future<void> setPropertyAchete(String id, bool achete) async {
+  Future<void> setPropertyAchete(String id, bool achete, {DateTime? dateAchat}) async {
     final idx = biens.indexWhere((b) => b.id == id);
     if (idx == -1) return;
-    final newForm = biens[idx].form.copyWith(achete: achete);
+    final newForm = biens[idx].form.copyWith(achete: achete, dateAchat: dateAchat);
     if (_uid != null) {
       await _firestore.saveProperty(_uid!, id, newForm.toJson());
       return; // le flux Firestore mettra `biens` à jour automatiquement.

@@ -34,6 +34,12 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final plusValueEquity = last.equity - first.equity;
     final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
     final tri = state.tri;
+    // Années écoulées depuis l'achat réel (si le bien a été marqué "acquis"
+    // avec une date, voir l'onglet Comparer) — sert de repère "aujourd'hui"
+    // sur le graphique et le tableau d'amortissement, année 0 du graphique
+    // restant la date d'achat.
+    final anneesDetention =
+        (form.achete && form.dateAchat != null) ? DateTime.now().difference(form.dateAchat!).inDays / 365.25 : null;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -43,7 +49,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
         const SizedBox(height: 12),
         Row(
-          children: [10, 15, 20].map((y) {
+          children: [10, 15, 20, 25, 30].map((y) {
             final active = form.dureeProjection == y;
             return Expanded(
               child: Padding(
@@ -58,13 +64,33 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: Text('$y ans', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink)),
+                    child: Text('$y ans',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink)),
                   ),
                 ),
               ),
             );
           }).toList(),
         ),
+        if (anneesDetention != null) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+            child: Row(children: [
+              Icon(Icons.event_available_outlined, size: 14, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Acquis le ${dateFr(form.dateAchat!)} — ${anneesDetention < 1 ? "moins d'un an" : '${anneesDetention.floor()} an${anneesDetention.floor() > 1 ? 's' : ''}'} de détention, repéré "Aujourd\'hui" sur le graphique',
+                  style: AppTextStyles.sans(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.accent),
+                ),
+              ),
+            ]),
+          ),
+        ],
         const SizedBox(height: 16),
         Row(children: [
           Expanded(child: NumberField(label: 'Croissance loyers', value: form.croissanceLoyer, suffix: '%/an', onChanged: (v) => state.updateForm((f) => f.copyWith(croissanceLoyer: v)))),
@@ -92,7 +118,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           margin: const EdgeInsets.only(bottom: 24),
           decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(children: [
-            SizedBox(height: 200, child: _buildChart(projection)),
+            SizedBox(height: 200, child: _buildChart(projection, anneesDetention)),
             const SizedBox(height: 4),
             Wrap(spacing: 16, alignment: WrapAlignment.center, children: [
               _legendDot('Valeur du bien', AppColors.gold),
@@ -117,7 +143,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             ]),
           ),
         ),
-        if (_showAmortissement) _buildAmortissementTable(state.amortissement),
+        if (_showAmortissement) _buildAmortissementTable(state.amortissement, anneesDetention),
         const SectionTitle('Simulation de revente'),
         if (isNovice)
           Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
@@ -191,13 +217,14 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     );
   }
 
-  Widget _buildChart(List<ProjectionPoint> projection) {
+  Widget _buildChart(List<ProjectionPoint> projection, double? anneesDetention) {
     List<FlSpot> spotsFor(double Function(ProjectionPoint) pick) =>
         projection.map((p) => FlSpot(p.year.toDouble(), pick(p))).toList();
 
     final allValues = projection.expand((p) => [p.valeurBien, p.capitalRestant, p.equity]);
     final maxY = allValues.fold<double>(0, (a, b) => a > b ? a : b);
     final minY = allValues.fold<double>(0, (a, b) => a < b ? a : b);
+    final maxYear = projection.last.year.toDouble();
 
     return LineChart(
       LineChartData(
@@ -205,6 +232,22 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         maxY: maxY <= 0 ? 1 : maxY * 1.1,
         gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 4, getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 1)),
         borderData: FlBorderData(show: false),
+        extraLinesData: anneesDetention == null
+            ? const ExtraLinesData()
+            : ExtraLinesData(verticalLines: [
+                VerticalLine(
+                  x: anneesDetention.clamp(0, maxYear),
+                  color: AppColors.ink.withValues(alpha: 0.4),
+                  strokeWidth: 1.5,
+                  dashArray: [4, 3],
+                  label: VerticalLineLabel(
+                    show: true,
+                    alignment: Alignment.topRight,
+                    style: AppTextStyles.sans(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.ink.withValues(alpha: 0.6)),
+                    labelResolver: (_) => "Aujourd'hui",
+                  ),
+                ),
+              ]),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -251,7 +294,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     ]);
   }
 
-  Widget _buildAmortissementTable(List<AmortissementRow> rows) {
+  Widget _buildAmortissementTable(List<AmortissementRow> rows, double? anneesDetention) {
     if (rows.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -261,6 +304,9 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
       );
     }
+    // Ligne la plus proche de l'année en cours de détention, mise en avant
+    // pour situer "où on en est" dans le remboursement réel du prêt.
+    final anneeActuelle = anneesDetention?.ceil().clamp(1, rows.last.annee);
     const colWidth = 84.0;
     Widget cell(String text, {bool header = false}) => SizedBox(
           width: colWidth,
@@ -286,15 +332,23 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
             cell('Restant dû', header: true),
           ]),
           Container(margin: const EdgeInsets.symmetric(vertical: 6), height: 1, color: AppColors.border),
-          ...rows.map((r) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(children: [
-                  SizedBox(width: 40, child: Text('${r.annee}', style: AppTextStyles.mono(fontSize: 11.5, color: AppColors.ink))),
-                  cell(eur(r.interets)),
-                  cell(eur(r.capitalRembourse)),
-                  cell(eur(r.capitalRestant)),
-                ]),
-              )),
+          ...rows.map((r) {
+            final isNow = r.annee == anneeActuelle;
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              margin: const EdgeInsets.symmetric(vertical: 1),
+              decoration: isNow ? BoxDecoration(color: AppColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)) : null,
+              child: Row(children: [
+                SizedBox(
+                  width: 40,
+                  child: Text('${r.annee}', style: AppTextStyles.mono(fontSize: 11.5, fontWeight: isNow ? FontWeight.bold : FontWeight.normal, color: isNow ? AppColors.accent : AppColors.ink)),
+                ),
+                cell(eur(r.interets)),
+                cell(eur(r.capitalRembourse)),
+                cell(eur(r.capitalRestant)),
+              ]),
+            );
+          }),
         ]),
       ),
     );

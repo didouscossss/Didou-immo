@@ -180,8 +180,13 @@ class PropertyInput {
 
   /// `true` une fois l'achat conclu — distingue, dans les biens enregistrés,
   /// le patrimoine réellement détenu des projets encore à l'étude/en
-  /// standby. N'affecte aucun calcul, uniquement l'affichage.
+  /// standby. N'affecte aucun calcul de rendement, uniquement l'affichage.
   final bool achete;
+  /// Date d'achat effective — renseignée en marquant le bien "acquis" (voir
+  /// `RendementState.setPropertyAchete`). Sert à situer le bien dans le
+  /// temps sur la projection patrimoniale (repère "aujourd'hui" sur le
+  /// graphique, ligne mise en avant dans le tableau d'amortissement).
+  final DateTime? dateAchat;
 
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
@@ -229,6 +234,7 @@ class PropertyInput {
     this.notaireAuto = true,
     this.travauxAuto = true,
     this.achete = false,
+    this.dateAchat,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -321,6 +327,7 @@ class PropertyInput {
     bool? notaireAuto,
     bool? travauxAuto,
     bool? achete,
+    DateTime? dateAchat,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -364,6 +371,7 @@ class PropertyInput {
       notaireAuto: notaireAuto ?? this.notaireAuto,
       travauxAuto: travauxAuto ?? this.travauxAuto,
       achete: achete ?? this.achete,
+      dateAchat: dateAchat ?? this.dateAchat,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,
