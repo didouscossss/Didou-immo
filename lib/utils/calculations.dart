@@ -124,6 +124,11 @@ class PropertyInput {
   final double surface;
   final String typeBien;
   final double capacite;
+  /// Location meublée ou nue — n'a de sens qu'en longue durée (la courte
+  /// durée est toujours meublée par nature) ; détermine les régimes
+  /// fiscaux éligibles dans [computeRegimes] (micro-foncier/réel foncier
+  /// pour le nu, LMNP micro-BIC/réel pour le meublé).
+  final bool meuble;
 
   final double prix, notaire, travaux;
 
@@ -166,6 +171,7 @@ class PropertyInput {
     required this.surface,
     this.typeBien = 't2',
     this.capacite = 3,
+    this.meuble = false,
     required this.prix,
     required this.notaire,
     required this.travaux,
@@ -254,6 +260,7 @@ class PropertyInput {
     double? surface,
     String? typeBien,
     double? capacite,
+    bool? meuble,
     double? prix,
     double? notaire,
     double? travaux,
@@ -293,6 +300,7 @@ class PropertyInput {
       surface: surface ?? this.surface,
       typeBien: typeBien ?? this.typeBien,
       capacite: capacite ?? this.capacite,
+      meuble: meuble ?? this.meuble,
       prix: prix ?? this.prix,
       notaire: notaire ?? this.notaire,
       travaux: travaux ?? this.travaux,
@@ -464,7 +472,11 @@ List<RegimeResult> computeRegimes(PropertyInput f, CoreResult core) {
   final interetsAn1 = core.interetsAn1;
   final prixTotal = core.prixTotal;
   final tmi = f.tmi / 100;
-  final eligibleMicroFoncier = f.mode == RentalMode.longue && loyerAnnuelBrut <= 15000;
+  // La courte durée est toujours meublée par nature (location saisonnière) ;
+  // en longue durée, ça dépend du choix meublé/nu du bien (voir onglet Bien).
+  final estMeuble = f.mode == RentalMode.courte || f.meuble;
+  final estNue = f.mode == RentalMode.longue && !f.meuble;
+  final eligibleMicroFoncier = estNue && loyerAnnuelBrut <= 15000;
   final amortAnnuel = (prixTotal * 0.85) / 25;
 
   final defs = <({String id, String label, bool eligible, String note, double Function() base})>[
@@ -478,21 +490,21 @@ List<RegimeResult> computeRegimes(PropertyInput f, CoreResult core) {
     (
       id: 'reel',
       label: 'Réel foncier',
-      eligible: f.mode == RentalMode.longue,
+      eligible: estNue,
       note: "Location nue. Déduction des charges réelles + intérêts d'emprunt.",
       base: () => max(0, loyerAnnuelBrut - chargesAnnuelles - interetsAn1),
     ),
     (
       id: 'lmnpMicro',
       label: 'LMNP micro-BIC',
-      eligible: true,
+      eligible: estMeuble,
       note: 'Location meublée. Abattement forfaitaire 50 % (71 % si tourisme classé).',
       base: () => max(0, loyerAnnuelBrut * 0.5),
     ),
     (
       id: 'lmnpReel',
       label: 'LMNP réel',
-      eligible: true,
+      eligible: estMeuble,
       note: 'Location meublée. Amortissement du bien + charges réelles déduits.',
       base: () => max(0, loyerAnnuelBrut - chargesAnnuelles - interetsAn1 - amortAnnuel),
     ),
