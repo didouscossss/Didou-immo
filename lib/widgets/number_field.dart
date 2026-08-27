@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
+import 'glossary_icon.dart';
 
 /// Champ numérique labellisé — équivalent de `Field` du prototype.
 class NumberField extends StatefulWidget {
@@ -9,6 +10,9 @@ class NumberField extends StatefulWidget {
   final ValueChanged<double> onChanged;
   final String? suffix;
   final String? hint;
+  /// Définition courte affichée via une icône "?" à côté du libellé —
+  /// pour les champs au vocabulaire technique, sans quitter le formulaire.
+  final String? glossaryDefinition;
 
   const NumberField({
     super.key,
@@ -17,6 +21,7 @@ class NumberField extends StatefulWidget {
     required this.onChanged,
     this.suffix,
     this.hint,
+    this.glossaryDefinition,
   });
 
   @override
@@ -70,6 +75,8 @@ class _NumberFieldState extends State<NumberField> {
                 style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
               ),
             ),
+            if (widget.glossaryDefinition != null)
+              GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
             if (widget.hint != null) ...[
               const SizedBox(width: 6),
               Text(widget.hint!,

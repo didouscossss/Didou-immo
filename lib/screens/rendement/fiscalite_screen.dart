@@ -45,6 +45,7 @@ class FiscaliteScreen extends StatelessWidget {
           label: "Tranche marginale d'imposition (TMI)",
           value: form.tmi,
           suffix: '%',
+          glossaryDefinition: 'Le taux d\'impôt qui s\'applique à la dernière tranche de tes revenus (0, 11, 30, 41 ou 45 %) — pas ton taux moyen. Regarde ton dernier avis d\'imposition si tu ne le connais pas.',
           onChanged: (v) => state.updateForm((f) => f.copyWith(tmi: v)),
         ),
         if (isNovice)

@@ -347,7 +347,13 @@ class _CalcScreenState extends State<CalcScreen> {
           Row(children: [
             Expanded(child: NumberField(label: 'Loyer mensuel', value: form.loyer, suffix: '€', onChanged: (v) => set((f) => f.copyWith(loyer: v)))),
             const SizedBox(width: 12),
-            Expanded(child: NumberField(label: 'Vacance locative', value: form.vacancePct, suffix: '%', onChanged: (v) => set((f) => f.copyWith(vacancePct: v)))),
+            Expanded(child: NumberField(
+              label: 'Vacance locative',
+              value: form.vacancePct,
+              suffix: '%',
+              glossaryDefinition: 'Part de l\'année où le logement reste sans locataire entre deux baux (recherche, travaux, période creuse). Compte 4 à 8 % par sécurité, même si tu penses louer facilement.',
+              onChanged: (v) => set((f) => f.copyWith(vacancePct: v)),
+            )),
           ]),
           if (isNovice) const Tip('La "vacance locative" représente les mois sans locataire entre deux baux. Compte 4 à 8 % par sécurité, même si tu penses louer facilement.'),
           const SizedBox(height: 12),
@@ -413,7 +419,13 @@ class _CalcScreenState extends State<CalcScreen> {
         Row(children: [
           Expanded(child: NumberField(label: 'Taxe foncière / an', value: form.taxeFonciere, suffix: '€', onChanged: (v) => set((f) => f.copyWith(taxeFonciere: v)))),
           const SizedBox(width: 12),
-          Expanded(child: NumberField(label: 'Assurance PNO / an', value: form.assurance, suffix: '€', onChanged: (v) => set((f) => f.copyWith(assurance: v)))),
+          Expanded(child: NumberField(
+            label: 'Assurance PNO / an',
+            value: form.assurance,
+            suffix: '€',
+            glossaryDefinition: 'PNO = Propriétaire Non Occupant. Couvre le logement (dégâts des eaux, incendie...) pendant qu\'il est loué ou vacant — distincte de l\'assurance habitation que souscrit le locataire.',
+            onChanged: (v) => set((f) => f.copyWith(assurance: v)),
+          )),
         ]),
         const SizedBox(height: 24),
 
@@ -658,6 +670,7 @@ class _CalcScreenState extends State<CalcScreen> {
             value: form.notaire,
             suffix: '€',
             hint: form.notaireAuto ? '${notaireDefaultPct.round()} % auto' : null,
+            glossaryDefinition: 'Malgré leur nom, l\'essentiel revient à l\'État (droits de mutation) et aux collectivités, pas au notaire lui-même — environ 7-8 % du prix dans l\'ancien, 2-3 % dans le neuf.',
             onChanged: (v) => set((f) => f.copyWith(notaire: v, notaireAuto: false)),
           ),
         ),
