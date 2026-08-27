@@ -106,7 +106,7 @@ class _CommunePickerState extends State<CommunePicker> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(children: [
-              Icon(Icons.search, size: 15, color: AppColors.ink.withValues(alpha: 0.4)),
+              Icon(Icons.search, size: 15, color: const Color(0xFF16211C).withValues(alpha: 0.4)),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -120,15 +120,15 @@ class _CommunePickerState extends State<CommunePicker> {
                     hintText: !_open && commune != null
                         ? '${commune.nom}${commune.codePostal.isNotEmpty ? ' (${commune.codePostal})' : ''}'
                         : 'Ville, village, code postal...',
-                    hintStyle: AppTextStyles.sans(fontSize: 14, color: AppColors.ink),
+                    hintStyle: AppTextStyles.sans(fontSize: 14, color: const Color(0xFF16211C)),
                   ),
-                  style: AppTextStyles.sans(fontSize: 14, color: AppColors.ink),
+                  style: AppTextStyles.sans(fontSize: 14, color: const Color(0xFF16211C)),
                 ),
               ),
               if (_status == _SearchStatus.loading)
                 const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2))
               else
-                Icon(Icons.expand_more, size: 15, color: AppColors.ink.withValues(alpha: 0.4)),
+                Icon(Icons.expand_more, size: 15, color: const Color(0xFF16211C).withValues(alpha: 0.4)),
             ]),
           ),
           if (_open)
@@ -180,13 +180,13 @@ class _CommunePickerState extends State<CommunePicker> {
       return Padding(
         padding: const EdgeInsets.all(12),
         child: Text('Tape au moins 2 lettres — n\'importe quel village compte.',
-            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.4))),
+            style: AppTextStyles.sans(fontSize: 12, color: const Color(0xFF16211C).withValues(alpha: 0.5))),
       );
     }
     if (_status == _SearchStatus.ok && _results.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(12),
-        child: Text('Aucune commune trouvée', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.4))),
+        child: Text('Aucune commune trouvée', style: AppTextStyles.sans(fontSize: 12, color: const Color(0xFF16211C).withValues(alpha: 0.5))),
       );
     }
     return ListView.builder(
@@ -202,17 +202,17 @@ class _CommunePickerState extends State<CommunePicker> {
               Expanded(
                 child: RichText(
                   text: TextSpan(children: [
-                    TextSpan(text: c.nom, style: AppTextStyles.sans(fontSize: 13.5, color: AppColors.ink)),
+                    TextSpan(text: c.nom, style: AppTextStyles.sans(fontSize: 13.5, color: const Color(0xFF16211C))),
                     TextSpan(
                         text: '  ${c.codesPostaux.isNotEmpty ? c.codesPostaux.first : ''} · ${c.departementNom ?? ''}',
-                        style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
+                        style: AppTextStyles.sans(fontSize: 11, color: const Color(0xFF16211C).withValues(alpha: 0.55))),
                   ]),
                 ),
               ),
               Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.people_outline, size: 11, color: AppColors.ink.withValues(alpha: 0.4)),
+                Icon(Icons.people_outline, size: 11, color: const Color(0xFF16211C).withValues(alpha: 0.4)),
                 const SizedBox(width: 3),
-                Text(fmt(c.population, 0), style: AppTextStyles.mono(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.4))),
+                Text(fmt(c.population, 0), style: AppTextStyles.mono(fontSize: 10.5, color: const Color(0xFF16211C).withValues(alpha: 0.5))),
               ]),
             ]),
           ),

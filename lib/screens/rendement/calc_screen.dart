@@ -533,13 +533,13 @@ class _CalcScreenState extends State<CalcScreen> {
                 child: Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('RENTABILITÉ NETTE', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.5))),
+                      Text('RENTABILITÉ NETTE', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
                       Text('${fmt(core.net, 1)}% → ${fmt(stressCore.net, 1)}%', style: AppTextStyles.mono(fontSize: 14, color: AppColors.alert)),
                     ]),
                   ),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('CASH-FLOW /MOIS', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.5))),
+                      Text('CASH-FLOW /MOIS', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
                       Text('${fmt(core.cashflowMensuel)}€ → ${fmt(stressCore.cashflowMensuel)}€',
                           style: AppTextStyles.mono(fontSize: 14, color: stressCore.cashflowMensuel < 0 ? AppColors.alert : AppColors.ink)),
                     ]),
@@ -621,7 +621,7 @@ class _CalcScreenState extends State<CalcScreen> {
 
   Widget _statMini(String label, String value, Color color) {
     return Column(children: [
-      Text(label, style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.5))),
+      Text(label, style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.65))),
       const SizedBox(height: 2),
       Text(value, style: AppTextStyles.mono(fontSize: 15, color: color)),
     ]);
@@ -629,7 +629,7 @@ class _CalcScreenState extends State<CalcScreen> {
 
   Widget _statBlock(String label, String value, Color color) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+      Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.65))),
       const SizedBox(height: 4),
       Text(value, style: AppTextStyles.mono(fontSize: 16, color: color)),
     ]);

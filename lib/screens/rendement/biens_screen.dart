@@ -91,7 +91,7 @@ class BiensScreen extends StatelessWidget {
               child: Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Row(children: [
                 Expanded(
                   child: Row(children: [
@@ -104,7 +104,7 @@ class BiensScreen extends StatelessWidget {
                             child: Text(b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom,
                                 overflow: TextOverflow.ellipsis, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
                           ),
-                          if (b.form.mode == RentalMode.courte) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.bed_outlined, size: 11, color: Colors.black38)),
+                          if (b.form.mode == RentalMode.courte) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.bed_outlined, size: 11, color: AppColors.ink.withValues(alpha: 0.35))),
                         ]),
                         Text('${b.form.commune?.nom ?? '—'} · ${eur(b.form.prix)} · net ${fmt(b.core.net, 1)}%',
                             style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -125,7 +125,7 @@ class BiensScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Column(children: [
               CompareBar(
                 label: 'Rentabilité nette (%)',
