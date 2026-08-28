@@ -8,6 +8,14 @@ class ReferralScreen extends StatefulWidget {
   final String? myReferralCode;
   const ReferralScreen({super.key, required this.uid, this.myReferralCode});
 
+  /// Parrainage désactivé côté UI pour la version finale : la Cloud
+  /// Function `applyReferralCode` qui le fait fonctionner n'est pas
+  /// déployée (voir README, étape 1bis). Le code (service, règles
+  /// Firestore, Cloud Function, attribution auto d'un code à chaque
+  /// compte) reste en place tel quel — repasser ce flag à `true` suffit
+  /// pour le réactiver le jour où la fonction sera déployée.
+  static const bool referralEnabled = false;
+
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
 }
@@ -58,69 +66,72 @@ class _ReferralScreenState extends State<ReferralScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Codes & parrainage')),
+      appBar: AppBar(
+          title: Text(ReferralScreen.referralEnabled ? 'Codes & parrainage' : 'Code cadeau')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          if (widget.myReferralCode != null) ...[
-            const Text('Ton code de parrainage',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F0E6),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(widget.myReferralCode!,
-                      style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16)),
-                  const Icon(Icons.share, size: 18),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Partage-le : toi et ton filleul recevez chacun un bonus '
-              "équivalent à -10% sur l'abonnement.",
-              style: TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-            const SizedBox(height: 28),
-          ],
-          const Text('J\'ai un code de parrainage',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _parrainageController,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    hintText: 'DIDOU-XXXX',
-                    border: OutlineInputBorder(),
-                  ),
+          if (ReferralScreen.referralEnabled) ...[
+            if (widget.myReferralCode != null) ...[
+              const Text('Ton code de parrainage',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F0E6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(widget.myReferralCode!,
+                        style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
+                    const Icon(Icons.share, size: 18),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: _loadingParrainage ? null : _applyParrainage,
-                child: const Text('Valider'),
+              const SizedBox(height: 4),
+              const Text(
+                'Partage-le : toi et ton filleul recevez chacun un bonus '
+                "équivalent à -10% sur l'abonnement.",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
+              const SizedBox(height: 28),
             ],
-          ),
-          if (_parrainageMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(_parrainageMessage!,
-                  style: const TextStyle(fontSize: 12.5)),
+            const Text('J\'ai un code de parrainage',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _parrainageController,
+                    textCapitalization: TextCapitalization.characters,
+                    decoration: const InputDecoration(
+                      hintText: 'DIDOU-XXXX',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _loadingParrainage ? null : _applyParrainage,
+                  child: const Text('Valider'),
+                ),
+              ],
             ),
-          const SizedBox(height: 28),
+            if (_parrainageMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_parrainageMessage!,
+                    style: const TextStyle(fontSize: 12.5)),
+              ),
+            const SizedBox(height: 28),
+          ],
           const Text('J\'ai un code cadeau',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
           const SizedBox(height: 8),

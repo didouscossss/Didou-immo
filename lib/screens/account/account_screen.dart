@@ -52,7 +52,7 @@ class AccountScreen extends StatelessWidget {
               builder: (_) => ReferralScreen(uid: user.uid, myReferralCode: account.referralCode),
             )),
             icon: const Icon(Icons.card_giftcard_outlined),
-            label: const Text('Parrainage & codes cadeaux'),
+            label: const Text('Code cadeau'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
               side: BorderSide(color: AppColors.border),
