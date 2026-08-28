@@ -188,6 +188,13 @@ class PropertyInput {
   /// graphique, ligne mise en avant dans le tableau d'amortissement).
   final DateTime? dateAchat;
 
+  /// `true` une fois le bien revendu — un bien vendu n'est plus compté dans
+  /// le patrimoine actuellement détenu (voir l'onglet Comparer), mais garde
+  /// son historique d'achat/revente. Implique `achete == true`.
+  final bool vendu;
+  final DateTime? dateVente;
+  final double? prixVente;
+
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
 
@@ -235,6 +242,9 @@ class PropertyInput {
     this.travauxAuto = true,
     this.achete = false,
     this.dateAchat,
+    this.vendu = false,
+    this.dateVente,
+    this.prixVente,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -328,6 +338,9 @@ class PropertyInput {
     bool? travauxAuto,
     bool? achete,
     DateTime? dateAchat,
+    bool? vendu,
+    DateTime? dateVente,
+    double? prixVente,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -372,6 +385,9 @@ class PropertyInput {
       travauxAuto: travauxAuto ?? this.travauxAuto,
       achete: achete ?? this.achete,
       dateAchat: dateAchat ?? this.dateAchat,
+      vendu: vendu ?? this.vendu,
+      dateVente: dateVente ?? this.dateVente,
+      prixVente: prixVente ?? this.prixVente,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,
