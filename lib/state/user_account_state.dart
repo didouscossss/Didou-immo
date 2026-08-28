@@ -85,6 +85,36 @@ class UserAccountState extends ChangeNotifier {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// Fournisseur du compte connecté, pour que l'UI sache quel flux de
+  /// réauthentification proposer avant suppression ('password' -> demander
+  /// le mot de passe, sinon -> redemander le consentement Google).
+  String? get authProviderId => _auth.currentProviderId;
+
+  /// Supprime définitivement le compte : réauthentifie (Firebase l'exige
+  /// pour cette opération sensible), efface les données Firestore, puis le
+  /// compte Auth lui-même — dans cet ordre, sans quoi les règles Firestore
+  /// refuseraient l'effacement une fois le compte supprimé. Renvoie un
+  /// message d'erreur, ou null en cas de succès (le flux d'auth global
+  /// bascule alors seul vers l'écran de connexion, voir `AppRoot`).
+  Future<String?> deleteAccount({String? password}) async {
+    final u = user;
+    if (u == null) return 'Aucun compte connecté.';
+    try {
+      if (password != null) {
+        await _auth.reauthenticateWithEmail(u.email!, password);
+      } else {
+        await _auth.reauthenticateWithGoogle();
+      }
+      await _firestore.deleteAllUserData(u.uid);
+      await _auth.deleteAccount();
+      return null;
+    } on fb.FirebaseAuthException catch (e) {
+      return e.message ?? 'Une erreur est survenue.';
+    } catch (_) {
+      return 'Une erreur est survenue.';
+    }
+  }
+
   /// Comptabilise un essai gratuit utilisé (bien sauvegardé sans abonnement
   /// ni code cadeau) — à appeler après une sauvegarde réussie.
   Future<void> recordFreeSave() async {

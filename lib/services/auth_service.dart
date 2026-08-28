@@ -44,4 +44,40 @@ class AuthService {
   Future<void> sendPasswordReset(String email) {
     return _auth.sendPasswordResetEmail(email: email);
   }
+
+  /// Fournisseur du compte connecté ('password', 'google.com'...), pour
+  /// savoir quel flux de réauthentification proposer avant suppression.
+  String? get currentProviderId =>
+      _auth.currentUser?.providerData.isNotEmpty == true ? _auth.currentUser!.providerData.first.providerId : null;
+
+  /// Requis par Firebase avant une opération sensible (suppression de
+  /// compte) si la dernière connexion date de trop longtemps.
+  Future<void> reauthenticateWithEmail(String email, String password) {
+    final credential = EmailAuthProvider.credential(email: email, password: password);
+    return _auth.currentUser!.reauthenticateWithCredential(credential);
+  }
+
+  /// Équivalent pour un compte connecté via Google — redemande le
+  /// consentement Google plutôt qu'un mot de passe (il n'y en a pas).
+  Future<void> reauthenticateWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      throw FirebaseAuthException(code: 'reauth-cancelled', message: 'Reconnexion annulée.');
+    }
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    await _auth.currentUser!.reauthenticateWithCredential(credential);
+  }
+
+  /// Supprime le compte Firebase Auth. À appeler seulement après avoir
+  /// effacé les données Firestore associées (voir
+  /// `FirestoreService.deleteAllUserData`) : une fois le compte supprimé,
+  /// le client perd son jeton d'authentification et les règles Firestore
+  /// (`isOwner`) refuseraient toute suppression ultérieure.
+  Future<void> deleteAccount() {
+    return _auth.currentUser!.delete();
+  }
 }
