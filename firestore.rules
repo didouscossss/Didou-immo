@@ -61,7 +61,12 @@ service cloud.firestore {
     }
 
     match /referralCodes/{code} {
-      allow read: if isSignedIn();
+      // `get` seulement (pas `list`) : le code est toujours lu par son ID
+      // exact (voir referral_service.dart), jamais par requête filtrée.
+      // Avec `read`, n'importe quel compte connecté aurait pu lister TOUTE
+      // la collection et récupérer chaque code de parrainage + son
+      // `ownerUid` d'un coup.
+      allow get: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
       // `timesUsed` n'est incrémenté que par la Cloud Function
       // `applyReferralCode` (admin, contourne ces règles).
@@ -69,7 +74,11 @@ service cloud.firestore {
     }
 
     match /accessCodes/{code} {
-      allow read: if isSignedIn();
+      // `get` seulement (pas `list`) : idem, un code cadeau n'est jamais lu
+      // que par son ID exact (voir redeemAccessCode) — `read` aurait permis
+      // à n'importe quel compte connecté de lister tous les codes actifs
+      // et de les utiliser lui-même avant les destinataires prévus.
+      allow get: if isSignedIn();
       allow create, delete: if isAdmin();
       // N'autorise que la décrémentation légitime de 1 d'un code actif —
       // jamais une réactivation, un reset, ou toucher un autre champ.

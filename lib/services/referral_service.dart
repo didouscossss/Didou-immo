@@ -44,15 +44,16 @@ class ReferralService {
   /// À appeler à la création de compte : attribue un code de parrainage
   /// unique à l'utilisateur et l'enregistre pour qu'il soit recherchable.
   Future<String> assignReferralCode(String uid) async {
+    // Vérifie l'unicité par lecture directe du document (le code EST l'ID
+    // du document, voir plus bas) plutôt que par une requête filtrée : les
+    // règles Firestore n'autorisent plus que `get` sur `referralCodes`, pas
+    // `list`, pour empêcher un compte connecté d'énumérer tous les codes.
     String code;
-    QuerySnapshot existing;
+    DocumentSnapshot existing;
     do {
       code = generateReferralCode();
-      existing = await _db
-          .collection('referralCodes')
-          .where('code', isEqualTo: code)
-          .get();
-    } while (existing.docs.isNotEmpty);
+      existing = await _db.collection('referralCodes').doc(code).get();
+    } while (existing.exists);
 
     await _db.collection('referralCodes').doc(code).set({
       'code': code,
