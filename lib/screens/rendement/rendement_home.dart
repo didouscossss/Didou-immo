@@ -193,14 +193,15 @@ class _RendementHomeState extends State<RendementHome> {
     setState(() => _active = _Tab.biens);
   }
 
-  // Chaque écran est reconstruit entièrement (clé sur darkMode) quand le
-  // mode nuit change : certains widgets internes sont déclarés `const`
-  // (ex. `SectionTitle`), donc Flutter réutilise la même instance et ne
-  // relit jamais `AppColors.xxx` tant que la branche n'est pas démontée —
-  // sans la clé, les libellés restaient figés dans l'ancienne couleur
-  // jusqu'à changer d'onglet puis revenir.
+  // Chaque écran est reconstruit entièrement (clé sur darkMode + niveau,
+  // les deux pilotant AppColors) à chaque changement de l'un ou l'autre :
+  // certains widgets internes sont déclarés `const` (ex. `SectionTitle`),
+  // donc Flutter réutilise la même instance et ne relit jamais
+  // `AppColors.xxx` tant que la branche n'est pas démontée — sans la clé,
+  // les libellés/fonds restaient figés dans l'ancienne couleur jusqu'à
+  // changer d'onglet puis revenir.
   Widget _buildActiveScreen(RendementState state) {
-    final themeKey = ValueKey(state.darkMode);
+    final themeKey = ValueKey((state.darkMode, state.niveau));
     switch (_active) {
       case _Tab.calc:
         return CalcScreen(key: themeKey, onSave: () => _handleSave(state));
