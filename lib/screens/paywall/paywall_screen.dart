@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../services/billing_service.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
+import '../legal/legal_screens.dart';
 
 /// Affiché quand l'utilisateur a épuisé ses biens gratuits et n'est pas
 /// encore abonné. Propose les deux offres (mensuelle / annuelle).
@@ -119,6 +120,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: const Text('Restaurer mes achats'),
               ),
             ],
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CgvScreen())),
+              child: const Text('Voir les conditions générales de vente'),
+            ),
           ],
         ),
       ),
