@@ -14,15 +14,35 @@ class AppColors {
   static void setDark(bool value) => _dark = value;
   static bool get isDark => _dark;
 
+  /// Mode novice : identité de fond nettement différente du mode avancé —
+  /// famille chaude/dorée (dans la continuité de [gold]) contre le
+  /// beige-vert neutre et plus froid du mode avancé, y compris en mode
+  /// nuit. Piloté par [setNovice], reflète `RendementState.niveau`. Étendu
+  /// à [surface] (cartes) pour que le contraste entre les deux modes se
+  /// voie partout, pas seulement en arrière-plan — texte et accents restent
+  /// identiques pour ne pas perdre en lisibilité.
+  static bool _novice = false;
+  static void setNovice(bool value) => _novice = value;
+
   static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
   static Color get accent => _dark ? const Color(0xFF4FA88A) : const Color(0xFF2F5D50);
   static Color get gold => const Color(0xFFB8935A);
   static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
   static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
-  static Color get paper => _dark ? const Color(0xFF10170F) : const Color(0xFFF4F0E6);
-  /// Fond des cartes/encadrés — `Colors.white` en clair, une surface
-  /// légèrement plus claire que [paper] en sombre.
-  static Color get surface => _dark ? const Color(0xFF1B241C) : const Color(0xFFFFFFFF);
+  static Color get paper {
+    if (_dark) return _novice ? const Color(0xFF241C10) : const Color(0xFF10170F);
+    return _novice ? const Color(0xFFFAE8CC) : const Color(0xFFF4F0E6);
+  }
+
+  /// Fond des cartes/encadrés — `Colors.white` en clair/avancé, une surface
+  /// légèrement plus claire que [paper] en sombre ; teintée chaud en mode
+  /// novice pour rester cohérente avec [paper] plutôt que de flotter en
+  /// blanc/vert neutre dessus.
+  static Color get surface {
+    if (_dark) return _novice ? const Color(0xFF2E2416) : const Color(0xFF1B241C);
+    return _novice ? const Color(0xFFFFFBF2) : const Color(0xFFFFFFFF);
+  }
+
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
 }
 
@@ -42,12 +62,14 @@ class AppTextStyles {
       GoogleFonts.spaceMono(fontSize: fontSize, fontWeight: fontWeight, color: color, letterSpacing: letterSpacing, decoration: decoration);
 }
 
-/// [dark] doit refléter `RendementState.darkMode` — appelé à chaque
-/// changement (voir `main.dart`), pour que le thème Material lui-même
-/// (fond de Scaffold, AppBar...) suive le mode nuit, pas seulement les
-/// widgets qui lisent `AppColors.xxx` directement à chaque rebuild.
-ThemeData buildAppTheme({required bool dark}) {
+/// [dark] doit refléter `RendementState.darkMode`, [novice]
+/// `RendementState.niveau` — appelés à chaque changement (voir `main.dart`),
+/// pour que le thème Material lui-même (fond de Scaffold, AppBar...) suive
+/// le mode nuit et le niveau, pas seulement les widgets qui lisent
+/// `AppColors.xxx` directement à chaque rebuild.
+ThemeData buildAppTheme({required bool dark, required bool novice}) {
   AppColors.setDark(dark);
+  AppColors.setNovice(novice);
   final base = ThemeData(
     useMaterial3: true,
     brightness: dark ? Brightness.dark : Brightness.light,

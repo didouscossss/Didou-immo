@@ -44,7 +44,7 @@ class DidouImmoApp extends StatelessWidget {
         builder: (context, state, _) => MaterialApp(
           title: 'Rendement',
           debugShowCheckedModeBanner: false,
-          theme: buildAppTheme(dark: state.darkMode),
+          theme: buildAppTheme(dark: state.darkMode, novice: state.niveau == NiveauMode.novice),
           // Sans ça, les sélecteurs de date natifs (ex. date d'achat d'un
           // bien) s'affichaient avec les noms de mois/jours en anglais.
           locale: const Locale('fr', 'FR'),
