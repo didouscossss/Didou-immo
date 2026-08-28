@@ -14,11 +14,13 @@ class AppColors {
   static void setDark(bool value) => _dark = value;
   static bool get isDark => _dark;
 
-  /// Mode novice : fond plus doux et coloré (teinte sauge, cohérente avec
-  /// [accent]/[good]) plutôt que le beige neutre du mode avancé — piloté par
-  /// [setNovice], reflète `RendementState.niveau`. N'affecte que le fond de
-  /// page ([paper]) : texte, cartes et accents restent identiques pour ne
-  /// pas perdre en lisibilité ni en cohérence de marque.
+  /// Mode novice : identité de fond nettement différente du mode avancé —
+  /// famille chaude/dorée (dans la continuité de [gold]) contre le
+  /// beige-vert neutre et plus froid du mode avancé, y compris en mode
+  /// nuit. Piloté par [setNovice], reflète `RendementState.niveau`. Étendu
+  /// à [surface] (cartes) pour que le contraste entre les deux modes se
+  /// voie partout, pas seulement en arrière-plan — texte et accents restent
+  /// identiques pour ne pas perdre en lisibilité.
   static bool _novice = false;
   static void setNovice(bool value) => _novice = value;
 
@@ -28,13 +30,19 @@ class AppColors {
   static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
   static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
   static Color get paper {
-    if (_dark) return _novice ? const Color(0xFF16211A) : const Color(0xFF10170F);
-    return _novice ? const Color(0xFFEDF3E7) : const Color(0xFFF4F0E6);
+    if (_dark) return _novice ? const Color(0xFF241C10) : const Color(0xFF10170F);
+    return _novice ? const Color(0xFFFAE8CC) : const Color(0xFFF4F0E6);
   }
 
-  /// Fond des cartes/encadrés — `Colors.white` en clair, une surface
-  /// légèrement plus claire que [paper] en sombre.
-  static Color get surface => _dark ? const Color(0xFF1B241C) : const Color(0xFFFFFFFF);
+  /// Fond des cartes/encadrés — `Colors.white` en clair/avancé, une surface
+  /// légèrement plus claire que [paper] en sombre ; teintée chaud en mode
+  /// novice pour rester cohérente avec [paper] plutôt que de flotter en
+  /// blanc/vert neutre dessus.
+  static Color get surface {
+    if (_dark) return _novice ? const Color(0xFF2E2416) : const Color(0xFF1B241C);
+    return _novice ? const Color(0xFFFFFBF2) : const Color(0xFFFFFFFF);
+  }
+
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
 }
 
