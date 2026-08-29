@@ -623,7 +623,7 @@ class _SuiviDialogState extends State<_SuiviDialog> {
             _field(_loyerController, 'Loyer réellement perçu'),
           ],
           const SizedBox(height: 12),
-          Text('Charges réelles (par poste)', style: AppTextStyles.sans(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.6))),
+          Text('Charges réelles (par mois)', style: AppTextStyles.sans(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.6))),
           const SizedBox(height: 6),
           _field(_coproController, 'Copropriété'),
           const SizedBox(height: 8),
