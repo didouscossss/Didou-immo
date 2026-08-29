@@ -289,14 +289,24 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
                 _ecartRow('Assurance', ecart.assuranceTheorique, ecart.assuranceReel, plusEstMieux: false),
               ],
               const SizedBox(height: 16),
-              CheckboxListTile(
-                value: estResidence,
-                onChanged: (v) => state.setResidencePrincipale(b.id, v ?? false),
-                title: Text("C'est notre résidence principale (pas un investissement locatif)",
-                    style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink)),
-                controlAffinity: ListTileControlAffinity.leading,
-                contentPadding: EdgeInsets.zero,
-                dense: true,
+              // `Row` + `Checkbox` plutôt que `CheckboxListTile` : ce dernier
+              // peint son fond/ses ondes sur le `Material` ancestor le plus
+              // proche, or la carte englobante est un `Container` décoré
+              // (fond + bordure) — Flutter lève une assertion (fatale dans
+              // les tests) quand un `DecoratedBox` s'intercale ainsi.
+              InkWell(
+                onTap: () => state.setResidencePrincipale(b.id, !estResidence),
+                borderRadius: BorderRadius.circular(8),
+                child: Row(children: [
+                  Checkbox(
+                    value: estResidence,
+                    onChanged: (v) => state.setResidencePrincipale(b.id, v ?? false),
+                  ),
+                  Expanded(
+                    child: Text("C'est notre résidence principale (pas un investissement locatif)",
+                        style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink)),
+                  ),
+                ]),
               ),
               const SizedBox(height: 8),
               OutlinedButton.icon(
