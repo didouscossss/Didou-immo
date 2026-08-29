@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/loyer_import_service.dart';
 import '../../state/user_account_state.dart';
+import 'admin_suggestions_screen.dart';
 
 /// Génération de codes cadeaux (accès gratuit) — réservé aux comptes dont
 /// le document Firestore `users/{uid}` porte `isAdmin: true`. Ce flag doit
@@ -242,6 +243,21 @@ class _AdminScreenState extends State<AdminScreen> {
               padding: const EdgeInsets.only(top: 12),
               child: Text(_loyerPublished!, style: const TextStyle(color: Colors.green)),
             ),
+          const SizedBox(height: 36),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text('Suggestions des utilisateurs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text(
+            "Idées d'amélioration envoyées depuis l'app (Mon compte → Proposer une amélioration).",
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminSuggestionsScreen())),
+            icon: const Icon(Icons.lightbulb_outline, size: 18),
+            label: const Text('Voir les suggestions'),
+          ),
         ],
       ),
     );
