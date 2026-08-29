@@ -430,6 +430,8 @@ class CoreResult {
       montantEmprunte,
       mensualite,
       interetsAn1,
+      interetsTotalPret,
+      coutTotalProjet,
       loyerAnnuelBrut,
       chargesAnnuelles,
       revenuNet,
@@ -449,6 +451,8 @@ class CoreResult {
     required this.montantEmprunte,
     required this.mensualite,
     required this.interetsAn1,
+    required this.interetsTotalPret,
+    required this.coutTotalProjet,
     required this.loyerAnnuelBrut,
     required this.chargesAnnuelles,
     required this.revenuNet,
@@ -472,6 +476,11 @@ CoreResult computeCore(PropertyInput f) {
   final montantEmprunte = max(0, prixTotal - apport).toDouble();
   final mensualite = monthlyPayment(montantEmprunte, f.tauxPct, f.dureePretAns);
   final interetsAn1 = interestPaidYear1(montantEmprunte, f.tauxPct, f.dureePretAns);
+  // Coût total du crédit sur toute sa durée — même formule que
+  // `computeOffre` pour les offres de banques comparées, appliquée ici au
+  // prêt réel du bien (taux/durée saisis dans "Financement").
+  final interetsTotalPret = mensualite * f.dureePretAns * 12 - montantEmprunte;
+  final coutTotalProjet = prixTotal + interetsTotalPret;
 
   double loyerAnnuelBrut, chargesSpecifiques, tauxOccupation;
   double? nuitsTotal, nombreReservations, prixNuitMoyen;
@@ -512,6 +521,8 @@ CoreResult computeCore(PropertyInput f) {
     montantEmprunte: montantEmprunte,
     mensualite: mensualite,
     interetsAn1: interetsAn1,
+    interetsTotalPret: interetsTotalPret,
+    coutTotalProjet: coutTotalProjet,
     loyerAnnuelBrut: loyerAnnuelBrut,
     chargesAnnuelles: chargesAnnuelles,
     revenuNet: revenuNet,
