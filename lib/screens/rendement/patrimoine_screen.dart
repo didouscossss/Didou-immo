@@ -150,10 +150,27 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
     return b.core.cashflowMensuel;
   }
 
+  /// Le 1er de chaque mois strictement compris entre [debut] (exclu) et
+  /// [fin] (exclu) — sert à ajouter des points intermédiaires sur les
+  /// graphiques en escalier ci-dessous, pour qu'on puisse lire/toucher une
+  /// valeur mois par mois plutôt que seulement à chaque début/fin de
+  /// période (qui peut couvrir plusieurs mois d'un coup).
+  List<DateTime> _premiersDuMoisEntre(DateTime debut, DateTime fin) {
+    final points = <DateTime>[];
+    var curseur = DateTime(debut.year, debut.month + 1, 1);
+    while (curseur.isBefore(fin)) {
+      points.add(curseur);
+      curseur = DateTime(curseur.year, curseur.month + 1, 1);
+    }
+    return points;
+  }
+
   /// Reconstruit une série temporelle du cash-flow réel CUMULÉ du
   /// portefeuille, à partir de l'union des dates de début/fin de toutes les
-  /// périodes de tous les biens — une approximation "en escalier", pas une
-  /// vraie moyenne continue, mais qui suit fidèlement chaque changement.
+  /// périodes de tous les biens (+ un point par mois entre la première et la
+  /// dernière) — une approximation "en escalier", pas une vraie moyenne
+  /// continue, mais qui suit fidèlement chaque changement et se lit mois
+  /// par mois.
   List<FlSpot> _buildPortefeuilleSpots(List<SavedProperty> biens) {
     if (biens.isEmpty) return const [];
     final dates = <DateTime>{};
@@ -164,6 +181,8 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
       }
     }
     if (dates.length < 2) return const [];
+    final bornes = dates.toList()..sort();
+    dates.addAll(_premiersDuMoisEntre(bornes.first, bornes.last));
     final sorted = dates.toList()..sort();
     final origin = sorted.first;
     return [
@@ -222,6 +241,16 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
     final aDesReleves = b.form.suivi.isNotEmpty;
     final nbVacants = b.form.suivi.where((e) => e.vacant).length;
     final ecart = computeEcartReelPrevu(b.form, b.form.suivi.isEmpty ? null : b.form.suivi.last);
+    // Loyer perçu et cash-flow réel cumulés sur tout l'historique de CE
+    // bien (chaque relevé pondéré par sa durée, comme le total du
+    // portefeuille) — non pertinent pour la résidence principale, qui n'est
+    // pas un investissement locatif.
+    final loyerCumule = estResidence
+        ? 0.0
+        : b.form.suivi.fold<double>(0, (s, e) => s + (e.vacant ? 0 : (e.loyerPercu ?? 0) * e.nbMois));
+    final cashFlowGenere = estResidence
+        ? 0.0
+        : b.form.suivi.fold<double>(0, (s, e) => s + e.cashFlowReel(b.core.mensualite) * e.nbMois);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -282,6 +311,13 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
                 Expanded(child: _miniStat('Mois vacants', '$nbVacants')),
                 Expanded(child: _miniStat('Mensualité crédit', eur(b.core.mensualite))),
               ]),
+              if (!estResidence && aDesReleves) ...[
+                const SizedBox(height: 12),
+                Row(children: [
+                  Expanded(child: _miniStat('Loyer cumulé', eur(loyerCumule))),
+                  Expanded(child: _miniStat('Cash-flow généré', '${cashFlowGenere >= 0 ? '+' : ''}${fmt(cashFlowGenere)} €')),
+                ]),
+              ],
               if (ecart != null) ...[
                 const SizedBox(height: 16),
                 Text('Réel vs prévu (dernier relevé)', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -385,9 +421,10 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
 
   /// Courbe en escalier du loyer réel (0 si vacant) dans le temps, pour QUE
   /// une vacance suivie d'une reprise à un loyer différent se voie
-  /// clairement — deux points par période (début et fin) plutôt qu'un point
-  /// par relevé, pour que l'axe du temps reflète la vraie durée de chaque
-  /// période, pas juste leur ordre.
+  /// clairement — un point par mois couvert par chaque période (plus ses
+  /// bornes exactes), pour que l'axe du temps reflète la vraie durée de
+  /// chaque période ET qu'on puisse lire/toucher le loyer mois par mois,
+  /// pas seulement au tout début/fin d'une période de plusieurs mois.
   Widget _buildChart(SavedProperty b) {
     final entries = b.form.suivi;
     final origin = entries.first.dateDebut;
@@ -396,8 +433,12 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
     final spots = <FlSpot>[];
     for (final e in entries) {
       final valeur = e.vacant ? 0.0 : (e.loyerPercu ?? 0);
+      final fin = e.dateFin ?? DateTime.now();
       spots.add(FlSpot(x(e.dateDebut), valeur));
-      spots.add(FlSpot(x(e.dateFin ?? DateTime.now()), valeur));
+      for (final mois in _premiersDuMoisEntre(e.dateDebut, fin)) {
+        spots.add(FlSpot(x(mois), valeur));
+      }
+      spots.add(FlSpot(x(fin), valeur));
     }
     final maxY = spots.map((s) => s.y).fold<double>(0, (a, v) => a > v ? a : v);
     final maxX = spots.isEmpty ? 1.0 : spots.last.x;
