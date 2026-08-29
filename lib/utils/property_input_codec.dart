@@ -33,14 +33,18 @@ extension PropertyInputCodec on PropertyInput {
         'prixVente': prixVente,
         'suivi': suivi
             .map((s) => {
-                  'date': s.date.toIso8601String(),
+                  'dateDebut': s.dateDebut.toIso8601String(),
+                  'dateFin': s.dateFin?.toIso8601String(),
                   'loyerPercu': s.loyerPercu,
-                  'chargesReelles': s.chargesReelles,
+                  'chargesCoproReelles': s.chargesCoproReelles,
+                  'taxeFonciereReelle': s.taxeFonciereReelle,
+                  'assuranceReelle': s.assuranceReelle,
                   'vacant': s.vacant,
                   'travauxImprevus': s.travauxImprevus,
                   'note': s.note,
                 })
             .toList(),
+        'residencePrincipale': residencePrincipale,
         'loyer': loyer,
         'vacancePct': vacancePct,
         'chargesCopro': chargesCopro,
@@ -117,15 +121,23 @@ extension PropertyInputCodec on PropertyInput {
       prixVente: (json['prixVente'] as num?)?.toDouble(),
       suivi: (json['suivi'] as List?)
               ?.map((s) => SuiviEntry(
-                    date: DateTime.tryParse(s['date'] as String? ?? '') ?? DateTime.now(),
+                    // `date` : ancien format (avant l'introduction des
+                    // périodes dateDebut/dateFin) — les relevés déjà
+                    // enregistrés deviennent des périodes ponctuelles sans
+                    // date de fin connue, plutôt que d'être perdus.
+                    dateDebut: DateTime.tryParse((s['dateDebut'] ?? s['date']) as String? ?? '') ?? DateTime.now(),
+                    dateFin: s['dateFin'] != null ? DateTime.tryParse(s['dateFin'] as String) : null,
                     loyerPercu: (s['loyerPercu'] as num?)?.toDouble(),
-                    chargesReelles: (s['chargesReelles'] as num?)?.toDouble(),
+                    chargesCoproReelles: (s['chargesCoproReelles'] as num?)?.toDouble() ?? (s['chargesReelles'] as num?)?.toDouble(),
+                    taxeFonciereReelle: (s['taxeFonciereReelle'] as num?)?.toDouble(),
+                    assuranceReelle: (s['assuranceReelle'] as num?)?.toDouble(),
                     vacant: s['vacant'] as bool? ?? false,
                     travauxImprevus: (s['travauxImprevus'] as num?)?.toDouble(),
                     note: s['note'] as String?,
                   ))
               .toList() ??
           const [],
+      residencePrincipale: json['residencePrincipale'] as bool? ?? false,
       loyer: (json['loyer'] as num?)?.toDouble() ?? 0,
       vacancePct: (json['vacancePct'] as num?)?.toDouble() ?? 0,
       chargesCopro: (json['chargesCopro'] as num?)?.toDouble() ?? 0,

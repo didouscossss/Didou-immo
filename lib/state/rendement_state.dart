@@ -290,13 +290,28 @@ class RendementState extends ChangeNotifier {
       _updateSavedProperty(id, (f) => f.copyWith(vendu: vendu, dateVente: dateVente, prixVente: prixVente));
 
   /// Ajoute un relevé réel (onglet Patrimoine) sur un bien acquis — trié par
-  /// date à l'insertion pour que le graphique/l'historique restent dans
-  /// l'ordre sans devoir re-trier à chaque lecture.
+  /// date de début à l'insertion pour que le graphique/l'historique restent
+  /// dans l'ordre sans devoir re-trier à chaque lecture.
   Future<void> addSuiviEntry(String id, SuiviEntry entry) => _updateSavedProperty(
-      id, (f) => f.copyWith(suivi: [...f.suivi, entry]..sort((a, b) => a.date.compareTo(b.date))));
+      id, (f) => f.copyWith(suivi: [...f.suivi, entry]..sort((a, b) => a.dateDebut.compareTo(b.dateDebut))));
+
+  /// Remplace un relevé existant (édition) — identifié par référence
+  /// d'objet, comme [deleteSuiviEntry].
+  Future<void> updateSuiviEntry(String id, SuiviEntry ancien, SuiviEntry nouveau) => _updateSavedProperty(
+      id,
+      (f) => f.copyWith(
+          suivi: [for (final s in f.suivi) if (s == ancien) nouveau else s]
+            ..sort((a, b) => a.dateDebut.compareTo(b.dateDebut))));
 
   Future<void> deleteSuiviEntry(String id, SuiviEntry entry) =>
       _updateSavedProperty(id, (f) => f.copyWith(suivi: f.suivi.where((s) => s != entry).toList()));
+
+  /// Marque un bien acquis comme résidence principale (ou revient en
+  /// arrière) — exclu du cash-flow réel du portefeuille et de la
+  /// distinction actif/passif dans l'onglet Patrimoine, voir
+  /// `PropertyInput.residencePrincipale`.
+  Future<void> setResidencePrincipale(String id, bool value) =>
+      _updateSavedProperty(id, (f) => f.copyWith(residencePrincipale: value));
 
   Future<void> _updateSavedProperty(String id, PropertyInput Function(PropertyInput f) updater) async {
     final idx = biens.indexWhere((b) => b.id == id);
