@@ -1,8 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
+import '../legal/legal_screens.dart';
 
 /// Écran de connexion / inscription — équivalent d'un `AuthGate` classique.
 /// Un seul écran, bascule entre les deux modes.
@@ -15,15 +17,23 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   bool _isSignUp = false;
+  bool _acceptedTerms = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
   String? _error;
 
+  late final _cguRecognizer = TapGestureRecognizer()
+    ..onTap = () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CgvScreen()));
+  late final _confidentialiteRecognizer = TapGestureRecognizer()
+    ..onTap = () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConfidentialiteScreen()));
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _cguRecognizer.dispose();
+    _confidentialiteRecognizer.dispose();
     super.dispose();
   }
 
@@ -32,6 +42,10 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) {
       setState(() => _error = 'Renseigne ton email et ton mot de passe.');
+      return;
+    }
+    if (_isSignUp && !_acceptedTerms) {
+      setState(() => _error = "Tu dois accepter les CGU et la politique de confidentialité pour créer un compte.");
       return;
     }
     setState(() {
@@ -48,6 +62,10 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _submitGoogle() async {
+    if (_isSignUp && !_acceptedTerms) {
+      setState(() => _error = "Tu dois accepter les CGU et la politique de confidentialité pour créer un compte.");
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -110,6 +128,43 @@ class _AuthScreenState extends State<AuthScreen> {
                   obscureText: true,
                   decoration: _decoration('Mot de passe'),
                 ),
+                if (_isSignUp) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Checkbox(
+                        value: _acceptedTerms,
+                        onChanged: _loading ? null : (v) => setState(() => _acceptedTerms = v ?? false),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 14),
+                          child: RichText(
+                            text: TextSpan(
+                              style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7)),
+                              children: [
+                                const TextSpan(text: "J'accepte les "),
+                                TextSpan(
+                                  text: 'CGU',
+                                  style: TextStyle(color: AppColors.accent, decoration: TextDecoration.underline),
+                                  recognizer: _cguRecognizer,
+                                ),
+                                const TextSpan(text: ' et la '),
+                                TextSpan(
+                                  text: 'politique de confidentialité',
+                                  style: TextStyle(color: AppColors.accent, decoration: TextDecoration.underline),
+                                  recognizer: _confidentialiteRecognizer,
+                                ),
+                                const TextSpan(text: '.'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 10),
                   Text(_error!, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.alert)),

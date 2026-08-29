@@ -5,6 +5,7 @@ import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../admin/admin_screen.dart';
+import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
 import '../referral/referral_screen.dart';
 import '../suggestions/suggestions_screen.dart';
@@ -89,6 +90,18 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LegalHubScreen())),
+            icon: const Icon(Icons.gavel_outlined),
+            label: const Text('Informations légales'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.ink,
+              side: BorderSide(color: AppColors.border),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
           const SizedBox(height: 28),
           TextButton(
             onPressed: () async {
