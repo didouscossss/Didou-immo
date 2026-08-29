@@ -156,6 +156,41 @@ class LoanOffer {
   }
 }
 
+/// Un relevé réel sur un bien acquis (onglet Patrimoine) — ce qui s'est
+/// vraiment passé sur une période donnée, par opposition aux hypothèses
+/// saisies dans l'onglet Bien. Tous les montants sont facultatifs (`null` =
+/// non renseigné pour ce relevé), sauf [date].
+class SuiviEntry {
+  final DateTime date;
+  final double? loyerPercu;
+  final double? chargesReelles;
+  /// true si le bien n'était pas loué sur la période de ce relevé — dans ce
+  /// cas [loyerPercu] est ignoré dans [cashFlowReel] même s'il est renseigné
+  /// (résidu d'un relevé précédent laissé tel quel dans le champ).
+  final bool vacant;
+  /// Dépense ponctuelle non prévue (réparation, sinistre...), distincte des
+  /// [chargesReelles] courantes.
+  final double? travauxImprevus;
+  final String? note;
+
+  const SuiviEntry({
+    required this.date,
+    this.loyerPercu,
+    this.chargesReelles,
+    this.vacant = false,
+    this.travauxImprevus,
+    this.note,
+  });
+
+  /// Cash-flow réel de la période couverte par ce relevé — même logique que
+  /// `CoreResult.cashflowMensuel`, mais avec les montants réellement
+  /// constatés plutôt que les hypothèses de l'onglet Bien. [mensualiteCredit]
+  /// (le crédit réel du bien, constant quel que soit le relevé) n'est pas
+  /// stocké ici : il est passé par l'appelant (voir `RendementState`).
+  double cashFlowReel(double mensualiteCredit) =>
+      (vacant ? 0 : (loyerPercu ?? 0)) - (chargesReelles ?? 0) - (travauxImprevus ?? 0) - mensualiteCredit;
+}
+
 /// Le bien à l'étude — équivalent de l'objet `form`/`DEFAULT_FORM` du JSX.
 /// Immuable : on le modifie via [copyWith], comme `setForm(f => ({...f, x}))`.
 class PropertyInput {
@@ -194,6 +229,13 @@ class PropertyInput {
   final bool vendu;
   final DateTime? dateVente;
   final double? prixVente;
+
+  /// Relevés réels saisis au fil de l'eau sur un bien acquis (onglet
+  /// Patrimoine) — loyer réellement perçu, charges réellement payées,
+  /// vacance, travaux/imprévus. Vide pour un bien encore à l'étude. Pas de
+  /// fréquence imposée (pas forcément un par mois) : chaque relevé porte sa
+  /// propre date, voir [SuiviEntry].
+  final List<SuiviEntry> suivi;
 
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
@@ -245,6 +287,7 @@ class PropertyInput {
     this.vendu = false,
     this.dateVente,
     this.prixVente,
+    this.suivi = const [],
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -341,6 +384,7 @@ class PropertyInput {
     bool? vendu,
     DateTime? dateVente,
     double? prixVente,
+    List<SuiviEntry>? suivi,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -388,6 +432,7 @@ class PropertyInput {
       vendu: vendu ?? this.vendu,
       dateVente: dateVente ?? this.dateVente,
       prixVente: prixVente ?? this.prixVente,
+      suivi: suivi ?? this.suivi,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,

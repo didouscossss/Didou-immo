@@ -31,6 +31,16 @@ extension PropertyInputCodec on PropertyInput {
         'vendu': vendu,
         'dateVente': dateVente?.toIso8601String(),
         'prixVente': prixVente,
+        'suivi': suivi
+            .map((s) => {
+                  'date': s.date.toIso8601String(),
+                  'loyerPercu': s.loyerPercu,
+                  'chargesReelles': s.chargesReelles,
+                  'vacant': s.vacant,
+                  'travauxImprevus': s.travauxImprevus,
+                  'note': s.note,
+                })
+            .toList(),
         'loyer': loyer,
         'vacancePct': vacancePct,
         'chargesCopro': chargesCopro,
@@ -105,6 +115,17 @@ extension PropertyInputCodec on PropertyInput {
       vendu: json['vendu'] as bool? ?? false,
       dateVente: json['dateVente'] != null ? DateTime.tryParse(json['dateVente'] as String) : null,
       prixVente: (json['prixVente'] as num?)?.toDouble(),
+      suivi: (json['suivi'] as List?)
+              ?.map((s) => SuiviEntry(
+                    date: DateTime.tryParse(s['date'] as String? ?? '') ?? DateTime.now(),
+                    loyerPercu: (s['loyerPercu'] as num?)?.toDouble(),
+                    chargesReelles: (s['chargesReelles'] as num?)?.toDouble(),
+                    vacant: s['vacant'] as bool? ?? false,
+                    travauxImprevus: (s['travauxImprevus'] as num?)?.toDouble(),
+                    note: s['note'] as String?,
+                  ))
+              .toList() ??
+          const [],
       loyer: (json['loyer'] as num?)?.toDouble() ?? 0,
       vacancePct: (json['vacancePct'] as num?)?.toDouble() ?? 0,
       chargesCopro: (json['chargesCopro'] as num?)?.toDouble() ?? 0,

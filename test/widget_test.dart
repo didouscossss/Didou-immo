@@ -1,6 +1,6 @@
 // Test de fumée : l'app démarre et chaque onglet se construit sans erreur.
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,7 +25,7 @@ Future<void> _scrollToAndTap(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
-  testWidgets('Les 5 onglets se construisent sans erreur, en novice et en avancé',
+  testWidgets('Les 6 onglets se construisent sans erreur, en novice et en avancé',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
@@ -36,7 +36,7 @@ void main() {
     expect(find.text('Le bien'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    const tabs = ['Marché', 'Fiscalité', 'Projection', 'Comparer', 'Bien'];
+    const tabs = ['Marché', 'Fiscalité', 'Projection', 'Comparer', 'Patrimoine', 'Bien'];
     for (final label in tabs) {
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
@@ -102,6 +102,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Rentabilité nette (%)'), findsOneWidget);
     expect(tester.takeException(), isNull);
+
+    // Marque le premier bien "acquis" (date du jour) : fait apparaître une
+    // carte dans l'onglet Patrimoine, jusque-là vide.
+    await tester.tap(find.text('À l\'étude').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Valider'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('Patrimoine'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('Ajouter un relevé'), findsNothing); // carte repliée par défaut
+
+    // Déplie la carte, puis ajoute deux relevés — de quoi exercer le
+    // graphique (affiché à partir de 2 relevés), pas seulement la liste vide.
+    await tester.tap(find.text('Bien sans nom'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ajouter un relevé'), findsOneWidget);
+
+    for (final loyer in ['750', '780']) {
+      await tester.tap(find.text('Ajouter un relevé'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.widgetWithText(TextField, 'Loyer réellement perçu'), loyer);
+      await tester.tap(find.text('Ajouter'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    }
+    expect(find.textContaining('Relevés'), findsOneWidget);
   });
 
   testWidgets("L'onboarding affiche Didou et se parcourt sans erreur",

@@ -289,6 +289,15 @@ class RendementState extends ChangeNotifier {
   Future<void> setPropertyVendu(String id, bool vendu, {DateTime? dateVente, double? prixVente}) =>
       _updateSavedProperty(id, (f) => f.copyWith(vendu: vendu, dateVente: dateVente, prixVente: prixVente));
 
+  /// Ajoute un relevé réel (onglet Patrimoine) sur un bien acquis — trié par
+  /// date à l'insertion pour que le graphique/l'historique restent dans
+  /// l'ordre sans devoir re-trier à chaque lecture.
+  Future<void> addSuiviEntry(String id, SuiviEntry entry) => _updateSavedProperty(
+      id, (f) => f.copyWith(suivi: [...f.suivi, entry]..sort((a, b) => a.date.compareTo(b.date))));
+
+  Future<void> deleteSuiviEntry(String id, SuiviEntry entry) =>
+      _updateSavedProperty(id, (f) => f.copyWith(suivi: f.suivi.where((s) => s != entry).toList()));
+
   Future<void> _updateSavedProperty(String id, PropertyInput Function(PropertyInput f) updater) async {
     final idx = biens.indexWhere((b) => b.id == id);
     if (idx == -1) return;
