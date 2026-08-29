@@ -118,12 +118,12 @@ void main() {
 
     // Déplie la carte, puis ajoute deux relevés — de quoi exercer le
     // graphique (affiché à partir de 2 relevés), pas seulement la liste vide.
-    await tester.tap(find.text('Bien sans nom'));
+    await _scrollToAndTap(tester, find.text('Bien sans nom'));
     await tester.pumpAndSettle();
     expect(find.text('Ajouter un relevé'), findsOneWidget);
 
     for (final loyer in ['750', '780']) {
-      await tester.tap(find.text('Ajouter un relevé'));
+      await _scrollToAndTap(tester, find.text('Ajouter un relevé'));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextField, 'Loyer réellement perçu'), loyer);
       await tester.tap(find.text('Ajouter'));

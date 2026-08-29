@@ -157,38 +157,98 @@ class LoanOffer {
 }
 
 /// Un relevé réel sur un bien acquis (onglet Patrimoine) — ce qui s'est
-/// vraiment passé sur une période donnée, par opposition aux hypothèses
-/// saisies dans l'onglet Bien. Tous les montants sont facultatifs (`null` =
-/// non renseigné pour ce relevé), sauf [date].
+/// vraiment passé sur une PÉRIODE ([dateDebut] → [dateFin]), pas un simple
+/// point dans le temps : pour qu'un loyer qui change, une vacance puis une
+/// reprise à un loyer différent, etc. se lisent clairement sur la courbe
+/// d'évolution plutôt que comme des points isolés reliés en ligne droite.
+/// Tous les montants sont facultatifs (`null` = non renseigné), sauf
+/// [dateDebut].
 class SuiviEntry {
-  final DateTime date;
+  final DateTime dateDebut;
+  /// `null` = période toujours en cours (le relevé le plus récent, pas
+  /// encore clôturé par un nouveau relevé qui prendrait le relais) — traitée
+  /// comme active jusqu'à aujourd'hui partout où c'est pertinent (graphique,
+  /// dernier cash-flow connu...).
+  final DateTime? dateFin;
   final double? loyerPercu;
-  final double? chargesReelles;
-  /// true si le bien n'était pas loué sur la période de ce relevé — dans ce
-  /// cas [loyerPercu] est ignoré dans [cashFlowReel] même s'il est renseigné
-  /// (résidu d'un relevé précédent laissé tel quel dans le champ).
+  /// Charges réelles détaillées par poste (plutôt qu'un seul montant
+  /// fourre-tout) — permet de comparer chaque poste à l'hypothèse de départ
+  /// correspondante dans l'onglet Bien (voir `computeEcartReelPrevu`).
+  final double? chargesCoproReelles;
+  final double? taxeFonciereReelle;
+  final double? assuranceReelle;
+  /// true si le bien n'était pas loué sur cette période — dans ce cas
+  /// [loyerPercu] est ignoré dans [cashFlowReel] même s'il est renseigné
+  /// (résidu d'une période précédente laissé tel quel dans le champ).
   final bool vacant;
-  /// Dépense ponctuelle non prévue (réparation, sinistre...), distincte des
-  /// [chargesReelles] courantes.
+  /// Dépense ponctuelle non prévue (réparation, sinistre...) survenue sur
+  /// cette période, distincte des charges courantes.
   final double? travauxImprevus;
   final String? note;
 
   const SuiviEntry({
-    required this.date,
+    required this.dateDebut,
+    this.dateFin,
     this.loyerPercu,
-    this.chargesReelles,
+    this.chargesCoproReelles,
+    this.taxeFonciereReelle,
+    this.assuranceReelle,
     this.vacant = false,
     this.travauxImprevus,
     this.note,
   });
 
-  /// Cash-flow réel de la période couverte par ce relevé — même logique que
+  /// Total mensuel des charges réelles renseignées sur cette période, tous
+  /// postes confondus.
+  double get chargesReellesTotal => (chargesCoproReelles ?? 0) + (taxeFonciereReelle ?? 0) + (assuranceReelle ?? 0);
+
+  /// Cash-flow réel de cette période — même logique que
   /// `CoreResult.cashflowMensuel`, mais avec les montants réellement
   /// constatés plutôt que les hypothèses de l'onglet Bien. [mensualiteCredit]
-  /// (le crédit réel du bien, constant quel que soit le relevé) n'est pas
+  /// (le crédit réel du bien, constant quelle que soit la période) n'est pas
   /// stocké ici : il est passé par l'appelant (voir `RendementState`).
   double cashFlowReel(double mensualiteCredit) =>
-      (vacant ? 0 : (loyerPercu ?? 0)) - (chargesReelles ?? 0) - (travauxImprevus ?? 0) - mensualiteCredit;
+      (vacant ? 0 : (loyerPercu ?? 0)) - chargesReellesTotal - (travauxImprevus ?? 0) - mensualiteCredit;
+
+  /// true si [date] tombe dans cette période (bornes incluses ; une période
+  /// sans [dateFin] est considérée active jusqu'à aujourd'hui).
+  bool couvre(DateTime date) =>
+      !date.isBefore(dateDebut) && (dateFin == null ? !date.isAfter(DateTime.now()) : !date.isAfter(dateFin!));
+}
+
+class EcartReelPrevu {
+  final double loyerTheorique, loyerReel;
+  final double coproTheorique, coproReel;
+  final double taxeFonciereTheorique, taxeFonciereReel;
+  final double assuranceTheorique, assuranceReel;
+  const EcartReelPrevu({
+    required this.loyerTheorique,
+    required this.loyerReel,
+    required this.coproTheorique,
+    required this.coproReel,
+    required this.taxeFonciereTheorique,
+    required this.taxeFonciereReel,
+    required this.assuranceTheorique,
+    required this.assuranceReel,
+  });
+}
+
+/// Compare le dernier relevé réel connu d'un bien aux hypothèses saisies au
+/// départ dans l'onglet Bien — `null` si aucun relevé n'existe encore.
+/// Les charges de [f] sont annuelles (voir `computeCore`), ramenées au mois
+/// pour être comparables à [dernier], qui raisonne déjà en mensuel.
+EcartReelPrevu? computeEcartReelPrevu(PropertyInput f, SuiviEntry? dernier) {
+  if (dernier == null) return null;
+  return EcartReelPrevu(
+    loyerTheorique: f.mode == RentalMode.longue ? f.loyer : 0,
+    loyerReel: dernier.vacant ? 0 : (dernier.loyerPercu ?? 0),
+    coproTheorique: f.chargesCopro / 12,
+    coproReel: dernier.chargesCoproReelles ?? 0,
+    taxeFonciereTheorique: f.taxeFonciere / 12,
+    taxeFonciereReel: dernier.taxeFonciereReelle ?? 0,
+    assuranceTheorique: f.assurance / 12,
+    assuranceReel: dernier.assuranceReelle ?? 0,
+  );
 }
 
 /// Le bien à l'étude — équivalent de l'objet `form`/`DEFAULT_FORM` du JSX.
@@ -236,6 +296,12 @@ class PropertyInput {
   /// fréquence imposée (pas forcément un par mois) : chaque relevé porte sa
   /// propre date, voir [SuiviEntry].
   final List<SuiviEntry> suivi;
+
+  /// `true` si ce bien acquis est la résidence principale (on y habite,
+  /// pas de loyer perçu) plutôt qu'un investissement locatif — exclu du
+  /// cash-flow réel du portefeuille et de la distinction actif/passif dans
+  /// l'onglet Patrimoine, mais garde son propre suivi (charges réelles...).
+  final bool residencePrincipale;
 
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
@@ -288,6 +354,7 @@ class PropertyInput {
     this.dateVente,
     this.prixVente,
     this.suivi = const [],
+    this.residencePrincipale = false,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -385,6 +452,7 @@ class PropertyInput {
     DateTime? dateVente,
     double? prixVente,
     List<SuiviEntry>? suivi,
+    bool? residencePrincipale,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -433,6 +501,7 @@ class PropertyInput {
       dateVente: dateVente ?? this.dateVente,
       prixVente: prixVente ?? this.prixVente,
       suivi: suivi ?? this.suivi,
+      residencePrincipale: residencePrincipale ?? this.residencePrincipale,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,

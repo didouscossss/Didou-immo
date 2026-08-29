@@ -71,6 +71,50 @@ class CsvExportService {
     return saveBytes(bytes: bytes, filename: 'didou-immo-patrimoine.csv', mimeType: 'text/csv;charset=utf-8');
   }
 
+  static const _headersSuivi = [
+    'Bien',
+    'Debut periode',
+    'Fin periode',
+    'Vacant',
+    'Loyer percu (EUR)',
+    'Charges copro reelles (EUR)',
+    'Taxe fonciere reelle (EUR)',
+    'Assurance reelle (EUR)',
+    'Travaux imprevus (EUR)',
+    'Cash-flow reel (EUR)',
+    'Note',
+  ];
+
+  /// Export CSV des relevés réels de l'onglet Patrimoine — une ligne par
+  /// relevé (tous biens acquis confondus), pour retravailler le suivi réel
+  /// soi-même dans un tableur.
+  static Future<bool> exportSuivi(List<SavedProperty> biens) async {
+    final buffer = StringBuffer();
+    buffer.writeln(_headersSuivi.map(_field).join(';'));
+    for (final b in biens) {
+      for (final s in b.form.suivi) {
+        buffer.writeln([
+          _field(b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom),
+          _field(_dateIso(s.dateDebut)),
+          _field(s.dateFin != null ? _dateIso(s.dateFin!) : 'en cours'),
+          s.vacant ? 'oui' : 'non',
+          _num(s.vacant ? 0 : (s.loyerPercu ?? 0)),
+          _num(s.chargesCoproReelles ?? 0),
+          _num(s.taxeFonciereReelle ?? 0),
+          _num(s.assuranceReelle ?? 0),
+          _num(s.travauxImprevus ?? 0),
+          _num(s.cashFlowReel(b.core.mensualite)),
+          _field(s.note ?? ''),
+        ].join(';'));
+      }
+    }
+    final bytes = Uint8List.fromList([0xEF, 0xBB, 0xBF, ...utf8.encode(buffer.toString())]);
+    return saveBytes(bytes: bytes, filename: 'didou-immo-suivi-patrimoine.csv', mimeType: 'text/csv;charset=utf-8');
+  }
+
+  static String _dateIso(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
   static String _num(double v) => v.toStringAsFixed(2);
 
   static String _field(String value) {
