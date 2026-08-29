@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,12 +8,18 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
+import 'services/loyer_reference_service.dart';
 import 'state/rendement_state.dart';
 import 'state/user_account_state.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Démarré tôt, en parallèle de Firebase ci-dessous : `RendementState.load`
+  // l'attend de toute façon, mais le lancer ici plutôt que d'attendre ce
+  // moment-là le fait chevaucher l'init Firebase au lieu de s'ajouter à sa
+  // durée.
+  unawaited(LoyerReferenceService.preload());
   // Initialisation défensive : si Firebase refuse de démarrer (options
   // invalides, projet supprimé...), l'app bascule en mode local — sans
   // compte, sans limite de biens — au lieu de planter.

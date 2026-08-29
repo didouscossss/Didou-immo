@@ -40,6 +40,21 @@ class MarcheScreen extends StatelessWidget {
         : null;
     final ecartLoyer = (ref != null && core.loyerM2 > 0) ? ((core.loyerM2 - ref.loyerM2) / ref.loyerM2) * 100 : null;
 
+    final loyerDonneeCommune = refInfo?.loyerDonneeCommune == true;
+    final loyerLabel = loyerDonneeCommune ? 'Loyer estimé / m² (annonces)' : 'Loyer repère / m²';
+    // "Carte des loyers" (Ministère chargé du Logement / ANIL) : ce sont des
+    // loyers D'ANNONCE modélisés à partir des annonces LeBonCoin/SeLoger, pas
+    // des baux réellement signés comme DVF l'est pour le prix — d'où la
+    // distinction commune directe / zone élargie, à ne pas présenter comme
+    // une vérité absolue.
+    final loyerCaption = !loyerDonneeCommune
+        ? null
+        : refInfo?.loyerEstimationZone == true
+            ? "Pas assez d'annonces observées à ${commune?.nom} : estimation basée sur sa zone statistique élargie."
+                ' Estimations ANIL, d\'après des données du groupe SeLoger et de leboncoin (édition 2025).'
+            : 'Estimation directe pour ${commune?.nom}, à partir des annonces de location du secteur.'
+                ' Estimations ANIL, d\'après des données du groupe SeLoger et de leboncoin (édition 2025).';
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
@@ -102,24 +117,29 @@ class MarcheScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(child: _statCard('Loyer repère / m²', eur(ref?.loyerM2))),
+            Expanded(child: _statCard(loyerLabel, eur(ref?.loyerM2))),
           ]),
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.only(top: 10),
             child: Text(
               (live != null
                       ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''} (${live.annee})'
                           '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
-                          ' — source VALORIS / DVF, Licence Ouverte (Etalab). Loyer toujours indicatif (DVF ne couvre que les ventes).'
+                          ' — source VALORIS / DVF, Licence Ouverte (Etalab).'
                       : refInfo?.precise == true
-                          ? 'Donnée rattachée directement à ${ref!.name} (repère indicatif).'
-                          : "Pas de moyenne fiable pour une commune de cette taille — repère basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local ou l'observatoire des loyers du secteur.") +
+                          ? 'Prix rattaché directement à ${ref!.name} (repère indicatif).'
+                          : "Pas de moyenne fiable pour une commune de cette taille — prix basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local.") +
                   (form.mode == RentalMode.longue && form.meuble
                       ? ' Loyer repère majoré de ${((primeMeuble - 1) * 100).round()}% (meublé).'
                       : ''),
               style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
             ),
           ),
+          if (loyerCaption != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 6),
+              child: Text(loyerCaption, style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45))),
+            ),
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
