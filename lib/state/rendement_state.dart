@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/saved_property.dart';
 import '../services/firestore_service.dart';
+import '../services/loyer_reference_service.dart';
 import '../services/valoris_service.dart';
 import '../utils/calculations.dart';
 import '../utils/property_input_codec.dart';
@@ -64,7 +65,35 @@ class RendementState extends ChangeNotifier {
       );
   List<AmortissementRow> get amortissement =>
       computeAmortissementSchedule(core.montantEmprunte, form.tauxPct, form.dureePretAns);
-  RefInfo? get refInfo => nearestReference(form.commune);
+  /// Repère indicatif (96 préfectures, voir `nearestReference`), avec le
+  /// loyer/m² remplacé par la donnée réelle par commune (jeu "Carte des
+  /// loyers", voir `LoyerReferenceService`) dès qu'elle est disponible pour
+  /// la commune EXACTE choisie — bien plus précis que le repère des 96
+  /// préfectures, qui reste le repli si la commune n'y figure pas ou tant
+  /// que `LoyerReferenceService.preload()` (appelé dans `load()`) n'a pas
+  /// terminé. Le prix/m², lui, n'est jamais modifié ici : sa version réelle
+  /// (VALORIS/DVF) est déjà gérée séparément, voir `liveMarketPrice`.
+  RefInfo? get refInfo => _refInfoFor(form.commune);
+
+  /// Fabrique le [RefInfo] d'une commune donnée en fusionnant le repère
+  /// statique (`nearestReference`) avec la donnée de loyer réelle par
+  /// commune si disponible — utilisé pour le bien en cours de saisie
+  /// ([refInfo]) et pour chaque bien déjà enregistré (voir `_decodeSaved`
+  /// et `_updateSavedProperty`), pour que le score reste cohérent partout.
+  RefInfo? _refInfoFor(CommuneRef? commune) {
+    final base = nearestReference(commune);
+    if (base == null) return null;
+    final live = LoyerReferenceService.lookup(commune?.codeInsee ?? '');
+    if (live == null) return base;
+    return RefInfo(
+      ref: CityRef(base.ref.name, base.ref.prixM2, live.loyerM2, base.ref.tension, base.ref.lat,
+          base.ref.lon, base.ref.codeDepartement, base.ref.codeInsee),
+      precise: base.precise,
+      loyerDonneeCommune: true,
+      loyerEstimationZone: live.estimationZone,
+    );
+  }
+
   Typology get typology =>
       typologies.firstWhere((t) => t.id == form.typeBien, orElse: () => typologies[2]);
   ReferenceResult? get refs =>
@@ -79,6 +108,8 @@ class RendementState extends ChangeNotifier {
       ref: CityRef(ri.ref.name, r.prixM2, r.loyerM2, ri.ref.tension, ri.ref.lat, ri.ref.lon,
           ri.ref.codeDepartement, ri.ref.codeInsee),
       precise: ri.precise,
+      loyerDonneeCommune: ri.loyerDonneeCommune,
+      loyerEstimationZone: ri.loyerEstimationZone,
     );
   }
 
@@ -87,6 +118,14 @@ class RendementState extends ChangeNotifier {
   TriResult get tri => computeTri(form, core);
 
   Future<void> load() async {
+    // `LoyerReferenceService.preload()` n'est PAS attendu ici : c'est un
+    // asset de ~800 Ko (voir sa doc), et bloquer tout le démarrage de l'app
+    // dessus serait pire que la légère imprécision temporaire que ça évite
+    // (repère statique le temps qu'il finisse de charger, déjà lancé bien
+    // plus tôt dans `main.dart`, en parallèle de Firebase). `refInfo`/
+    // `refInfoAjuste` sont des getters recalculés à chaque lecture : dès que
+    // le chargement termine, le prochain rebuild (n'importe quelle
+    // interaction) reflète la donnée réelle sans action particulière.
     try {
       await _loadLocalBiens();
       final prefs = await SharedPreferences.getInstance();
@@ -123,7 +162,7 @@ class RendementState extends ChangeNotifier {
       form: f,
       core: c,
       regimes: computeRegimes(f, c),
-      score: computeScore(f, c, nearestReference(f.commune)),
+      score: computeScore(f, c, _refInfoFor(f.commune)),
     );
   }
 
@@ -263,7 +302,7 @@ class RendementState extends ChangeNotifier {
       form: newForm,
       core: computeCore(newForm),
       regimes: computeRegimes(newForm, computeCore(newForm)),
-      score: computeScore(newForm, computeCore(newForm), nearestReference(newForm.commune)),
+      score: computeScore(newForm, computeCore(newForm), _refInfoFor(newForm.commune)),
     );
     biens = [for (final b in biens) if (b.id == id) updated else b];
     notifyListeners();

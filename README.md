@@ -59,7 +59,11 @@ Il reste, dans https://console.firebase.google.com/project/didou-immo :
    Règles, puis publier — sans ça, Firestore refuse tout accès par défaut
    et rien ne fonctionnera (comptes, biens, parrainage), même avec la
    configuration ci-dessus en place
-4. Si tu ajoutes un jour une app iOS/macOS : relancer `flutterfire configure`
+4. Activer **Storage** (mode production) si ce n'est pas déjà fait, puis
+   **coller le contenu de `storage.rules`** dans Storage → Règles, publier —
+   nécessaire pour le loyer/m² par commune (voir `LoyerReferenceService` et
+   la section "Mettre à jour le loyer/m² par commune" plus bas)
+5. Si tu ajoutes un jour une app iOS/macOS : relancer `flutterfire configure`
    depuis une machine avec un accès réseau normal (ça régénérera
    `lib/firebase_options.dart` en gardant Android + Web)
 
@@ -148,6 +152,30 @@ app, `functions/index.js` → `applyReferralCode` côté serveur, à déployer
   `lib/screens/referral/referral_screen.dart`. Pour créer un code, utilise
   `createAccessCode()` depuis un script admin ou directement dans la
   console Firebase (collection `accessCodes`).
+
+### 3ter. Mettre à jour le loyer/m² par commune
+Le loyer/m² (jeu "Carte des loyers", Ministère chargé du Logement / ANIL)
+est stocké sur Firebase Storage (`reference-data/loyers_communes.json`), PAS
+compilé dans l'app — le mettre à jour ne demande donc AUCUNE nouvelle
+version Play Store, juste republier le fichier. Une nouvelle édition sort
+environ une fois par an.
+
+1. Télécharger le fichier "Appartements" (nom se terminant par
+   `appmefdhup.csv`) depuis la page data.gouv.fr "Carte des loyers" —
+   l'écran Administration de l'app a un bouton qui copie ce lien
+2. Dans l'app, aller dans **Mon compte → Administration** (compte admin
+   requis, voir étape 2 ci-dessous) → section "Loyer/m² par commune" →
+   sélectionner ce CSV
+3. Vérifier l'aperçu (nombre de communes reconnues), puis "Publier cette
+   mise à jour" — effectif immédiatement pour la session en cours, et pour
+   tout le monde au prochain démarrage de leur app (cache local de 7 jours)
+
+Le fichier `assets/data/loyers_communes.json` compilé dans l'app reste un
+filet de sécurité (repli si Storage/le réseau sont indisponibles au premier
+lancement) — pas la peine de le mettre à jour manuellement à chaque édition,
+sauf si tu veux aussi rafraîchir ce filet de sécurité pour les nouvelles
+installations. Voir `lib/services/loyer_import_service.dart` et
+`loyer_reference_service.dart` pour le détail du format.
 
 ### 4. Test interne avant publication
 - Ajouter ton compte Google en testeur interne dans Play Console

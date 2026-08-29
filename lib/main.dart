@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -6,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
+import 'services/loyer_reference_service.dart';
 import 'state/rendement_state.dart';
 import 'state/user_account_state.dart';
 import 'theme/app_theme.dart';
@@ -22,6 +25,12 @@ Future<void> main() async {
   } catch (_) {
     firebaseReady = false;
   }
+  // Démarré ici (après Firebase, pas avant) : `LoyerReferenceService` tente
+  // Firebase Storage en premier, avant de retomber sur l'asset embarqué —
+  // le tenter avant que Firebase soit prêt échouerait à coup sûr. Non
+  // attendu : `RendementState.load` ne bloque plus dessus non plus (voir sa
+  // doc), pour ne jamais retarder le premier affichage de l'app dessus.
+  unawaited(LoyerReferenceService.preload());
   runApp(DidouImmoApp(firebaseReady: firebaseReady));
 }
 

@@ -1180,7 +1180,21 @@ const List<CityRef> frenchCities = [
 class RefInfo {
   final CityRef ref;
   final bool precise;
-  const RefInfo({required this.ref, required this.precise});
+  /// true quand `ref.loyerM2` vient du jeu "Carte des loyers" par commune
+  /// (voir `LoyerReferenceService`, appliqué en dehors de cette fonction
+  /// volontairement pure — voir `RendementState.refInfo`), pas du repère
+  /// statique des 96 préfectures ci-dessous.
+  final bool loyerDonneeCommune;
+  /// true quand cette donnée de loyer est une estimation de ZONE élargie
+  /// (pas assez d'annonces observées directement dans la commune), à
+  /// signaler à l'utilisateur plutôt que de la présenter comme acquise.
+  final bool loyerEstimationZone;
+  const RefInfo({
+    required this.ref,
+    required this.precise,
+    this.loyerDonneeCommune = false,
+    this.loyerEstimationZone = false,
+  });
 }
 
 RefInfo? nearestReference(CommuneRef? commune) {
