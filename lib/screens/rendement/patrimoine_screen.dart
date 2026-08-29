@@ -70,8 +70,11 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
     final nbActifs = investissements.where((b) => _dernierCashFlow(b) >= 0).length;
     final nbPassifs = investissements.length - nbActifs;
     final cashFlowPortefeuille = investissements.fold<double>(0, (s, b) => s + _dernierCashFlow(b));
+    // `loyerPercu` est un montant mensuel : on le multiplie par la durée de
+    // la période ([nbMois]) pour ne pas sous-compter les périodes couvrant
+    // plusieurs mois d'un coup.
     final loyersRecusTotal = tousActifs.fold<double>(
-        0, (s, b) => s + b.form.suivi.fold<double>(0, (s2, e) => s2 + (e.vacant ? 0 : (e.loyerPercu ?? 0))));
+        0, (s, b) => s + b.form.suivi.fold<double>(0, (s2, e) => s2 + (e.vacant ? 0 : (e.loyerPercu ?? 0) * e.nbMois)));
     final portefeuilleSpots = _buildPortefeuilleSpots(investissements);
 
     return ListView(

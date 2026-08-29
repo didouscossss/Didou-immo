@@ -214,6 +214,13 @@ class SuiviEntry {
   /// sans [dateFin] est considérée active jusqu'à aujourd'hui).
   bool couvre(DateTime date) =>
       !date.isBefore(dateDebut) && (dateFin == null ? !date.isAfter(DateTime.now()) : !date.isAfter(dateFin!));
+
+  /// Nombre de mois (fractionnaire) couverts par cette période — [loyerPercu]
+  /// est un montant MENSUEL, pas un total pour toute la période : il faut le
+  /// multiplier par cette durée pour cumuler correctement le loyer réellement
+  /// perçu sur une période de plusieurs mois (sans quoi une période "3 mois à
+  /// 750€" compterait comme un seul mois de 750€ au lieu de 2250€).
+  double get nbMois => ((dateFin ?? DateTime.now()).difference(dateDebut).inDays + 1) / 30.44;
 }
 
 class EcartReelPrevu {

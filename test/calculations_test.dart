@@ -48,4 +48,24 @@ void main() {
       expect(tri.tauxPct!, greaterThan(0));
     });
   });
+
+  group('SuiviEntry.nbMois', () {
+    test('une période de 3 mois pleins compte ~3 mois, pas 1', () {
+      final entry = SuiviEntry(
+        dateDebut: DateTime(2026, 1, 1),
+        dateFin: DateTime(2026, 3, 31),
+        loyerPercu: 750,
+      );
+      expect(entry.nbMois, closeTo(3, 0.1));
+      // Le loyer perçu cumulé sur la période doit donc être ~3x le loyer
+      // mensuel, pas le loyer mensuel une seule fois (le bug signalé).
+      expect(entry.loyerPercu! * entry.nbMois, closeTo(2250, 80));
+    });
+
+    test('une période ouverte (sans dateFin) court jusqu\'à aujourd\'hui', () {
+      final debut = DateTime.now().subtract(const Duration(days: 60));
+      final entry = SuiviEntry(dateDebut: debut, loyerPercu: 500);
+      expect(entry.nbMois, closeTo(2, 0.2));
+    });
+  });
 }
