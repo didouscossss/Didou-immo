@@ -15,11 +15,6 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Démarré tôt, en parallèle de Firebase ci-dessous : `RendementState.load`
-  // l'attend de toute façon, mais le lancer ici plutôt que d'attendre ce
-  // moment-là le fait chevaucher l'init Firebase au lieu de s'ajouter à sa
-  // durée.
-  unawaited(LoyerReferenceService.preload());
   // Initialisation défensive : si Firebase refuse de démarrer (options
   // invalides, projet supprimé...), l'app bascule en mode local — sans
   // compte, sans limite de biens — au lieu de planter.
@@ -30,6 +25,12 @@ Future<void> main() async {
   } catch (_) {
     firebaseReady = false;
   }
+  // Démarré ici (après Firebase, pas avant) : `LoyerReferenceService` tente
+  // Firebase Storage en premier, avant de retomber sur l'asset embarqué —
+  // le tenter avant que Firebase soit prêt échouerait à coup sûr. Non
+  // attendu : `RendementState.load` ne bloque plus dessus non plus (voir sa
+  // doc), pour ne jamais retarder le premier affichage de l'app dessus.
+  unawaited(LoyerReferenceService.preload());
   runApp(DidouImmoApp(firebaseReady: firebaseReady));
 }
 

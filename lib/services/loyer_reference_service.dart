@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Loyer/m² d'une commune, issu du jeu "Carte des loyers" (voir
 /// [LoyerReferenceService]).
@@ -12,19 +15,28 @@ class LoyerCommuneRef {
   const LoyerCommuneRef({required this.loyerM2, required this.estimationZone});
 }
 
+/// Chemin Firebase Storage du fichier — republié par un compte admin depuis
+/// l'app (voir `AdminScreen` et `LoyerImportService`), pas par une nouvelle
+/// version d'app : la donnée est trop volumineuse et évolue trop souvent
+/// (une nouvelle édition par an) pour justifier de repasser par une
+/// publication Play Store à chaque fois.
+const loyerCommunesStoragePath = 'reference-data/loyers_communes.json';
+
 /// Loyer/m² par commune — jeu de données "Carte des loyers" (Ministère
-/// chargé du Logement / ANIL, édition 2025, modélisé à partir des annonces
-/// LeBonCoin et SeLoger du 3ᵉ trimestre 2025), embarqué dans l'app en asset
-/// JSON compact (`assets/data/loyers_communes.json`, ~34 900 communes de
-/// France métropolitaine) — voir le script de génération dans l'historique
-/// de la PR qui l'a ajouté.
+/// chargé du Logement / ANIL, modélisé à partir des annonces LeBonCoin et
+/// SeLoger), bien plus fin que le repère des 96 préfectures de
+/// `frenchCities` (`calculations.dart`), qui reste le repli pour les
+/// DOM-TOM et les rares communes absentes du jeu de données.
 ///
-/// Contrairement à VALORIS (prix, appel réseau à la demande, quota
-/// 100 requêtes/jour), c'est un asset embarqué : pas de réseau, pas de
-/// quota, disponible pour absolument toutes les communes du jeu de données
-/// dès que [preload] a terminé — bien plus fin que le repère des 96
-/// préfectures de `frenchCities` (`calculations.dart`), qui reste le repli
-/// pour les DOM-TOM et les rares communes absentes du jeu de données.
+/// Trois sources possibles, dans l'ordre :
+/// 1. Cache local (SharedPreferences, 7 jours) — évite de retélécharger le
+///    fichier (~800 Ko) à chaque démarrage.
+/// 2. Firebase Storage ([loyerCommunesStoragePath]) — la version la plus
+///    récente publiée par un admin.
+/// 3. Asset embarqué dans l'app (`assets/data/loyers_communes.json`) —
+///    figé à la date du build, dernier repli si le réseau/Storage sont
+///    indisponibles (ou si un cache périmé mais utilisable existe, celui-ci
+///    est préféré à l'asset embarqué : plus récent).
 ///
 /// ⚠️ Ce sont des LOYERS D'ANNONCE modélisés (prix demandé, pas forcément
 /// obtenu), pas des baux réellement signés comme DVF l'est pour les ventes
@@ -43,32 +55,81 @@ class LoyerCommuneRef {
 /// que la moyenne ait un sens (les loyers y varient énormément d'un
 /// arrondissement à l'autre).
 class LoyerReferenceService {
+  static const _cacheKey = 'loyers-communes-cache-v1';
+  static const _cacheDateKey = 'loyers-communes-cache-v1-date';
+  static const _cacheMaxAge = Duration(days: 7);
+
   static Map<String, LoyerCommuneRef>? _data;
   static Future<void>? _loading;
 
-  /// À appeler une fois au démarrage (voir `RendementState.load`) — les
-  /// lectures suivantes via [lookup] sont synchrones et ne redéclenchent
-  /// jamais de chargement.
+  /// À appeler une fois au démarrage (voir `main.dart`) — les lectures
+  /// suivantes via [lookup] sont synchrones et ne redéclenchent jamais de
+  /// chargement.
   static Future<void> preload() {
     return _loading ??= _load();
   }
 
+  /// Force un rechargement au prochain [preload] — à appeler juste après
+  /// qu'un admin a republié un nouveau fichier (voir `AdminScreen`), pour
+  /// que la session en cours reflète la mise à jour sans attendre 7 jours
+  /// ou un redémarrage de l'app.
+  static void invalidateCache() {
+    _loading = null;
+  }
+
   static Future<void> _load() async {
+    String? cachedJson;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedDate = prefs.getString(_cacheDateKey);
+      cachedJson = prefs.getString(_cacheKey);
+      if (cachedJson != null && cachedDate != null) {
+        final age = DateTime.now().difference(DateTime.tryParse(cachedDate) ?? DateTime(2000));
+        if (age < _cacheMaxAge) {
+          _applyJson(cachedJson);
+          return;
+        }
+      }
+      // Cache absent ou périmé : tente Firebase Storage, la source la plus
+      // à jour. Toute erreur (Firebase non configuré, pas de réseau, fichier
+      // pas encore publié...) retombe silencieusement plus bas, jamais
+      // d'erreur visible pour l'utilisateur.
+      final bytes = await FirebaseStorage.instance.ref(loyerCommunesStoragePath).getData(10 << 20);
+      if (bytes == null) throw StateError('empty');
+      final raw = utf8.decode(bytes);
+      _applyJson(raw);
+      unawaited(prefs.setString(_cacheKey, raw));
+      unawaited(prefs.setString(_cacheDateKey, DateTime.now().toIso8601String()));
+      return;
+    } catch (_) {
+      // suite ci-dessous
+    }
+    if (cachedJson != null) {
+      // Périmé (>7 jours) mais toujours mieux qu'un asset figé au build.
+      try {
+        _applyJson(cachedJson);
+        return;
+      } catch (_) {
+        // cache corrompu : dernier repli ci-dessous
+      }
+    }
     try {
       final raw = await rootBundle.loadString('assets/data/loyers_communes.json');
-      final json = jsonDecode(raw) as Map<String, dynamic>;
-      _data = {
-        for (final entry in json.entries)
-          entry.key: LoyerCommuneRef(
-            loyerM2: ((entry.value as Map<String, dynamic>)['m'] as num).toDouble(),
-            estimationZone: entry.value['z'] == 1,
-          ),
-      };
+      _applyJson(raw);
     } catch (_) {
-      // Asset manquant/corrompu : l'app retombe sur le repère statique de
-      // `frenchCities`, jamais d'erreur visible pour l'utilisateur.
       _data = {};
     }
+  }
+
+  static void _applyJson(String raw) {
+    final json = jsonDecode(raw) as Map<String, dynamic>;
+    _data = {
+      for (final entry in json.entries)
+        entry.key: LoyerCommuneRef(
+          loyerM2: ((entry.value as Map<String, dynamic>)['m'] as num).toDouble(),
+          estimationZone: entry.value['z'] == 1,
+        ),
+    };
   }
 
   /// `null` tant que [preload] n'a pas terminé, ou si la commune n'est pas
