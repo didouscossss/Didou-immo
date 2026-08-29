@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// Règles de sécurité Firebase Storage pour Didou Immo — à coller dans
+// Firebase Console → Storage → Règles (ou déployer via la CLI Firebase, en
+// même temps que firestore.rules). Sans elles, Storage refuse tout accès
+// par défaut.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Loyer/m² par commune (voir LoyerReferenceService) : lecture publique
+    // (nécessaire même en mode invité, sans compte, comme le reste des
+    // repères de marché), écriture réservée aux comptes admin — même
+    // vérification que `firestore.rules` (`isAdmin` sur `users/{uid}`),
+    // via `firestore.get()` qui permet à une règle Storage de lire
+    // Firestore.
+    match /reference-data/loyers_communes.json {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+  }
+}

@@ -91,7 +91,10 @@ service cloud.firestore {
 
     match /suggestions/{suggestionId} {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-      allow read: if false; // consultées uniquement depuis la console Firebase
+      // Consultées et supprimées depuis l'écran Administration de l'app —
+      // seul un compte admin y a accès, jamais l'auteur d'une suggestion ni
+      // un autre utilisateur.
+      allow read, delete: if isAdmin();
     }
   }
 }

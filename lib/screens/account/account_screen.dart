@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../admin/admin_screen.dart';
 import '../paywall/paywall_screen.dart';
 import '../referral/referral_screen.dart';
+import '../suggestions/suggestions_screen.dart';
 
 /// Écran "Compte" — statut d'abonnement, parrainage, déconnexion, et accès
 /// à l'administration pour les comptes admin.
@@ -53,6 +54,20 @@ class AccountScreen extends StatelessWidget {
             )),
             icon: const Icon(Icons.card_giftcard_outlined),
             label: const Text('Code cadeau'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.ink,
+              side: BorderSide(color: AppColors.border),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => SuggestionsScreen(uid: user.uid),
+            )),
+            icon: const Icon(Icons.lightbulb_outline),
+            label: const Text('Proposer une amélioration'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
               side: BorderSide(color: AppColors.border),

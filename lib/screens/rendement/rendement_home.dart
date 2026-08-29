@@ -14,9 +14,10 @@ import 'fiscalite_screen.dart';
 import 'marche_screen.dart';
 import 'methodologie_sheet.dart';
 import 'onboarding_sheet.dart';
+import 'patrimoine_screen.dart';
 import 'projection_screen.dart';
 
-enum _Tab { calc, marche, carte, fisc, proj, biens }
+enum _Tab { calc, marche, carte, fisc, proj, biens, patrimoine }
 
 /// Coquille de l'app — équivalent du composant `RendementApp` (barre du
 /// haut + navigation par onglets + overlays onboarding/méthodologie).
@@ -43,6 +44,7 @@ class _RendementHomeState extends State<RendementHome> {
     (tab: _Tab.fisc, label: 'Fiscalité', icon: Icons.account_balance_outlined),
     (tab: _Tab.proj, label: 'Projection', icon: Icons.trending_up),
     (tab: _Tab.biens, label: 'Comparer', icon: Icons.layers_outlined),
+    (tab: _Tab.patrimoine, label: 'Patrimoine', icon: Icons.insights_outlined),
   ];
 
   @override
@@ -215,6 +217,8 @@ class _RendementHomeState extends State<RendementHome> {
         return ProjectionScreen(key: themeKey);
       case _Tab.biens:
         return BiensScreen(key: themeKey, onEdit: () => setState(() => _active = _Tab.calc));
+      case _Tab.patrimoine:
+        return PatrimoineScreen(key: themeKey);
     }
   }
 

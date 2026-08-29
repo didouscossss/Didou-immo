@@ -99,8 +99,6 @@ class FirestoreService {
   }
 
   /// Suggestions d'amélioration envoyées par les utilisateurs.
-  /// Consultables directement depuis la console Firebase, sans back-office
-  /// à construire pour démarrer.
   Future<void> submitSuggestion(String uid, String title, String body) {
     return _db.collection('suggestions').add({
       'uid': uid,
@@ -109,5 +107,14 @@ class FirestoreService {
       'status': 'new', // new | reviewing | planned | done
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Consultables uniquement par un compte admin (voir `firestore.rules`).
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchSuggestions() {
+    return _db.collection('suggestions').orderBy('createdAt', descending: true).snapshots();
+  }
+
+  Future<void> deleteSuggestion(String suggestionId) {
+    return _db.collection('suggestions').doc(suggestionId).delete();
   }
 }
