@@ -156,6 +156,101 @@ class LoanOffer {
   }
 }
 
+/// Un relevé réel sur un bien acquis (onglet Patrimoine) — ce qui s'est
+/// vraiment passé sur une PÉRIODE ([dateDebut] → [dateFin]), pas un simple
+/// point dans le temps : pour qu'un loyer qui change, une vacance puis une
+/// reprise à un loyer différent, etc. se lisent clairement sur la courbe
+/// d'évolution plutôt que comme des points isolés reliés en ligne droite.
+/// Tous les montants sont facultatifs (`null` = non renseigné), sauf
+/// [dateDebut].
+class SuiviEntry {
+  final DateTime dateDebut;
+  /// `null` = période toujours en cours (le relevé le plus récent, pas
+  /// encore clôturé par un nouveau relevé qui prendrait le relais) — traitée
+  /// comme active jusqu'à aujourd'hui partout où c'est pertinent (graphique,
+  /// dernier cash-flow connu...).
+  final DateTime? dateFin;
+  final double? loyerPercu;
+  /// Charges réelles détaillées par poste (plutôt qu'un seul montant
+  /// fourre-tout) — permet de comparer chaque poste à l'hypothèse de départ
+  /// correspondante dans l'onglet Bien (voir `computeEcartReelPrevu`).
+  final double? chargesCoproReelles;
+  final double? taxeFonciereReelle;
+  final double? assuranceReelle;
+  /// true si le bien n'était pas loué sur cette période — dans ce cas
+  /// [loyerPercu] est ignoré dans [cashFlowReel] même s'il est renseigné
+  /// (résidu d'une période précédente laissé tel quel dans le champ).
+  final bool vacant;
+  /// Dépense ponctuelle non prévue (réparation, sinistre...) survenue sur
+  /// cette période, distincte des charges courantes.
+  final double? travauxImprevus;
+  final String? note;
+
+  const SuiviEntry({
+    required this.dateDebut,
+    this.dateFin,
+    this.loyerPercu,
+    this.chargesCoproReelles,
+    this.taxeFonciereReelle,
+    this.assuranceReelle,
+    this.vacant = false,
+    this.travauxImprevus,
+    this.note,
+  });
+
+  /// Total mensuel des charges réelles renseignées sur cette période, tous
+  /// postes confondus.
+  double get chargesReellesTotal => (chargesCoproReelles ?? 0) + (taxeFonciereReelle ?? 0) + (assuranceReelle ?? 0);
+
+  /// Cash-flow réel de cette période — même logique que
+  /// `CoreResult.cashflowMensuel`, mais avec les montants réellement
+  /// constatés plutôt que les hypothèses de l'onglet Bien. [mensualiteCredit]
+  /// (le crédit réel du bien, constant quelle que soit la période) n'est pas
+  /// stocké ici : il est passé par l'appelant (voir `RendementState`).
+  double cashFlowReel(double mensualiteCredit) =>
+      (vacant ? 0 : (loyerPercu ?? 0)) - chargesReellesTotal - (travauxImprevus ?? 0) - mensualiteCredit;
+
+  /// true si [date] tombe dans cette période (bornes incluses ; une période
+  /// sans [dateFin] est considérée active jusqu'à aujourd'hui).
+  bool couvre(DateTime date) =>
+      !date.isBefore(dateDebut) && (dateFin == null ? !date.isAfter(DateTime.now()) : !date.isAfter(dateFin!));
+}
+
+class EcartReelPrevu {
+  final double loyerTheorique, loyerReel;
+  final double coproTheorique, coproReel;
+  final double taxeFonciereTheorique, taxeFonciereReel;
+  final double assuranceTheorique, assuranceReel;
+  const EcartReelPrevu({
+    required this.loyerTheorique,
+    required this.loyerReel,
+    required this.coproTheorique,
+    required this.coproReel,
+    required this.taxeFonciereTheorique,
+    required this.taxeFonciereReel,
+    required this.assuranceTheorique,
+    required this.assuranceReel,
+  });
+}
+
+/// Compare le dernier relevé réel connu d'un bien aux hypothèses saisies au
+/// départ dans l'onglet Bien — `null` si aucun relevé n'existe encore.
+/// Les charges de [f] sont annuelles (voir `computeCore`), ramenées au mois
+/// pour être comparables à [dernier], qui raisonne déjà en mensuel.
+EcartReelPrevu? computeEcartReelPrevu(PropertyInput f, SuiviEntry? dernier) {
+  if (dernier == null) return null;
+  return EcartReelPrevu(
+    loyerTheorique: f.mode == RentalMode.longue ? f.loyer : 0,
+    loyerReel: dernier.vacant ? 0 : (dernier.loyerPercu ?? 0),
+    coproTheorique: f.chargesCopro / 12,
+    coproReel: dernier.chargesCoproReelles ?? 0,
+    taxeFonciereTheorique: f.taxeFonciere / 12,
+    taxeFonciereReel: dernier.taxeFonciereReelle ?? 0,
+    assuranceTheorique: f.assurance / 12,
+    assuranceReel: dernier.assuranceReelle ?? 0,
+  );
+}
+
 /// Le bien à l'étude — équivalent de l'objet `form`/`DEFAULT_FORM` du JSX.
 /// Immuable : on le modifie via [copyWith], comme `setForm(f => ({...f, x}))`.
 class PropertyInput {
@@ -194,6 +289,19 @@ class PropertyInput {
   final bool vendu;
   final DateTime? dateVente;
   final double? prixVente;
+
+  /// Relevés réels saisis au fil de l'eau sur un bien acquis (onglet
+  /// Patrimoine) — loyer réellement perçu, charges réellement payées,
+  /// vacance, travaux/imprévus. Vide pour un bien encore à l'étude. Pas de
+  /// fréquence imposée (pas forcément un par mois) : chaque relevé porte sa
+  /// propre date, voir [SuiviEntry].
+  final List<SuiviEntry> suivi;
+
+  /// `true` si ce bien acquis est la résidence principale (on y habite,
+  /// pas de loyer perçu) plutôt qu'un investissement locatif — exclu du
+  /// cash-flow réel du portefeuille et de la distinction actif/passif dans
+  /// l'onglet Patrimoine, mais garde son propre suivi (charges réelles...).
+  final bool residencePrincipale;
 
   // longue durée
   final double loyer, vacancePct, chargesCopro, gestion;
@@ -245,6 +353,8 @@ class PropertyInput {
     this.vendu = false,
     this.dateVente,
     this.prixVente,
+    this.suivi = const [],
+    this.residencePrincipale = false,
     this.loyer = 0,
     this.vacancePct = 0,
     this.chargesCopro = 0,
@@ -341,6 +451,8 @@ class PropertyInput {
     bool? vendu,
     DateTime? dateVente,
     double? prixVente,
+    List<SuiviEntry>? suivi,
+    bool? residencePrincipale,
     double? loyer,
     double? vacancePct,
     double? chargesCopro,
@@ -388,6 +500,8 @@ class PropertyInput {
       vendu: vendu ?? this.vendu,
       dateVente: dateVente ?? this.dateVente,
       prixVente: prixVente ?? this.prixVente,
+      suivi: suivi ?? this.suivi,
+      residencePrincipale: residencePrincipale ?? this.residencePrincipale,
       loyer: loyer ?? this.loyer,
       vacancePct: vacancePct ?? this.vacancePct,
       chargesCopro: chargesCopro ?? this.chargesCopro,
@@ -430,6 +544,8 @@ class CoreResult {
       montantEmprunte,
       mensualite,
       interetsAn1,
+      interetsTotalPret,
+      coutTotalProjet,
       loyerAnnuelBrut,
       chargesAnnuelles,
       revenuNet,
@@ -449,6 +565,8 @@ class CoreResult {
     required this.montantEmprunte,
     required this.mensualite,
     required this.interetsAn1,
+    required this.interetsTotalPret,
+    required this.coutTotalProjet,
     required this.loyerAnnuelBrut,
     required this.chargesAnnuelles,
     required this.revenuNet,
@@ -472,6 +590,11 @@ CoreResult computeCore(PropertyInput f) {
   final montantEmprunte = max(0, prixTotal - apport).toDouble();
   final mensualite = monthlyPayment(montantEmprunte, f.tauxPct, f.dureePretAns);
   final interetsAn1 = interestPaidYear1(montantEmprunte, f.tauxPct, f.dureePretAns);
+  // Coût total du crédit sur toute sa durée — même formule que
+  // `computeOffre` pour les offres de banques comparées, appliquée ici au
+  // prêt réel du bien (taux/durée saisis dans "Financement").
+  final interetsTotalPret = mensualite * f.dureePretAns * 12 - montantEmprunte;
+  final coutTotalProjet = prixTotal + interetsTotalPret;
 
   double loyerAnnuelBrut, chargesSpecifiques, tauxOccupation;
   double? nuitsTotal, nombreReservations, prixNuitMoyen;
@@ -512,6 +635,8 @@ CoreResult computeCore(PropertyInput f) {
     montantEmprunte: montantEmprunte,
     mensualite: mensualite,
     interetsAn1: interetsAn1,
+    interetsTotalPret: interetsTotalPret,
+    coutTotalProjet: coutTotalProjet,
     loyerAnnuelBrut: loyerAnnuelBrut,
     chargesAnnuelles: chargesAnnuelles,
     revenuNet: revenuNet,
@@ -1180,7 +1305,21 @@ const List<CityRef> frenchCities = [
 class RefInfo {
   final CityRef ref;
   final bool precise;
-  const RefInfo({required this.ref, required this.precise});
+  /// true quand `ref.loyerM2` vient du jeu "Carte des loyers" par commune
+  /// (voir `LoyerReferenceService`, appliqué en dehors de cette fonction
+  /// volontairement pure — voir `RendementState.refInfo`), pas du repère
+  /// statique des 96 préfectures ci-dessous.
+  final bool loyerDonneeCommune;
+  /// true quand cette donnée de loyer est une estimation de ZONE élargie
+  /// (pas assez d'annonces observées directement dans la commune), à
+  /// signaler à l'utilisateur plutôt que de la présenter comme acquise.
+  final bool loyerEstimationZone;
+  const RefInfo({
+    required this.ref,
+    required this.precise,
+    this.loyerDonneeCommune = false,
+    this.loyerEstimationZone = false,
+  });
 }
 
 RefInfo? nearestReference(CommuneRef? commune) {

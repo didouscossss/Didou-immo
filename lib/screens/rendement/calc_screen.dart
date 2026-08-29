@@ -441,9 +441,23 @@ class _CalcScreenState extends State<CalcScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Row(children: [
-            Expanded(child: _statBlock('Montant emprunté', eur(core.montantEmprunte), AppColors.ink)),
-            Expanded(child: _statBlock('Mensualité calculée', eur(core.mensualite), AppColors.accent)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: _statBlock('Montant emprunté', eur(core.montantEmprunte), AppColors.ink)),
+              Expanded(child: _statBlock('Mensualité calculée', eur(core.mensualite), AppColors.accent)),
+            ]),
+            const SizedBox(height: 16),
+            Container(height: 1, color: AppColors.border),
+            const SizedBox(height: 16),
+            Text(
+              'Coût total du projet : ${eur(core.coutTotalProjet)}',
+              style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'dont ${eur(core.interetsTotalPret)} d\'intérêts sur ${form.dureePretAns} ans de prêt',
+              style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55)),
+            ),
           ]),
         ),
         const Tip(
@@ -866,13 +880,14 @@ class _CalcScreenState extends State<CalcScreen> {
           const SizedBox(height: 10),
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text.rich(TextSpan(children: [
               TextSpan(text: 'Mensualité tot. : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
               TextSpan(text: eur(c.mensualiteTotale), style: AppTextStyles.mono(fontSize: 12, color: AppColors.ink)),
             ])),
+            const SizedBox(height: 4),
             Text.rich(TextSpan(children: [
-              TextSpan(text: 'Coût total crédit : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
+              TextSpan(text: 'Coût total du crédit (intérêts + assurance) : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
               TextSpan(text: eur(c.coutTotal), style: AppTextStyles.mono(fontSize: 12, color: isBest ? AppColors.accent : AppColors.ink)),
             ])),
           ]),
