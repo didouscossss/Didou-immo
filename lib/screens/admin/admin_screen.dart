@@ -184,6 +184,29 @@ class _AdminScreenState extends State<AdminScreen> {
             label: const Text('Copier le lien data.gouv.fr'),
           ),
           const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+            child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Comment reconnaître le bon fichier', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              SizedBox(height: 6),
+              Text(
+                'Le téléchargement contient 4 fichiers CSV — un seul est le bon, celui '
+                'nommé exactement "predappmefdhup.csv" (rien entre "app" et "mefdhup", '
+                "c'est le plus court des 4). Les 3 autres ne sont PAS utilisés par l'app :\n"
+                '• predapp12mefdhup.csv → appartements 1-2 pièces\n'
+                '• predapp3mefdhup.csv → appartements 3 pièces et plus\n'
+                '• predmaimefdhup.csv → maisons\n\n'
+                "Les 4 fichiers ont la même structure : l'aperçu ci-dessous affichera "
+                'toujours "~34 900 communes reconnues" même si tu sélectionnes le mauvais '
+                'par erreur — vérifie donc bien le NOM du fichier avant de publier. Pas '
+                'grave si tu te trompes, republier le bon fichier écrase simplement le '
+                'précédent.',
+                style: TextStyle(fontSize: 12.5),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: _loyerParsing ? null : _pickLoyerCsv,
             icon: const Icon(Icons.upload_file_outlined, size: 18),
