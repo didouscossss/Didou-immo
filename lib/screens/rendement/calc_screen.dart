@@ -866,13 +866,14 @@ class _CalcScreenState extends State<CalcScreen> {
           const SizedBox(height: 10),
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 8),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text.rich(TextSpan(children: [
               TextSpan(text: 'Mensualité tot. : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
               TextSpan(text: eur(c.mensualiteTotale), style: AppTextStyles.mono(fontSize: 12, color: AppColors.ink)),
             ])),
+            const SizedBox(height: 4),
             Text.rich(TextSpan(children: [
-              TextSpan(text: 'Coût total crédit : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
+              TextSpan(text: 'Coût total du crédit (intérêts + assurance) : ', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6))),
               TextSpan(text: eur(c.coutTotal), style: AppTextStyles.mono(fontSize: 12, color: isBest ? AppColors.accent : AppColors.ink)),
             ])),
           ]),
