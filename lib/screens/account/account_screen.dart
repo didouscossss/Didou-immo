@@ -116,8 +116,94 @@ class AccountScreen extends StatelessWidget {
             },
             child: Text('Se déconnecter', style: AppTextStyles.sans(fontSize: 13, color: AppColors.alert)),
           ),
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: () => _confirmDeleteAccount(context, account),
+            child: Text('Supprimer mon compte', style: AppTextStyles.sans(fontSize: 13, color: AppColors.alert)),
+          ),
         ],
       ),
+    );
+  }
+
+  /// Droit à l'effacement (RGPD) : confirmation, puis réauthentification —
+  /// Firebase l'exige pour cette opération sensible si la connexion date
+  /// un peu — avant d'effacer irréversiblement les données et le compte.
+  Future<void> _confirmDeleteAccount(BuildContext context, UserAccountState account) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer définitivement ton compte ?'),
+        content: const Text(
+          'Tous tes biens enregistrés et les données de ton compte seront effacés '
+          'immédiatement. Cette action est irréversible.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Supprimer', style: TextStyle(color: AppColors.alert)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    String? password;
+    if (account.authProviderId == 'password') {
+      password = await showDialog<String>(context: context, builder: (_) => const _PasswordPromptDialog());
+      if (password == null || !context.mounted) return; // annulé
+    }
+
+    final error = await account.deleteAccount(password: password);
+    if (!context.mounted) return;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    // Cet écran est poussé au-dessus de `AppRoot` (qui bascule déjà tout
+    // seul sur AuthScreen dès que `user` devient null) — sans le pop, la
+    // route resterait affichée par-dessus le `SizedBox.shrink()` ci-dessus.
+    if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+  }
+}
+
+/// Demande le mot de passe avant suppression d'un compte email/mot de
+/// passe — nécessaire à la réauthentification exigée par Firebase.
+class _PasswordPromptDialog extends StatefulWidget {
+  const _PasswordPromptDialog();
+
+  @override
+  State<_PasswordPromptDialog> createState() => _PasswordPromptDialogState();
+}
+
+class _PasswordPromptDialogState extends State<_PasswordPromptDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Confirme ton mot de passe'),
+      content: TextField(
+        controller: _controller,
+        obscureText: true,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Mot de passe'),
+        onSubmitted: (v) => Navigator.of(context).pop(v),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Confirmer'),
+        ),
+      ],
     );
   }
 }

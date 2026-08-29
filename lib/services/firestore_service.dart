@@ -84,6 +84,20 @@ class FirestoreService {
     return _propertiesCol(uid).doc(propertyId).delete();
   }
 
+  /// Efface toutes les données du compte (biens + document utilisateur) —
+  /// droit à l'effacement RGPD. À appeler AVANT `AuthService.deleteAccount`
+  /// tant que les règles Firestore (`isOwner`) autorisent encore l'écriture
+  /// avec ce compte.
+  Future<void> deleteAllUserData(String uid) async {
+    final properties = await _propertiesCol(uid).get();
+    final batch = _db.batch();
+    for (final doc in properties.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(_userDoc(uid));
+    await batch.commit();
+  }
+
   /// Suggestions d'amélioration envoyées par les utilisateurs.
   Future<void> submitSuggestion(String uid, String title, String body) {
     return _db.collection('suggestions').add({
