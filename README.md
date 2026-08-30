@@ -94,6 +94,35 @@ ordinateur (le tien ou celui d'une personne qui t'aide) :
 5. Teste "J'ai un code de parrainage" dans l'app — l'erreur doit
    disparaître
 
+### 1ter. Notification de mise à jour du loyer/m²
+Une Cloud Function (`checkLoyerDatasetUpdate`, dans le même `functions/index.js`
+que le parrainage — se déploie donc en même temps, étape 1bis ci-dessus)
+vérifie chaque lundi si data.gouv.fr propose une version plus récente du
+fichier "Carte des loyers", et t'envoie un email à
+`valentin.champion31@gmail.com` si oui — pour penser à le retélécharger et
+le republier depuis Mon compte → Administration (voir étape 3ter plus bas).
+Elle ne republie rien elle-même, elle prévient juste.
+
+L'envoi passe par ton compte Gmail (SMTP), via un **mot de passe
+d'application** (jamais ton vrai mot de passe Gmail, et jamais stocké en
+clair dans le dépôt — c'est un secret Firebase) :
+
+1. Active la validation en deux étapes sur ton compte Google si ce n'est pas
+   déjà fait (obligatoire pour créer un mot de passe d'application) :
+   https://myaccount.google.com/security
+2. Crée un mot de passe d'application : https://myaccount.google.com/apppasswords
+   → nom libre (ex. "Didou Immo") → copie le mot de passe généré (16
+   caractères)
+3. Enregistre-le comme secret Firebase (il te le redemandera si tu ne l'as
+   pas déjà fait) : `firebase functions:secrets:set GMAIL_APP_PASSWORD` —
+   colle le mot de passe d'application quand c'est demandé
+4. Déploie avec le reste : `firebase deploy --only functions`
+
+Le tout premier passage (juste après le déploiement) enregistre uniquement
+la version actuelle du fichier comme référence, sans envoyer de mail — le
+premier vrai mail n'arrivera qu'à la prochaine vraie mise à jour publiée par
+data.gouv.fr (environ une fois par an).
+
 ### 2. Premier compte admin
 Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :
 Firestore Console → collection `users` → ton document (par ton `uid`) →
