@@ -53,6 +53,18 @@ class AppColors {
   }
 
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
+
+  /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
+  /// vif en novice (identique jour/nuit, comme sur la maquette fournie),
+  /// violet→rose→orange en avancé de jour, ardoise→cyan→émeraude en avancé
+  /// de nuit. Remplace l'ancien dégradé [ink]→[accent], plus terne, pour un
+  /// rendu plus vivant sur ces cartes en particulier.
+  static List<Color> get heroGradient {
+    if (_novice) return const [Color(0xFF4ADE80), Color(0xFF22C55E)];
+    return _dark
+        ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
+        : const [Color(0xFF7C3AED), Color(0xFFF43F5E), Color(0xFFF97316)];
+  }
 }
 
 /// Convertit un hex `#RRGGBB` (tel que renvoyé par `calculations.dart`,
