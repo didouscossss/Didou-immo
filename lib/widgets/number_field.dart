@@ -104,7 +104,7 @@ class _NumberFieldState extends State<NumberField> {
                   style: AppTextStyles.mono(fontSize: 15, color: const Color(0xFF16211C)),
                   decoration: const InputDecoration(
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                     border: InputBorder.none,
                   ),
                   onChanged: (text) {
@@ -115,7 +115,12 @@ class _NumberFieldState extends State<NumberField> {
               ),
               if (widget.suffix != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  // Padding réduit à 8 (au lieu de 12) : sur les mises en page
+                  // à 3 champs par ligne (ex. comparatif d'offres de prêt),
+                  // un suffixe de plusieurs lettres ("ans") pouvait laisser
+                  // trop peu de place au nombre et rogner son dernier
+                  // chiffre.
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.border))),
                   height: 44,
                   alignment: Alignment.center,
