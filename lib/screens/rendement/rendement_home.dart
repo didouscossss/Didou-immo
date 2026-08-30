@@ -58,86 +58,91 @@ class _RendementHomeState extends State<RendementHome> {
     final state = context.watch<RendementState>();
 
     return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Rendement', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                            Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
-                          ],
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: AppColors.backgroundGradient),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('Rendement', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                              Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // FittedBox : sur téléphone, les 3 icônes + le sélecteur
-                      // Novice/Avancé ne tenaient plus sur la largeur depuis
-                      // l'ajout du bouton mode nuit — "Avancé" se retrouvait
-                      // coupé hors écran. On rétrécit l'ensemble plutôt que
-                      // de le laisser déborder.
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerRight,
-                          child: Row(children: [
-                            InkWell(
-                              onTap: state.toggleDarkMode,
-                              borderRadius: BorderRadius.circular(999),
-                              child: Container(
-                                padding: const EdgeInsets.all(9),
-                                decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                child: Icon(state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 15, color: AppColors.ink),
+                        const SizedBox(width: 8),
+                        // FittedBox : sur téléphone, les 3 icônes + le sélecteur
+                        // Novice/Avancé ne tenaient plus sur la largeur depuis
+                        // l'ajout du bouton mode nuit — "Avancé" se retrouvait
+                        // coupé hors écran. On rétrécit l'ensemble plutôt que
+                        // de le laisser déborder.
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Row(children: [
+                              InkWell(
+                                onTap: state.toggleDarkMode,
+                                borderRadius: BorderRadius.circular(999),
+                                child: Container(
+                                  padding: const EdgeInsets.all(9),
+                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                                  child: Icon(state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 15, color: AppColors.ink),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: _openAccount,
-                              borderRadius: BorderRadius.circular(999),
-                              child: Container(
-                                padding: const EdgeInsets.all(9),
-                                decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                child: Icon(Icons.person_outline, size: 15, color: AppColors.ink),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: _openAccount,
+                                borderRadius: BorderRadius.circular(999),
+                                child: Container(
+                                  padding: const EdgeInsets.all(9),
+                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                                  child: Icon(Icons.person_outline, size: 15, color: AppColors.ink),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () => setState(() => _showMethodo = true),
-                              borderRadius: BorderRadius.circular(999),
-                              child: Container(
-                                padding: const EdgeInsets.all(9),
-                                decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                child: Icon(Icons.help_outline, size: 15, color: AppColors.ink),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () => setState(() => _showMethodo = true),
+                                borderRadius: BorderRadius.circular(999),
+                                child: Container(
+                                  padding: const EdgeInsets.all(9),
+                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                                  child: Icon(Icons.help_outline, size: 15, color: AppColors.ink),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
-                          ]),
+                              const SizedBox(width: 8),
+                              NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
+                            ]),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(child: _buildActiveScreen(state)),
-                _buildTabBar(),
-              ],
-            ),
-            if (!state.loaded) const SizedBox.shrink(),
-            if (state.loaded && state.showOnboarding)
-              OnboardingSheet(
-                onFinish: (mode, budget) => state.finishOnboarding(mode: mode, budget: budget),
+                  Expanded(child: _buildActiveScreen(state)),
+                  _buildTabBar(),
+                ],
               ),
-            if (_showMethodo) MethodologieSheet(onClose: () => setState(() => _showMethodo = false)),
-          ],
+              if (!state.loaded) const SizedBox.shrink(),
+              if (state.loaded && state.showOnboarding)
+                OnboardingSheet(
+                  onFinish: (mode, budget) => state.finishOnboarding(mode: mode, budget: budget),
+                ),
+              if (_showMethodo) MethodologieSheet(onClose: () => setState(() => _showMethodo = false)),
+            ],
+          ),
         ),
       ),
     );
