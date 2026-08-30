@@ -26,11 +26,12 @@ class AppColors {
   static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
 
   /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
-  /// vert en mode novice, violet en mode avancé ; plus clair en mode nuit
-  /// pour rester lisible sur un fond sombre.
+  /// vert doux (le même que [good], pas un vert flashy) en mode novice,
+  /// violet foncé/aubergine en mode avancé ; plus clair en mode nuit pour
+  /// rester lisible sur un fond sombre.
   static Color get accent {
-    if (_novice) return _dark ? const Color(0xFF4ADE80) : const Color(0xFF22C55E);
-    return _dark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
+    if (_novice) return _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
+    return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF5B21B6);
   }
 
   static Color get gold => const Color(0xFFB8935A);
@@ -55,15 +56,28 @@ class AppColors {
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
 
   /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
-  /// vif en novice (identique jour/nuit, comme sur la maquette fournie),
-  /// violet→rose→orange en avancé de jour, ardoise→cyan→émeraude en avancé
-  /// de nuit. Remplace l'ancien dégradé [ink]→[accent], plus terne, pour un
-  /// rendu plus vivant sur ces cartes en particulier.
+  /// doux en novice (identique jour/nuit), violet foncé→rose→orange en
+  /// avancé de jour, ardoise→cyan→émeraude en avancé de nuit.
   static List<Color> get heroGradient {
-    if (_novice) return const [Color(0xFF4ADE80), Color(0xFF22C55E)];
+    if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
     return _dark
         ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
-        : const [Color(0xFF7C3AED), Color(0xFFF43F5E), Color(0xFFF97316)];
+        : const [Color(0xFF5B21B6), Color(0xFFF43F5E), Color(0xFFF97316)];
+  }
+
+  /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
+  /// haut→bas, dans la même famille de teinte que [paper] plutôt qu'un
+  /// simple aplat ; distinct par mode/nuit comme le reste de l'identité
+  /// visuelle.
+  static List<Color> get backgroundGradient {
+    if (_novice) {
+      return _dark
+          ? const [Color(0xFF1C2617), Color(0xFF141D10)]
+          : const [Color(0xFFF3F8ED), Color(0xFFE0EBD2)];
+    }
+    return _dark
+        ? const [Color(0xFF0F172A), Color(0xFF1A1233)]
+        : const [Color(0xFFF6F4FB), Color(0xFFE8E3F3)];
   }
 }
 
