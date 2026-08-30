@@ -871,11 +871,14 @@ class _CalcScreenState extends State<CalcScreen> {
           ]),
           const SizedBox(height: 10),
           Row(children: [
-            Expanded(child: NumberField(label: 'Taux', value: offre.tauxPct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(tauxPct: v)))),
+            Expanded(flex: 5, child: NumberField(label: 'Taux', value: offre.tauxPct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(tauxPct: v)))),
             const SizedBox(width: 8),
-            Expanded(child: NumberField(label: 'Durée', value: offre.dureePretAns.toDouble(), suffix: 'ans', onChanged: (v) => updateOffre((o) => o.copyWith(dureePretAns: v.round())))),
+            // Flex un peu plus large : le suffixe "ans" (3 lettres) prend
+            // plus de place que "%", et rognait le chiffre des années sur
+            // 3 champs par ligne.
+            Expanded(flex: 6, child: NumberField(label: 'Durée', value: offre.dureePretAns.toDouble(), suffix: 'ans', onChanged: (v) => updateOffre((o) => o.copyWith(dureePretAns: v.round())))),
             const SizedBox(width: 8),
-            Expanded(child: NumberField(label: 'Assurance', value: offre.assurancePct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(assurancePct: v)))),
+            Expanded(flex: 5, child: NumberField(label: 'Assurance', value: offre.assurancePct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(assurancePct: v)))),
           ]),
           const SizedBox(height: 10),
           Container(height: 1, color: AppColors.border),
