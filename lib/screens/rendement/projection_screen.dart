@@ -103,7 +103,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('PATRIMOINE NET APRÈS ${form.dureeProjection} ANS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),

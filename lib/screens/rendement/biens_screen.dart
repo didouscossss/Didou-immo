@@ -82,7 +82,7 @@ class _BiensScreenState extends State<BiensScreen> {
           margin: EdgeInsets.only(bottom: enEtude > 0 ? 6 : 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [AppColors.ink, AppColors.accent]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
           ),
           child: achetes.isEmpty && vendus.isEmpty
               ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
