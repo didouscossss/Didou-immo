@@ -27,11 +27,11 @@ class AppColors {
 
   /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
   /// vert doux (le même que [good], pas un vert flashy) en mode novice,
-  /// violet foncé/aubergine en mode avancé ; plus clair en mode nuit pour
-  /// rester lisible sur un fond sombre.
+  /// violet profond mais pas trop sombre en mode avancé ; plus clair en
+  /// mode nuit pour rester lisible sur un fond sombre.
   static Color get accent {
     if (_novice) return _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
-    return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF5B21B6);
+    return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF6D28D9);
   }
 
   static Color get gold => const Color(0xFFB8935A);
@@ -56,13 +56,17 @@ class AppColors {
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
 
   /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
-  /// doux en novice (identique jour/nuit), violet foncé→rose→orange en
-  /// avancé de jour, ardoise→cyan→émeraude en avancé de nuit.
+  /// doux en novice (identique jour/nuit), violet (un seul ton, dégradé
+  /// clair→foncé) en avancé de jour, ardoise→cyan→émeraude en avancé de
+  /// nuit. Volontairement monochrome en avancé de jour (pas de rose/orange
+  /// mêlés) : un dégradé multi-teintes devenait criard et rendait les
+  /// courbes tracées par-dessus (ex. cash-flow du portefeuille) difficiles
+  /// à lire.
   static List<Color> get heroGradient {
     if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
     return _dark
         ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
-        : const [Color(0xFF5B21B6), Color(0xFFF43F5E), Color(0xFFF97316)];
+        : const [Color(0xFF8B5CF6), Color(0xFF6D28D9)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
