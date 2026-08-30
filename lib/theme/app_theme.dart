@@ -14,33 +14,42 @@ class AppColors {
   static void setDark(bool value) => _dark = value;
   static bool get isDark => _dark;
 
-  /// Mode novice : identité de fond nettement différente du mode avancé —
-  /// vert sauge doux et lumineux, contre le beige-vert neutre et plus froid
-  /// du mode avancé, y compris en mode nuit. Piloté par [setNovice],
-  /// reflète `RendementState.niveau`. Étendu à [surface] (cartes) pour que
-  /// le contraste entre les deux modes se voie partout, pas seulement en
-  /// arrière-plan — texte et accents restent identiques pour ne pas perdre
-  /// en lisibilité.
+  /// Mode novice : identité nettement différente du mode avancé — vert
+  /// sauge doux et lumineux (fond ET accent), contre un bleu-nuit/violet
+  /// plus analytique et froid en avancé, y compris en mode nuit. Piloté par
+  /// [setNovice], reflète `RendementState.niveau`. Étendu à [surface]
+  /// (cartes) et [accent] pour que le contraste entre les deux modes se
+  /// voie partout, pas seulement en arrière-plan.
   static bool _novice = false;
   static void setNovice(bool value) => _novice = value;
 
   static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
-  static Color get accent => _dark ? const Color(0xFF4FA88A) : const Color(0xFF2F5D50);
+
+  /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
+  /// vert en mode novice, violet en mode avancé ; plus clair en mode nuit
+  /// pour rester lisible sur un fond sombre.
+  static Color get accent {
+    if (_novice) return _dark ? const Color(0xFF4ADE80) : const Color(0xFF22C55E);
+    return _dark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
+  }
+
   static Color get gold => const Color(0xFFB8935A);
   static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
   static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
   static Color get paper {
-    if (_dark) return _novice ? const Color(0xFF1C2617) : const Color(0xFF10170F);
-    return _novice ? const Color(0xFFE6EFDA) : const Color(0xFFF4F0E6);
+    if (_novice) return _dark ? const Color(0xFF1C2617) : const Color(0xFFE6EFDA);
+    // Avancé : bleu-nuit/ardoise (plutôt que le vert neutre précédent) pour
+    // appuyer l'identité "analytique" du mode, y compris de jour (nuance
+    // froide très légère plutôt que le beige chaud du novice).
+    return _dark ? const Color(0xFF0F172A) : const Color(0xFFF3F2F9);
   }
 
-  /// Fond des cartes/encadrés — `Colors.white` en clair/avancé, une surface
-  /// légèrement plus claire que [paper] en sombre ; teintée sauge en mode
-  /// novice pour rester cohérente avec [paper] plutôt que de flotter en
+  /// Fond des cartes/encadrés — légèrement plus clair que [paper] en
+  /// sombre ; teintée en cohérence avec [paper] plutôt que de flotter en
   /// blanc/vert neutre dessus.
   static Color get surface {
-    if (_dark) return _novice ? const Color(0xFF28331F) : const Color(0xFF1B241C);
-    return _novice ? const Color(0xFFF6FAF0) : const Color(0xFFFFFFFF);
+    if (_novice) return _dark ? const Color(0xFF28331F) : const Color(0xFFF6FAF0);
+    return _dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
   }
 
   static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
