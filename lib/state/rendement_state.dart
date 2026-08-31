@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_tab.dart';
+import '../models/bien_section.dart';
 import '../models/saved_property.dart';
 import '../services/firestore_service.dart';
 import '../services/loyer_reference_service.dart';
@@ -19,6 +20,8 @@ const _onboardingKey = 'onboarding-done';
 const _darkModeKey = 'dark-mode';
 const _tabOrderKey = 'tab-order';
 const _hiddenTabsKey = 'hidden-tabs';
+const _bienSectionOrderKey = 'bien-section-order';
+const _bienHiddenSectionsKey = 'bien-hidden-sections';
 
 /// État global de l'app — équivalent des `useState`/`useMemo` du composant
 /// `RendementApp` du prototype.
@@ -52,6 +55,15 @@ class RendementState extends ChangeNotifier {
   /// Onglets réellement affichés, dans l'ordre personnalisé — ce que lit
   /// `RendementHome` pour construire la barre du bas.
   List<AppTab> get visibleTabOrder => tabOrder.where((t) => !hiddenTabs.contains(t)).toList();
+
+  /// Même principe que [tabOrder]/[hiddenTabs], mais pour les blocs de
+  /// l'onglet "Bien" (voir `CalcScreen` et `BienSectionCustomizationScreen`)
+  /// — première "catégorie" (sous-onglet) à recevoir cette personnalisation ;
+  /// les autres onglets restent pour l'instant dans un ordre fixe.
+  List<String> bienSectionOrder = List.of(kDefaultBienSections);
+  Set<String> bienHiddenSections = {};
+
+  List<String> get visibleBienSections => bienSectionOrder.where((s) => !bienHiddenSections.contains(s)).toList();
 
   /// Prix médian réel (VALORIS/DVF) pour la commune actuellement choisie
   /// dans le formulaire — `null` tant qu'il n'a pas été chargé ou si aucune
@@ -148,6 +160,7 @@ class RendementState extends ChangeNotifier {
       showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
       darkMode = prefs.getBool(_darkModeKey) ?? false;
       _loadTabLayout(prefs);
+      _loadBienSectionLayout(prefs);
     } catch (_) {
       showOnboarding = true;
     }
@@ -223,6 +236,58 @@ class RendementState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tabOrderKey);
     await prefs.remove(_hiddenTabsKey);
+  }
+
+  /// Même logique que [_loadTabLayout], pour les blocs de l'onglet "Bien".
+  void _loadBienSectionLayout(SharedPreferences prefs) {
+    final storedOrder = prefs.getStringList(_bienSectionOrderKey);
+    if (storedOrder != null) {
+      final known = <String>[];
+      for (final id in storedOrder) {
+        if (kDefaultBienSections.contains(id) && !known.contains(id)) known.add(id);
+      }
+      for (final id in kDefaultBienSections) {
+        if (!known.contains(id)) known.add(id);
+      }
+      bienSectionOrder = known;
+    }
+    final storedHidden = prefs.getStringList(_bienHiddenSectionsKey);
+    if (storedHidden != null) {
+      bienHiddenSections = storedHidden.where((id) => bienSectionOrder.contains(id) && id != kBienSaveSectionId).toSet();
+    }
+  }
+
+  Future<void> setBienSectionOrder(List<String> order) async {
+    bienSectionOrder = order;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_bienSectionOrderKey, bienSectionOrder);
+  }
+
+  /// Masque/affiche un bloc — refuse de masquer [kBienSaveSectionId] (le
+  /// bouton d'enregistrement, jamais optionnel) ou le dernier bloc encore
+  /// visible.
+  Future<void> setBienSectionHidden(String id, bool hidden) async {
+    if (id == kBienSaveSectionId) return;
+    if (hidden && bienHiddenSections.length >= bienSectionOrder.length - 1 && !bienHiddenSections.contains(id)) return;
+    bienHiddenSections = {...bienHiddenSections};
+    if (hidden) {
+      bienHiddenSections.add(id);
+    } else {
+      bienHiddenSections.remove(id);
+    }
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_bienHiddenSectionsKey, bienHiddenSections.toList());
+  }
+
+  Future<void> resetBienSectionLayout() async {
+    bienSectionOrder = List.of(kDefaultBienSections);
+    bienHiddenSections = {};
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_bienSectionOrderKey);
+    await prefs.remove(_bienHiddenSectionsKey);
   }
 
   Future<void> _loadLocalBiens() async {

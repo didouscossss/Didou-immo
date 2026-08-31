@@ -24,6 +24,17 @@ Future<void> _scrollToAndTap(WidgetTester tester, Finder finder) async {
   await tester.tap(finder);
 }
 
+/// Scrolle la `ListView` de l'onglet courant jusqu'en bas, sans viser un
+/// widget précis — utile pour vérifier qu'un bloc masqué/réordonné a bien
+/// disparu (ou est bien de retour) plutôt que simplement hors du viewport.
+Future<void> _scrollBienListToBottom(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.drag(find.byType(ListView).first, const Offset(0, -400));
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Les 6 onglets se construisent sans erreur, en novice et en avancé',
       (WidgetTester tester) async {
@@ -196,6 +207,59 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.text('Carte'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Personnaliser "Bien" : masquer une section la retire de l\'onglet, réinitialiser la ramène',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Personnaliser mon affichage'), findsOneWidget);
+
+    final bienRow = find.ancestor(of: find.text('Bien'), matching: find.byType(ListTile));
+    await tester.tap(bienRow);
+    await tester.pumpAndSettle();
+    expect(find.text('Personnaliser "Bien"'), findsOneWidget);
+
+    // Masque "Export PDF" : le bloc disparaît de l'onglet une fois revenu dessus.
+    // La liste des 10 blocs dépasse le viewport — il faut la faire défiler
+    // pour que le dernier ("Export PDF") soit construit et visible.
+    await tester.dragUntilVisible(find.text('Export PDF'), find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    final exportRow = find.ancestor(of: find.text('Export PDF'), matching: find.byType(ListTile));
+    await tester.tap(find.descendant(of: exportRow, matching: find.byType(Switch)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    // Le bloc "Exporter en PDF" est tout en bas de l'onglet "Bien" — sans
+    // le scroller jusque là, son absence ne prouverait rien (il pourrait
+    // simplement être hors du viewport, comme le reste de la liste).
+    await _scrollBienListToBottom(tester);
+    expect(find.text('Exporter en PDF'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    // Réinitialiser ramène les 10 blocs dans leur ordre/visibilité d'origine.
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.ancestor(of: find.text('Bien'), matching: find.byType(ListTile)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Réinitialiser'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await _scrollBienListToBottom(tester);
+    expect(find.text('Exporter en PDF'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
