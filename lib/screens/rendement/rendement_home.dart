@@ -177,9 +177,10 @@ class _RendementHomeState extends State<RendementHome> {
   Future<void> _handleSave(RendementState state) async {
     // Modifier un bien déjà enregistré (voir `loadPropertyForEditing`) ne
     // doit ni consommer un essai gratuit, ni être bloqué par le paywall —
-    // seule la création d'un NOUVEAU bien compte. `saveCurrentProperty`
-    // remet `editingId` à null une fois l'enregistrement fait, donc on
-    // capture cette info avant de l'appeler.
+    // seule la création d'un NOUVEAU bien compte, identifiée par
+    // `editingId` encore nul à cet instant (`saveCurrentProperty` le fait
+    // ensuite pointer vers le bien créé, pour que tout enregistrement
+    // suivant sur ce même brouillon soit traité comme une mise à jour).
     final isNewProperty = state.editingId == null;
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
