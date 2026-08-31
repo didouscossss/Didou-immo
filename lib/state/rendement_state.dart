@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/app_tab.dart';
-import '../models/bien_section.dart';
 import '../models/saved_property.dart';
+import '../models/tab_sections.dart';
 import '../services/firestore_service.dart';
 import '../services/loyer_reference_service.dart';
 import '../services/valoris_service.dart';
@@ -56,14 +56,19 @@ class RendementState extends ChangeNotifier {
   /// `RendementHome` pour construire la barre du bas.
   List<AppTab> get visibleTabOrder => tabOrder.where((t) => !hiddenTabs.contains(t)).toList();
 
-  /// Même principe que [tabOrder]/[hiddenTabs], mais pour les blocs de
-  /// l'onglet "Bien" (voir `CalcScreen` et `BienSectionCustomizationScreen`)
-  /// — première "catégorie" (sous-onglet) à recevoir cette personnalisation ;
-  /// les autres onglets restent pour l'instant dans un ordre fixe.
-  List<String> bienSectionOrder = List.of(kDefaultBienSections);
-  Set<String> bienHiddenSections = {};
+  /// Même principe que [tabOrder]/[hiddenTabs], mais pour les blocs À
+  /// L'INTÉRIEUR d'un onglet (voir `kTabSections` et
+  /// `SectionCustomizationScreen`) — une entrée par onglet qui possède des
+  /// blocs personnalisables ; un onglet absent de [kTabSections] (ex.
+  /// "Carte", un seul bloc indissociable) n'a pas cette personnalisation.
+  final Map<AppTab, List<String>> _sectionOrders = {};
+  final Map<AppTab, Set<String>> _hiddenSections = {};
 
-  List<String> get visibleBienSections => bienSectionOrder.where((s) => !bienHiddenSections.contains(s)).toList();
+  List<String> sectionOrder(AppTab tab) => _sectionOrders[tab] ?? List.of(kTabSections[tab]?.defaultOrder ?? const []);
+  Set<String> hiddenSections(AppTab tab) => _hiddenSections[tab] ?? const {};
+
+  /// Blocs réellement affichés pour [tab], dans l'ordre personnalisé.
+  List<String> visibleSections(AppTab tab) => sectionOrder(tab).where((s) => !hiddenSections(tab).contains(s)).toList();
 
   /// Prix médian réel (VALORIS/DVF) pour la commune actuellement choisie
   /// dans le formulaire — `null` tant qu'il n'a pas été chargé ou si aucune
@@ -160,7 +165,9 @@ class RendementState extends ChangeNotifier {
       showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
       darkMode = prefs.getBool(_darkModeKey) ?? false;
       _loadTabLayout(prefs);
-      _loadBienSectionLayout(prefs);
+      for (final tab in kTabSections.keys) {
+        _loadSectionLayout(prefs, tab);
+      }
     } catch (_) {
       showOnboarding = true;
     }
@@ -238,57 +245,72 @@ class RendementState extends ChangeNotifier {
     await prefs.remove(_hiddenTabsKey);
   }
 
-  /// Même logique que [_loadTabLayout], pour les blocs de l'onglet "Bien".
-  void _loadBienSectionLayout(SharedPreferences prefs) {
-    final storedOrder = prefs.getStringList(_bienSectionOrderKey);
+  /// Même logique que [_loadTabLayout], pour les blocs à l'intérieur de
+  /// [tab] (voir [kTabSections]).
+  void _loadSectionLayout(SharedPreferences prefs, AppTab tab) {
+    final meta = kTabSections[tab]!;
+    var order = List.of(meta.defaultOrder);
+    final storedOrder = prefs.getStringList(_sectionOrderKey(tab));
     if (storedOrder != null) {
       final known = <String>[];
       for (final id in storedOrder) {
-        if (kDefaultBienSections.contains(id) && !known.contains(id)) known.add(id);
+        if (meta.defaultOrder.contains(id) && !known.contains(id)) known.add(id);
       }
-      for (final id in kDefaultBienSections) {
+      for (final id in meta.defaultOrder) {
         if (!known.contains(id)) known.add(id);
       }
-      bienSectionOrder = known;
+      order = known;
     }
-    final storedHidden = prefs.getStringList(_bienHiddenSectionsKey);
+    _sectionOrders[tab] = order;
+    final storedHidden = prefs.getStringList(_hiddenSectionsKey(tab));
     if (storedHidden != null) {
-      bienHiddenSections = storedHidden.where((id) => bienSectionOrder.contains(id) && id != kBienSaveSectionId).toSet();
+      _hiddenSections[tab] = storedHidden.where((id) => order.contains(id) && id != meta.lockedId).toSet();
     }
   }
 
-  Future<void> setBienSectionOrder(List<String> order) async {
-    bienSectionOrder = order;
+  Future<void> setSectionOrder(AppTab tab, List<String> order) async {
+    _sectionOrders[tab] = order;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_bienSectionOrderKey, bienSectionOrder);
+    await prefs.setStringList(_sectionOrderKey(tab), order);
   }
 
-  /// Masque/affiche un bloc — refuse de masquer [kBienSaveSectionId] (le
-  /// bouton d'enregistrement, jamais optionnel) ou le dernier bloc encore
-  /// visible.
-  Future<void> setBienSectionHidden(String id, bool hidden) async {
-    if (id == kBienSaveSectionId) return;
-    if (hidden && bienHiddenSections.length >= bienSectionOrder.length - 1 && !bienHiddenSections.contains(id)) return;
-    bienHiddenSections = {...bienHiddenSections};
+  /// Masque/affiche un bloc de [tab] — refuse de masquer le bloc verrouillé
+  /// de cet onglet ([TabSections.lockedId], s'il y en a un) ou le dernier
+  /// bloc encore visible.
+  Future<void> setSectionHidden(AppTab tab, String id, bool hidden) async {
+    final meta = kTabSections[tab];
+    if (meta == null || id == meta.lockedId) return;
+    final order = sectionOrder(tab);
+    final current = Set<String>.of(hiddenSections(tab));
+    if (hidden && current.length >= order.length - 1 && !current.contains(id)) return;
     if (hidden) {
-      bienHiddenSections.add(id);
+      current.add(id);
     } else {
-      bienHiddenSections.remove(id);
+      current.remove(id);
     }
+    _hiddenSections[tab] = current;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_bienHiddenSectionsKey, bienHiddenSections.toList());
+    await prefs.setStringList(_hiddenSectionsKey(tab), current.toList());
   }
 
-  Future<void> resetBienSectionLayout() async {
-    bienSectionOrder = List.of(kDefaultBienSections);
-    bienHiddenSections = {};
+  Future<void> resetSectionLayout(AppTab tab) async {
+    final meta = kTabSections[tab];
+    if (meta == null) return;
+    _sectionOrders[tab] = List.of(meta.defaultOrder);
+    _hiddenSections[tab] = {};
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_bienSectionOrderKey);
-    await prefs.remove(_bienHiddenSectionsKey);
+    await prefs.remove(_sectionOrderKey(tab));
+    await prefs.remove(_hiddenSectionsKey(tab));
   }
+
+  // L'onglet "Bien" avait cette personnalisation avant les autres (voir
+  // historique) : on garde ses clés de préférences d'origine pour ne pas
+  // faire perdre silencieusement la mise en page déjà choisie.
+  String _sectionOrderKey(AppTab tab) => tab == AppTab.calc ? _bienSectionOrderKey : 'section-order-${tab.name}';
+  String _hiddenSectionsKey(AppTab tab) => tab == AppTab.calc ? _bienHiddenSectionsKey : 'hidden-sections-${tab.name}';
 
   Future<void> _loadLocalBiens() async {
     final prefs = await SharedPreferences.getInstance();
