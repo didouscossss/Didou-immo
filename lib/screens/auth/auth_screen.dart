@@ -82,14 +82,24 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.paper,
+      // `LayoutBuilder` + `ConstrainedBox(minHeight: ...)` plutôt qu'un
+      // `Center` autour du `SingleChildScrollView` : ce dernier empêchait le
+      // clavier de faire défiler jusqu'au champ actif (l'écran restait
+      // "centré" sur son ancienne hauteur), masquant en partie le formulaire
+      // à la saisie. Ici, `minHeight` suit la hauteur réellement dispo (donc
+      // rétrécie par le clavier), donc le défilement automatique vers le
+      // champ actif fonctionne normalement.
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                 Center(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
@@ -202,7 +212,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.accent),
                   ),
                 ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
         ),

@@ -357,10 +357,48 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
                 const SizedBox(height: 12),
                 ...b.form.suivi.reversed.map((e) => _releveRow(context, state, b, e)),
               ],
+              const SizedBox(height: 16),
+              Container(height: 1, color: AppColors.border),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => _confirmerSuppressionBien(context, state, b),
+                  icon: Icon(Icons.delete_outline, size: 16, color: AppColors.alert),
+                  label: Text('Supprimer ce bien', style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.alert)),
+                ),
+              ),
             ]),
           ),
       ]),
     );
+  }
+
+  /// Supprime définitivement un bien acquis (et tout son historique de
+  /// relevés) — confirmation obligatoire : contrairement à un projet à
+  /// l'étude (onglet Comparer), un bien du Patrimoine porte souvent des mois
+  /// de suivi réel qu'on ne veut pas perdre par un tap accidentel.
+  Future<void> _confirmerSuppressionBien(BuildContext context, RendementState state, SavedProperty b) async {
+    final nom = b.form.nom.isEmpty ? 'ce bien' : b.form.nom;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Supprimer $nom ?'),
+        content: Text(
+          b.form.suivi.isEmpty
+              ? 'Cette action est irréversible.'
+              : "Les ${b.form.suivi.length} relevé${b.form.suivi.length > 1 ? 's' : ''} enregistré${b.form.suivi.length > 1 ? 's' : ''} pour ce bien seront perdus. Cette action est irréversible.",
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Supprimer', style: TextStyle(color: AppColors.alert)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) state.deleteProperty(b.id);
   }
 
   Widget _ecartRow(String label, double theorique, double reel, {required bool plusEstMieux}) {
