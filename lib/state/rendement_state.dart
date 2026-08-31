@@ -468,6 +468,8 @@ class RendementState extends ChangeNotifier {
 
   void updateForm(PropertyInput Function(PropertyInput current) updater) {
     form = updater(form);
+    formDirty = true;
+    savedFormId = null;
     notifyListeners();
     _maybeRefreshLiveMarketPrice();
   }
@@ -510,12 +512,29 @@ class RendementState extends ChangeNotifier {
   /// `null` signifie que le prochain enregistrement crée un nouveau bien.
   String? editingId;
 
+  /// Id du bien enregistré auquel le formulaire courant correspond
+  /// EXACTEMENT à l'instant présent (juste après [saveCurrentProperty], ou
+  /// juste après [loadPropertyForEditing] tant qu'aucun champ n'a été
+  /// modifié depuis — [updateForm] le remet à `null` au moindre
+  /// changement). Sert à n'autoriser l'export PDF (voir `CalcScreen`) que
+  /// sur un calcul réellement enregistré, jamais sur un brouillon en
+  /// cours — sans quoi n'importe qui pourrait générer un PDF "pro" à
+  /// l'infini sans jamais consommer un essai gratuit.
+  String? savedFormId;
+
+  /// `true` dès que le formulaire en cours a été modifié depuis le dernier
+  /// enregistrement ou chargement — sert à avertir avant de perdre ce
+  /// calcul (voir `BiensScreen.loadPropertyForEditing`).
+  bool formDirty = false;
+
   /// Recharge un bien déjà enregistré dans le formulaire pour le modifier.
   /// Le prochain [saveCurrentProperty] mettra à jour ce bien au lieu d'en
   /// créer un nouveau.
   void loadPropertyForEditing(SavedProperty b) {
     form = b.form;
     editingId = b.id;
+    savedFormId = b.id;
+    formDirty = false;
     notifyListeners();
   }
 
@@ -530,12 +549,17 @@ class RendementState extends ChangeNotifier {
     if (_uid != null) {
       await _firestore.saveProperty(_uid!, id, form.toJson());
       editingId = null;
-      return; // le flux Firestore mettra `biens` à jour automatiquement.
+      savedFormId = id;
+      formDirty = false;
+      notifyListeners();
+      return; // le flux Firestore mettra `biens` à jour automatiquement (`biens` lui-même).
     }
     final saved = SavedProperty(id: id, form: form, core: core, regimes: regimes, score: score);
     final idx = biens.indexWhere((b) => b.id == id);
     biens = idx == -1 ? [...biens, saved] : [for (final b in biens) if (b.id == id) saved else b];
     editingId = null;
+    savedFormId = id;
+    formDirty = false;
     notifyListeners();
     await _persistLocalBiens();
   }
@@ -615,6 +639,7 @@ class RendementState extends ChangeNotifier {
         notaire: defaultNotaire(budget),
         travaux: defaultTravaux(form.surface),
       );
+      formDirty = true;
     }
     showOnboarding = false;
     notifyListeners();

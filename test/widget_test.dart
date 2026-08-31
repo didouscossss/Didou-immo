@@ -35,6 +35,17 @@ Future<void> _scrollTabListToBottom(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Symétrique de [_scrollTabListToBottom] — `_scrollToAndTap` ne scrolle
+/// que vers le bas, donc remonter en haut d'abord est nécessaire pour
+/// retrouver un widget situé tôt dans la liste après l'avoir descendue.
+Future<void> _scrollTabListToTop(WidgetTester tester) async {
+  for (var i = 0; i < 20; i++) {
+    await tester.drag(find.byType(ListView).first, const Offset(0, 400));
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('Les 6 onglets se construisent sans erreur, en novice et en avancé',
       (WidgetTester tester) async {
@@ -312,6 +323,68 @@ void main() {
     await tester.pumpAndSettle();
     await _scrollTabListToBottom(tester);
     expect(find.text('Structure de détention'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets("L'export PDF exige un bien enregistré, et un calcul non enregistré prévient avant d'être perdu",
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    // Avant tout enregistrement, le bouton d'export PDF reste désactivé
+    // (calcul en cours, pas encore un bien enregistré) et aucune
+    // modification "non enregistrée" n'est signalée (rien n'a encore été
+    // saisi).
+    await _scrollTabListToBottom(tester);
+    OutlinedButton pdfButton() => tester.widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Générer le PDF'));
+    expect(pdfButton().onPressed, isNull);
+    expect(find.text('Modifications non enregistrées'), findsNothing);
+
+    // Enregistrer le bien débloque l'export PDF.
+    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await tester.pumpAndSettle();
+    expect(find.text('Comparatif'), findsOneWidget); // navigué vers "Comparer"
+
+    // Retour sur "Bien" : le PDF reste disponible tant que rien n'a changé.
+    await tester.tap(find.text('Bien'));
+    await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
+    expect(pdfButton().onPressed, isNotNull);
+
+    // Modifier un champ invalide l'export PDF et affiche l'indicateur de
+    // modifications non enregistrées.
+    await _scrollTabListToTop(tester);
+    await _scrollToAndTap(tester, find.text('Meublé'));
+    await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
+    expect(find.text('Modifications non enregistrées'), findsOneWidget);
+    expect(pdfButton().onPressed, isNull);
+
+    // Ouvrir un autre bien depuis "Comparer" prévient d'abord qu'on va
+    // perdre ce calcul non enregistré.
+    await tester.tap(find.text('Comparer'));
+    await tester.pumpAndSettle();
+    await _scrollToAndTap(tester, find.text('Bien sans nom'));
+    await tester.pumpAndSettle();
+    expect(find.text('Calcul non enregistré'), findsOneWidget);
+
+    // "Annuler" ne perd rien : toujours sur "Comparer", pas de navigation.
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+    expect(find.text('Calcul non enregistré'), findsNothing);
+    expect(find.text('Comparatif'), findsOneWidget);
+
+    // "Continuer sans enregistrer" recharge le bien : retour sur "Bien"
+    // avec le calcul d'origine (non modifié), le PDF redevient disponible.
+    await _scrollToAndTap(tester, find.text('Bien sans nom'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Continuer sans enregistrer'));
+    await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
+    expect(find.text('Modifications non enregistrées'), findsNothing);
+    expect(pdfButton().onPressed, isNotNull);
     expect(tester.takeException(), isNull);
   });
 }

@@ -166,10 +166,7 @@ class _BiensScreenState extends State<BiensScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       ...sorted.map((b) => InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              state.loadPropertyForEditing(b);
-              widget.onEdit?.call();
-            },
+            onTap: () => _openForEditing(context, state, b),
             child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(16),
@@ -312,6 +309,36 @@ class _BiensScreenState extends State<BiensScreen> {
         ),
       ]),
     ]);
+  }
+
+  /// Ouvre [b] dans le formulaire de l'onglet "Bien" pour le modifier —
+  /// avertit d'abord si un calcul en cours n'est pas encore enregistré
+  /// (`state.formDirty`), sans quoi `loadPropertyForEditing` l'écraserait
+  /// silencieusement.
+  Future<void> _openForEditing(BuildContext context, RendementState state, SavedProperty b) async {
+    if (state.formDirty) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.paper,
+          title: Text('Calcul non enregistré', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          content: Text(
+            "Tu as des modifications non enregistrées dans l'onglet \"Bien\" — ouvrir ce bien les remplacera, tu les perdras.",
+            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.7)),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Continuer sans enregistrer', style: TextStyle(color: AppColors.alert)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    state.loadPropertyForEditing(b);
+    widget.onEdit?.call();
   }
 
   /// Marquer un bien "acquis" demande la date d'achat (préremplie avec la
