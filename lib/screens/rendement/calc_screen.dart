@@ -709,6 +709,21 @@ class _CalcScreenState extends State<CalcScreen> {
 
   Widget _sectionSave(RendementState state) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.07), borderRadius: BorderRadius.circular(12)),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.layers_outlined, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Tu hésites entre plusieurs biens ? Une fois enregistré, celui-ci apparaît dans l'onglet Comparer, aux côtés de tes autres projets.",
+              style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.75)),
+            ),
+          ),
+        ]),
+      ),
       ElevatedButton.icon(
         onPressed: widget.onSave,
         icon: Icon(state.editingId == null ? Icons.add : Icons.save_outlined),
@@ -720,6 +735,14 @@ class _CalcScreenState extends State<CalcScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
+      if (state.formDirty) ...[
+        const SizedBox(height: 8),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.circle, size: 6, color: AppColors.alert),
+          const SizedBox(width: 6),
+          Text('Modifications non enregistrées', style: AppTextStyles.sans(fontSize: 11, color: AppColors.alert)),
+        ]),
+      ],
       const SizedBox(height: 16),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
@@ -736,6 +759,7 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   Widget _sectionExport(RendementState state) {
+    final canExport = state.savedFormId != null;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(16),
@@ -748,12 +772,14 @@ class _CalcScreenState extends State<CalcScreen> {
           ]),
           const SizedBox(height: 6),
           Text(
-            "Génère un dossier PDF de ce bien — chiffres clés, régimes fiscaux et tableau d'amortissement — à garder, imprimer ou transmettre à une banque, un notaire ou un associé.",
+            canExport
+                ? "Génère un dossier PDF de ce bien — chiffres clés, régimes fiscaux et tableau d'amortissement — à garder, imprimer ou transmettre à une banque, un notaire ou un associé."
+                : "Enregistre d'abord ce bien pour générer son PDF — il reflète toujours la dernière version enregistrée, pas un calcul en cours.",
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: () => _exportPdf(state),
+            onPressed: canExport ? () => _exportPdf(state) : null,
             icon: const Icon(Icons.ios_share, size: 15),
             label: const Text('Générer le PDF'),
           ),
