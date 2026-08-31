@@ -158,4 +158,44 @@ void main() {
     expect(find.text('Bienvenue 👋'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('Personnaliser mon affichage : masquer un onglet le retire de la barre, réinitialiser le ramène',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Personnaliser mon affichage'), findsOneWidget);
+
+    // Masque "Carte" : son interrupteur passe à faux, et il disparaît de la
+    // barre du bas une fois revenu sur l'écran principal.
+    final carteRow = find.ancestor(of: find.text('Carte'), matching: find.byType(ListTile));
+    await tester.tap(find.descendant(of: carteRow, matching: find.byType(Switch)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // `tester.pageBack()` cherche le bouton retour par son tooltip "Back" —
+    // en français ("Retour"), il ne le trouve pas ; on tape directement le
+    // `BackButton` que l'AppBar génère automatiquement.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Carte'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    // Réinitialiser ramène les 7 onglets dans leur ordre/visibilité d'origine.
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Réinitialiser'));
+    await tester.pumpAndSettle();
+    // `tester.pageBack()` cherche le bouton retour par son tooltip "Back" —
+    // en français ("Retour"), il ne le trouve pas ; on tape directement le
+    // `BackButton` que l'AppBar génère automatiquement.
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Carte'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

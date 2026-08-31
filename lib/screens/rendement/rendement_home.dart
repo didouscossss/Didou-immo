@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/app_tab.dart';
 import '../../state/rendement_state.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/niveau_toggle.dart';
 import '../account/account_screen.dart';
 import '../paywall/paywall_screen.dart';
+import 'app_tab_meta.dart';
 import 'biens_screen.dart';
 import 'calc_screen.dart';
 import 'carte_screen.dart';
@@ -16,8 +18,7 @@ import 'methodologie_sheet.dart';
 import 'onboarding_sheet.dart';
 import 'patrimoine_screen.dart';
 import 'projection_screen.dart';
-
-enum _Tab { calc, marche, carte, fisc, proj, biens, patrimoine }
+import 'tab_customization_screen.dart';
 
 /// Coquille de l'app — équivalent du composant `RendementApp` (barre du
 /// haut + navigation par onglets + overlays onboarding/méthodologie).
@@ -34,18 +35,8 @@ class RendementHome extends StatefulWidget {
 }
 
 class _RendementHomeState extends State<RendementHome> {
-  _Tab _active = _Tab.calc;
+  AppTab _active = AppTab.calc;
   bool _showMethodo = false;
-
-  static const _tabs = [
-    (tab: _Tab.calc, label: 'Bien', icon: Icons.home_outlined),
-    (tab: _Tab.marche, label: 'Marché', icon: Icons.location_on_outlined),
-    (tab: _Tab.carte, label: 'Carte', icon: Icons.map_outlined),
-    (tab: _Tab.fisc, label: 'Fiscalité', icon: Icons.account_balance_outlined),
-    (tab: _Tab.proj, label: 'Projection', icon: Icons.trending_up),
-    (tab: _Tab.biens, label: 'Comparer', icon: Icons.layers_outlined),
-    (tab: _Tab.patrimoine, label: 'Patrimoine', icon: Icons.insights_outlined),
-  ];
 
   @override
   void initState() {
@@ -56,6 +47,13 @@ class _RendementHomeState extends State<RendementHome> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RendementState>();
+    // Si l'onglet actif vient d'être masqué depuis "Personnaliser mon
+    // affichage", on retombe sur le premier onglet encore visible plutôt
+    // que de rendre un écran caché — sans toucher à `_active` lui-même
+    // (setState pendant build), pour qu'il redevienne actif tel quel si
+    // l'utilisateur le réaffiche ensuite.
+    final visibleTabs = state.visibleTabOrder;
+    final active = visibleTabs.contains(_active) ? _active : visibleTabs.first;
 
     return Scaffold(
       body: DecoratedBox(
@@ -95,6 +93,16 @@ class _RendementHomeState extends State<RendementHome> {
                             alignment: Alignment.centerRight,
                             child: Row(children: [
                               InkWell(
+                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+                                borderRadius: BorderRadius.circular(999),
+                                child: Container(
+                                  padding: const EdgeInsets.all(9),
+                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
+                                  child: Icon(Icons.dashboard_customize_outlined, size: 15, color: AppColors.ink),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              InkWell(
                                 onTap: state.toggleDarkMode,
                                 borderRadius: BorderRadius.circular(999),
                                 child: Container(
@@ -131,8 +139,8 @@ class _RendementHomeState extends State<RendementHome> {
                       ],
                     ),
                   ),
-                  Expanded(child: _buildActiveScreen(state)),
-                  _buildTabBar(),
+                  Expanded(child: _buildActiveScreen(state, active)),
+                  _buildTabBar(state, visibleTabs, active),
                 ],
               ),
               if (!state.loaded) const SizedBox.shrink(),
@@ -176,7 +184,7 @@ class _RendementHomeState extends State<RendementHome> {
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
       if (!mounted) return;
-      setState(() => _active = _Tab.biens);
+      setState(() => _active = AppTab.biens);
       return;
     }
     final account = context.read<UserAccountState>();
@@ -197,7 +205,7 @@ class _RendementHomeState extends State<RendementHome> {
     }
     if (isNewProperty) await account.recordFreeSave();
     if (!mounted) return;
-    setState(() => _active = _Tab.biens);
+    setState(() => _active = AppTab.biens);
   }
 
   // Chaque écran est reconstruit entièrement (clé sur darkMode + niveau,
@@ -207,44 +215,45 @@ class _RendementHomeState extends State<RendementHome> {
   // `AppColors.xxx` tant que la branche n'est pas démontée — sans la clé,
   // les libellés/fonds restaient figés dans l'ancienne couleur jusqu'à
   // changer d'onglet puis revenir.
-  Widget _buildActiveScreen(RendementState state) {
+  Widget _buildActiveScreen(RendementState state, AppTab active) {
     final themeKey = ValueKey((state.darkMode, state.niveau));
-    switch (_active) {
-      case _Tab.calc:
+    switch (active) {
+      case AppTab.calc:
         return CalcScreen(key: themeKey, onSave: () => _handleSave(state));
-      case _Tab.marche:
-        return MarcheScreen(key: themeKey, onGoToBien: () => setState(() => _active = _Tab.calc));
-      case _Tab.carte:
+      case AppTab.marche:
+        return MarcheScreen(key: themeKey, onGoToBien: () => setState(() => _active = AppTab.calc));
+      case AppTab.carte:
         return CarteScreen(key: themeKey);
-      case _Tab.fisc:
+      case AppTab.fisc:
         return FiscaliteScreen(key: themeKey);
-      case _Tab.proj:
+      case AppTab.proj:
         return ProjectionScreen(key: themeKey);
-      case _Tab.biens:
-        return BiensScreen(key: themeKey, onEdit: () => setState(() => _active = _Tab.calc));
-      case _Tab.patrimoine:
+      case AppTab.biens:
+        return BiensScreen(key: themeKey, onEdit: () => setState(() => _active = AppTab.calc));
+      case AppTab.patrimoine:
         return PatrimoineScreen(key: themeKey);
     }
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(RendementState state, List<AppTab> visibleTabs, AppTab active) {
     return Container(
       decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
       padding: const EdgeInsets.only(top: 8, bottom: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: _tabs.map((t) {
-          final active = _active == t.tab;
-          final color = active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.62);
+        children: visibleTabs.map((t) {
+          final meta = kTabMeta[t]!;
+          final isActive = active == t;
+          final color = isActive ? AppColors.accent : AppColors.ink.withValues(alpha: 0.62);
           return InkWell(
-            onTap: () => setState(() => _active = t.tab),
+            onTap: () => setState(() => _active = t),
             borderRadius: BorderRadius.circular(10),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(t.icon, size: 18, color: color),
+                Icon(meta.icon, size: 18, color: color),
                 const SizedBox(height: 3),
-                Text(t.label, style: AppTextStyles.sans(fontSize: 9, fontWeight: FontWeight.w500, color: color)),
+                Text(meta.label, style: AppTextStyles.sans(fontSize: 9, fontWeight: FontWeight.w500, color: color)),
               ]),
             ),
           );

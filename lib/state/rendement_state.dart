@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/app_tab.dart';
 import '../models/saved_property.dart';
 import '../services/firestore_service.dart';
 import '../services/loyer_reference_service.dart';
@@ -16,6 +17,8 @@ enum NiveauMode { novice, avance }
 const _biensKey = 'biens-list';
 const _onboardingKey = 'onboarding-done';
 const _darkModeKey = 'dark-mode';
+const _tabOrderKey = 'tab-order';
+const _hiddenTabsKey = 'hidden-tabs';
 
 /// État global de l'app — équivalent des `useState`/`useMemo` du composant
 /// `RendementApp` du prototype.
@@ -36,6 +39,19 @@ class RendementState extends ChangeNotifier {
   bool loaded = false;
   bool showOnboarding = false;
   bool darkMode = false;
+
+  /// Ordre et visibilité des onglets principaux — personnalisables depuis
+  /// "Personnaliser mon affichage" (voir `TabCustomizationScreen`),
+  /// préférence locale à l'appareil (comme [darkMode]/[niveau], pas
+  /// synchronisée entre appareils). [tabOrder] contient TOUJOURS les 7
+  /// onglets (jamais un sous-ensemble) : la visibilité passe uniquement par
+  /// [hiddenTabs], pour ne jamais perdre la position d'un onglet masqué.
+  List<AppTab> tabOrder = List.of(kDefaultTabOrder);
+  Set<AppTab> hiddenTabs = {};
+
+  /// Onglets réellement affichés, dans l'ordre personnalisé — ce que lit
+  /// `RendementHome` pour construire la barre du bas.
+  List<AppTab> get visibleTabOrder => tabOrder.where((t) => !hiddenTabs.contains(t)).toList();
 
   /// Prix médian réel (VALORIS/DVF) pour la commune actuellement choisie
   /// dans le formulaire — `null` tant qu'il n'a pas été chargé ou si aucune
@@ -131,6 +147,7 @@ class RendementState extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       showOnboarding = !(prefs.getBool(_onboardingKey) ?? false);
       darkMode = prefs.getBool(_darkModeKey) ?? false;
+      _loadTabLayout(prefs);
     } catch (_) {
       showOnboarding = true;
     }
@@ -143,6 +160,69 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_darkModeKey, darkMode);
+  }
+
+  /// Reconstruit [tabOrder]/[hiddenTabs] depuis les préférences stockées,
+  /// en filtrant tout nom qui ne correspondrait plus à un [AppTab] connu
+  /// (ex. après un renommage) et en rajoutant à la fin, dans l'ordre par
+  /// défaut, les onglets qui manqueraient (ex. après l'ajout d'un nouvel
+  /// onglet dans une mise à jour) — sans ça, un onglet nouvellement ajouté
+  /// resterait invisible pour un utilisateur ayant déjà personnalisé son
+  /// affichage.
+  void _loadTabLayout(SharedPreferences prefs) {
+    final storedOrder = prefs.getStringList(_tabOrderKey);
+    if (storedOrder != null) {
+      final known = <AppTab>[];
+      for (final name in storedOrder) {
+        for (final t in AppTab.values) {
+          if (t.name == name && !known.contains(t)) known.add(t);
+        }
+      }
+      for (final t in kDefaultTabOrder) {
+        if (!known.contains(t)) known.add(t);
+      }
+      tabOrder = known;
+    }
+    final storedHidden = prefs.getStringList(_hiddenTabsKey);
+    if (storedHidden != null) {
+      hiddenTabs = storedHidden.map((name) => AppTab.values.firstWhere((t) => t.name == name, orElse: () => AppTab.calc)).toSet()
+        ..removeWhere((t) => !tabOrder.contains(t));
+    }
+  }
+
+  /// Nouvel ordre choisi depuis "Personnaliser mon affichage" — [order] doit
+  /// contenir exactement les 7 onglets (l'écran ne fait que les réordonner,
+  /// jamais en retirer).
+  Future<void> setTabOrder(List<AppTab> order) async {
+    tabOrder = order;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_tabOrderKey, tabOrder.map((t) => t.name).toList());
+  }
+
+  /// Affiche/masque un onglet — refuse de masquer le dernier onglet encore
+  /// visible (la barre du bas ne doit jamais se retrouver vide).
+  Future<void> setTabHidden(AppTab tab, bool hidden) async {
+    if (hidden && hiddenTabs.length >= tabOrder.length - 1 && !hiddenTabs.contains(tab)) return;
+    hiddenTabs = {...hiddenTabs};
+    if (hidden) {
+      hiddenTabs.add(tab);
+    } else {
+      hiddenTabs.remove(tab);
+    }
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_hiddenTabsKey, hiddenTabs.map((t) => t.name).toList());
+  }
+
+  /// Revient à l'ordre et à la visibilité d'origine.
+  Future<void> resetTabLayout() async {
+    tabOrder = List.of(kDefaultTabOrder);
+    hiddenTabs = {};
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_tabOrderKey);
+    await prefs.remove(_hiddenTabsKey);
   }
 
   Future<void> _loadLocalBiens() async {
