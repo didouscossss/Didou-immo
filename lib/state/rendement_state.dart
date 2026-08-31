@@ -527,6 +527,18 @@ class RendementState extends ChangeNotifier {
   /// calcul (voir `BiensScreen.loadPropertyForEditing`).
   bool formDirty = false;
 
+  /// `true` dès que ce brouillon a été enregistré au moins une fois (ou
+  /// correspond à un bien déjà enregistré rouvert depuis "Comparer") —
+  /// contrairement à [savedFormId], NE se remet PAS à `false` quand on
+  /// ajuste ensuite des champs financiers (loyer, charges, taux...) :
+  /// seul [startNewProperty] le remet à `false`. Sert dans `CalcScreen` à
+  /// verrouiller la localisation/le prix/la surface/le type (impossible à
+  /// changer sans passer par "+ Nouveau bien") et à débloquer l'affichage
+  /// de la rentabilité — sans quoi il suffirait de changer le prix ou la
+  /// localisation d'un même bien enregistré pour évaluer gratuitement,
+  /// à l'infini, des biens totalement différents.
+  bool identityLocked = false;
+
   /// Recharge un bien déjà enregistré dans le formulaire pour le modifier.
   /// Le prochain [saveCurrentProperty] mettra à jour ce bien au lieu d'en
   /// créer un nouveau.
@@ -535,7 +547,22 @@ class RendementState extends ChangeNotifier {
     editingId = b.id;
     savedFormId = b.id;
     formDirty = false;
+    identityLocked = true;
     notifyListeners();
+  }
+
+  /// Repart d'un formulaire vierge pour évaluer un AUTRE bien — la seule
+  /// façon d'y arriver une fois [identityLocked], ce qui garantit qu'un
+  /// bien différent consomme bien un nouvel essai gratuit (voir
+  /// `CalcScreen._newPropertyBanner`).
+  void startNewProperty() {
+    form = PropertyInput.defaultForm();
+    editingId = null;
+    savedFormId = null;
+    formDirty = false;
+    identityLocked = false;
+    notifyListeners();
+    _maybeRefreshLiveMarketPrice();
   }
 
   /// Enregistre le bien courant pour comparaison — équivalent de `handleSave`.
@@ -544,22 +571,30 @@ class RendementState extends ChangeNotifier {
   /// d'avoir déjà vérifié la capacité d'enregistrement gratuite / l'abonnement
   /// au préalable, et doit attendre ce Future pour savoir si l'enregistrement
   /// a réussi avant de changer d'écran.
+  ///
+  /// [editingId] pointe désormais vers le bien qui vient d'être créé/mis à
+  /// jour (au lieu d'être remis à `null`) : un enregistrement répété sur ce
+  /// même brouillon (ex. après avoir ajusté le loyer) met donc toujours à
+  /// jour CE bien plutôt que d'en créer un autre — seul [startNewProperty]
+  /// permet d'en créer un nouveau.
   Future<void> saveCurrentProperty() async {
     final id = editingId ?? DateTime.now().millisecondsSinceEpoch.toString();
     if (_uid != null) {
       await _firestore.saveProperty(_uid!, id, form.toJson());
-      editingId = null;
+      editingId = id;
       savedFormId = id;
       formDirty = false;
+      identityLocked = true;
       notifyListeners();
-      return; // le flux Firestore mettra `biens` à jour automatiquement (`biens` lui-même).
+      return; // le flux Firestore mettra `biens` à jour automatiquement.
     }
     final saved = SavedProperty(id: id, form: form, core: core, regimes: regimes, score: score);
     final idx = biens.indexWhere((b) => b.id == id);
     biens = idx == -1 ? [...biens, saved] : [for (final b in biens) if (b.id == id) saved else b];
-    editingId = null;
+    editingId = id;
     savedFormId = id;
     formDirty = false;
+    identityLocked = true;
     notifyListeners();
     await _persistLocalBiens();
   }

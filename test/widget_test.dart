@@ -108,10 +108,14 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Comparatif'), findsOneWidget);
 
-    // Retour sur "Bien", bascule en courte durée, enregistre un 2e bien.
+    // Retour sur "Bien" : la localisation/le prix/la surface/le type du
+    // bien 1 sont maintenant verrouillés — "+ Nouveau bien" repart d'un
+    // formulaire vierge pour en créer un second, distinct, en courte durée.
     await tester.tap(find.text('Bien'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Courte durée'));
+    await _scrollToAndTap(tester, find.text('+ Nouveau bien'));
+    await tester.pumpAndSettle();
+    await _scrollToAndTap(tester, find.text('Courte durée'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
@@ -385,6 +389,43 @@ void main() {
     await _scrollTabListToBottom(tester);
     expect(find.text('Modifications non enregistrées'), findsNothing);
     expect(pdfButton().onPressed, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      "La rentabilité reste verrouillée tant que le bien n'est pas enregistré ; la localisation, le prix, la surface et le type se verrouillent une fois enregistré",
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    // Avant tout enregistrement : la rentabilité reste verrouillée, pas de
+    // bandeau "+ Nouveau bien" (rien à réinitialiser sur un bien vierge).
+    await tester.dragUntilVisible(find.text('Rentabilité verrouillée'), find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    expect(find.text('RENTABILITÉ NETTE'), findsNothing);
+    expect(find.text('+ Nouveau bien'), findsNothing);
+
+    // Enregistrer débloque la rentabilité et verrouille l'identité du bien.
+    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Bien'));
+    await tester.pumpAndSettle();
+    expect(find.text('+ Nouveau bien'), findsOneWidget);
+    await tester.dragUntilVisible(find.text('RENTABILITÉ NETTE'), find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    expect(find.text('Rentabilité verrouillée'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    // "+ Nouveau bien" repart d'un formulaire vierge : la rentabilité se
+    // reverrouille, le bandeau disparaît.
+    await _scrollTabListToTop(tester);
+    await _scrollToAndTap(tester, find.text('+ Nouveau bien'));
+    await tester.pumpAndSettle();
+    expect(find.text('+ Nouveau bien'), findsNothing);
+    await tester.dragUntilVisible(find.text('Rentabilité verrouillée'), find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 }

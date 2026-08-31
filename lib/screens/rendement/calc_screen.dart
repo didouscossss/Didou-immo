@@ -48,19 +48,76 @@ class _CalcScreenState extends State<CalcScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        if (state.identityLocked) _newPropertyBanner(state),
         for (final id in state.visibleSections(AppTab.calc)) ..._buildSection(id, state, isNovice),
       ],
     );
   }
 
+  /// Une fois un bien enregistré, sa localisation/son prix/sa surface/son
+  /// type sont verrouillés (voir `_sectionBien`, `_sectionLocalisation`) —
+  /// seul "+ Nouveau bien" permet d'en évaluer un autre, pour qu'analyser
+  /// un bien différent consomme bien un nouvel essai gratuit plutôt que de
+  /// détourner discrètement le même bien enregistré.
+  Widget _newPropertyBanner(RendementState state) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: Row(children: [
+        Icon(Icons.lock_outline, size: 15, color: AppColors.ink.withValues(alpha: 0.5)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Localisation, prix, surface et type verrouillés sur ce bien enregistré.',
+            style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.6)),
+          ),
+        ),
+        TextButton(
+          onPressed: () => _confirmNewProperty(context, state),
+          child: Text('+ Nouveau bien', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
+        ),
+      ]),
+    );
+  }
+
+  /// Avertit avant de perdre un calcul non enregistré (`state.formDirty`)
+  /// — même logique que `BiensScreen._openForEditing`.
+  Future<void> _confirmNewProperty(BuildContext context, RendementState state) async {
+    if (state.formDirty) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.paper,
+          title: Text('Calcul non enregistré', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          content: Text(
+            "Tu as des modifications non enregistrées sur ce bien — commencer un nouveau bien les remplacera, tu les perdras.",
+            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.7)),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text('Continuer sans enregistrer', style: TextStyle(color: AppColors.alert)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+    state.startNewProperty();
+  }
+
   /// Blocs de l'onglet "Bien" — voir `kTabSections[AppTab.calc]` et
   /// `SectionCustomizationScreen`. 'stress_test' reste filtré par niveau
   /// ici, quel que soit l'ordre/la visibilité choisis par l'utilisateur
-  /// (voir `tab_sections.dart`).
+  /// (voir `tab_sections.dart`) ; 'resultats'/'comparatif'/'stress_test'
+  /// restent verrouillés (voir `_sectionResultats`) tant que ce bien n'a
+  /// jamais été enregistré.
   List<Widget> _buildSection(String id, RendementState state, bool isNovice) {
     switch (id) {
       case 'localisation':
-        return [_sectionLocalisation()];
+        return [_sectionLocalisation(state)];
       case 'bien':
         return [_sectionBien(state)];
       case 'revenus':
@@ -72,9 +129,9 @@ class _CalcScreenState extends State<CalcScreen> {
       case 'resultats':
         return [_sectionResultats(state)];
       case 'comparatif':
-        return [_sectionComparatif(state)];
+        return state.identityLocked ? [_sectionComparatif(state)] : const [];
       case 'stress_test':
-        return isNovice ? const [] : [_sectionStressTest(state)];
+        return isNovice || !state.identityLocked ? const [] : [_sectionStressTest(state)];
       case 'save':
         return [_sectionSave(state)];
       case 'export':
@@ -86,13 +143,16 @@ class _CalcScreenState extends State<CalcScreen> {
 
   // Localisation — en premier, avant même les caractéristiques du bien :
   // c'est elle qui détermine les repères de prix/marché.
-  Widget _sectionLocalisation() {
+  Widget _sectionLocalisation(RendementState state) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       const SectionTitle('Localisation'),
       Text("Recherche n'importe quelle commune de France",
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 12),
-      const CommunePicker(),
+      AbsorbPointer(
+        absorbing: state.identityLocked,
+        child: Opacity(opacity: state.identityLocked ? 0.55 : 1, child: const CommunePicker()),
+      ),
       const SizedBox(height: 20),
       // Checklist de visite
       InkWell(
@@ -193,39 +253,47 @@ class _CalcScreenState extends State<CalcScreen> {
       ),
       const SizedBox(height: 12),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
-      Row(children: [
-        Expanded(
-          child: NumberField(
-            label: "Prix d'achat",
-            value: form.prix,
-            suffix: '€',
-            // Tant que les frais de notaire n'ont pas été ajustés à la
-            // main, ils suivent automatiquement le prix (voir
-            // `notaireAuto`).
-            onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
-          ),
+      AbsorbPointer(
+        absorbing: state.identityLocked,
+        child: Opacity(
+          opacity: state.identityLocked ? 0.55 : 1,
+          child: Row(children: [
+            Expanded(
+              child: NumberField(
+                label: "Prix d'achat",
+                value: form.prix,
+                suffix: '€',
+                // Tant que les frais de notaire n'ont pas été ajustés à la
+                // main, ils suivent automatiquement le prix (voir
+                // `notaireAuto`).
+                onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: NumberField(
+                label: 'Surface',
+                value: form.surface,
+                suffix: 'm²',
+                onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
+              ),
+            ),
+          ]),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: NumberField(
-            label: 'Surface',
-            value: form.surface,
-            suffix: 'm²',
-            onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
-          ),
-        ),
-      ]),
+      ),
       const SizedBox(height: 12),
       Text('Typologie', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
       const SizedBox(height: 6),
-      Row(
+      Opacity(
+        opacity: state.identityLocked ? 0.55 : 1,
+        child: Row(
         children: typologies.map((t) {
           final active = form.typeBien == t.id;
           return Expanded(
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
               child: GestureDetector(
-                onTap: () => set((f) => f.copyWith(typeBien: t.id, capacite: t.capaciteDefaut.toDouble())),
+                onTap: state.identityLocked ? null : () => set((f) => f.copyWith(typeBien: t.id, capacite: t.capaciteDefaut.toDouble())),
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   alignment: Alignment.center,
@@ -241,6 +309,7 @@ class _CalcScreenState extends State<CalcScreen> {
             ),
           );
         }).toList(),
+        ),
       ),
       if (form.mode == RentalMode.longue) ...[
         const SizedBox(height: 12),
@@ -559,6 +628,8 @@ class _CalcScreenState extends State<CalcScreen> {
     final core = state.core;
     final isNovice = state.niveau == NiveauMode.novice;
 
+    if (!state.identityLocked) return _sectionResultatsLocked();
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(20),
@@ -587,6 +658,45 @@ class _CalcScreenState extends State<CalcScreen> {
       if (isNovice) VerdictCard(core: core, form: form),
       const SizedBox(height: 24),
     ]);
+  }
+
+  /// Tant que ce bien n'a jamais été enregistré — voir
+  /// `RendementState.identityLocked`, mis à `true` par le premier
+  /// enregistrement (ou en rouvrant un bien existant depuis "Comparer").
+  Widget _sectionResultatsLocked() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.lock_outline, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Text('Rentabilité verrouillée', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+        ]),
+        const SizedBox(height: 10),
+        Text(
+          "Enregistre ce bien pour voir sa rentabilité et le retrouver dans l'onglet Comparer.",
+          style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7)),
+        ),
+        const SizedBox(height: 14),
+        ElevatedButton.icon(
+          onPressed: widget.onSave,
+          icon: const Icon(Icons.add),
+          label: const Text('Enregistrer pour voir la rentabilité'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ]),
+    );
   }
 
   Widget _sectionComparatif(RendementState state) {
