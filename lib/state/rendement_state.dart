@@ -44,11 +44,14 @@ class RendementState extends ChangeNotifier {
   bool darkMode = false;
 
   /// Ordre et visibilité des onglets principaux — personnalisables depuis
-  /// "Personnaliser mon affichage" (voir `TabCustomizationScreen`),
-  /// préférence locale à l'appareil (comme [darkMode]/[niveau], pas
-  /// synchronisée entre appareils). [tabOrder] contient TOUJOURS les 7
-  /// onglets (jamais un sous-ensemble) : la visibilité passe uniquement par
-  /// [hiddenTabs], pour ne jamais perdre la position d'un onglet masqué.
+  /// "Personnaliser mon affichage" (voir `TabCustomizationScreen`).
+  /// Toujours enregistrée en local (mode invité comme connecté) ; une fois
+  /// un compte lié via [attachAccount], synchronisée en plus avec ce
+  /// compte (voir [_pushLayoutToCloud]/[_applyCloudLayout]) pour se
+  /// retrouver identique sur un autre appareil connecté au même compte.
+  /// [tabOrder] contient TOUJOURS les 7 onglets (jamais un sous-ensemble) :
+  /// la visibilité passe uniquement par [hiddenTabs], pour ne jamais perdre
+  /// la position d'un onglet masqué.
   List<AppTab> tabOrder = List.of(kDefaultTabOrder);
   Set<AppTab> hiddenTabs = {};
 
@@ -86,6 +89,7 @@ class RendementState extends ChangeNotifier {
 
   String? _uid;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _cloudSub;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _layoutSub;
 
   CoreResult get core => computeCore(form);
   List<RegimeResult> get regimes => computeRegimes(form, core);
@@ -182,15 +186,19 @@ class RendementState extends ChangeNotifier {
     await prefs.setBool(_darkModeKey, darkMode);
   }
 
-  /// Reconstruit [tabOrder]/[hiddenTabs] depuis les préférences stockées,
-  /// en filtrant tout nom qui ne correspondrait plus à un [AppTab] connu
-  /// (ex. après un renommage) et en rajoutant à la fin, dans l'ordre par
-  /// défaut, les onglets qui manqueraient (ex. après l'ajout d'un nouvel
-  /// onglet dans une mise à jour) — sans ça, un onglet nouvellement ajouté
-  /// resterait invisible pour un utilisateur ayant déjà personnalisé son
-  /// affichage.
   void _loadTabLayout(SharedPreferences prefs) {
-    final storedOrder = prefs.getStringList(_tabOrderKey);
+    _applyTabLayout(storedOrder: prefs.getStringList(_tabOrderKey), storedHidden: prefs.getStringList(_hiddenTabsKey));
+  }
+
+  /// Reconstruit [tabOrder]/[hiddenTabs] à partir de listes stockées
+  /// (préférences locales ou mise en page synchronisée depuis le compte,
+  /// voir [_applyCloudLayout]), en filtrant tout nom qui ne correspondrait
+  /// plus à un [AppTab] connu (ex. après un renommage) et en rajoutant à la
+  /// fin, dans l'ordre par défaut, les onglets qui manqueraient (ex. après
+  /// l'ajout d'un nouvel onglet dans une mise à jour) — sans ça, un onglet
+  /// nouvellement ajouté resterait invisible pour un utilisateur ayant déjà
+  /// personnalisé son affichage.
+  void _applyTabLayout({List<String>? storedOrder, List<String>? storedHidden}) {
     if (storedOrder != null) {
       final known = <AppTab>[];
       for (final name in storedOrder) {
@@ -203,7 +211,6 @@ class RendementState extends ChangeNotifier {
       }
       tabOrder = known;
     }
-    final storedHidden = prefs.getStringList(_hiddenTabsKey);
     if (storedHidden != null) {
       hiddenTabs = storedHidden.map((name) => AppTab.values.firstWhere((t) => t.name == name, orElse: () => AppTab.calc)).toSet()
         ..removeWhere((t) => !tabOrder.contains(t));
@@ -218,6 +225,7 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_tabOrderKey, tabOrder.map((t) => t.name).toList());
+    _pushLayoutToCloud();
   }
 
   /// Affiche/masque un onglet — refuse de masquer le dernier onglet encore
@@ -233,6 +241,7 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_hiddenTabsKey, hiddenTabs.map((t) => t.name).toList());
+    _pushLayoutToCloud();
   }
 
   /// Revient à l'ordre et à la visibilité d'origine.
@@ -243,14 +252,18 @@ class RendementState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tabOrderKey);
     await prefs.remove(_hiddenTabsKey);
+    _pushLayoutToCloud();
   }
 
-  /// Même logique que [_loadTabLayout], pour les blocs à l'intérieur de
-  /// [tab] (voir [kTabSections]).
   void _loadSectionLayout(SharedPreferences prefs, AppTab tab) {
+    _applySectionLayout(tab, storedOrder: prefs.getStringList(_sectionOrderKey(tab)), storedHidden: prefs.getStringList(_hiddenSectionsKey(tab)));
+  }
+
+  /// Même logique que [_applyTabLayout], pour les blocs à l'intérieur de
+  /// [tab] (voir [kTabSections]).
+  void _applySectionLayout(AppTab tab, {List<String>? storedOrder, List<String>? storedHidden}) {
     final meta = kTabSections[tab]!;
     var order = List.of(meta.defaultOrder);
-    final storedOrder = prefs.getStringList(_sectionOrderKey(tab));
     if (storedOrder != null) {
       final known = <String>[];
       for (final id in storedOrder) {
@@ -262,7 +275,6 @@ class RendementState extends ChangeNotifier {
       order = known;
     }
     _sectionOrders[tab] = order;
-    final storedHidden = prefs.getStringList(_hiddenSectionsKey(tab));
     if (storedHidden != null) {
       _hiddenSections[tab] = storedHidden.where((id) => order.contains(id) && id != meta.lockedId).toSet();
     }
@@ -273,6 +285,7 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_sectionOrderKey(tab), order);
+    _pushLayoutToCloud();
   }
 
   /// Masque/affiche un bloc de [tab] — refuse de masquer le bloc verrouillé
@@ -293,6 +306,7 @@ class RendementState extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_hiddenSectionsKey(tab), current.toList());
+    _pushLayoutToCloud();
   }
 
   Future<void> resetSectionLayout(AppTab tab) async {
@@ -304,6 +318,7 @@ class RendementState extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_sectionOrderKey(tab));
     await prefs.remove(_hiddenSectionsKey(tab));
+    _pushLayoutToCloud();
   }
 
   // L'onglet "Bien" avait cette personnalisation avant les autres (voir
@@ -311,6 +326,56 @@ class RendementState extends ChangeNotifier {
   // faire perdre silencieusement la mise en page déjà choisie.
   String _sectionOrderKey(AppTab tab) => tab == AppTab.calc ? _bienSectionOrderKey : 'section-order-${tab.name}';
   String _hiddenSectionsKey(AppTab tab) => tab == AppTab.calc ? _bienHiddenSectionsKey : 'hidden-sections-${tab.name}';
+
+  /// Sérialise la mise en page actuelle (onglets + blocs internes) pour la
+  /// synchronisation cloud — voir [_pushLayoutToCloud]/[_applyCloudLayout].
+  Map<String, dynamic> _layoutToJson() => {
+        'tabOrder': tabOrder.map((t) => t.name).toList(),
+        'hiddenTabs': hiddenTabs.map((t) => t.name).toList(),
+        'sections': {
+          for (final tab in kTabSections.keys)
+            tab.name: {
+              'order': sectionOrder(tab),
+              'hidden': hiddenSections(tab).toList(),
+            },
+        },
+      };
+
+  /// Pousse la mise en page actuelle vers le compte connecté, pour qu'un
+  /// autre appareil connecté au même compte la retrouve — no-op en mode
+  /// invité. Le flux [_layoutSub] renverra la même donnée en écho, ce qui
+  /// réapplique simplement les mêmes valeurs (sans effet visible).
+  Future<void> _pushLayoutToCloud() {
+    final uid = _uid;
+    if (uid == null) return Future.value();
+    return _firestore.saveLayout(uid, _layoutToJson());
+  }
+
+  /// Applique la mise en page reçue du compte connecté (voir [attachAccount])
+  /// — si aucune n'a encore été enregistrée sur ce compte (première
+  /// connexion), pousse au contraire celle actuellement affichée sur cet
+  /// appareil, pour que le prochain appareil connecté à ce compte parte de
+  /// là plutôt que d'une mise en page par défaut.
+  void _applyCloudLayout(Map<String, dynamic>? layout) {
+    if (layout == null) {
+      _pushLayoutToCloud();
+      return;
+    }
+    _applyTabLayout(
+      storedOrder: (layout['tabOrder'] as List?)?.cast<String>(),
+      storedHidden: (layout['hiddenTabs'] as List?)?.cast<String>(),
+    );
+    final sections = layout['sections'] as Map<String, dynamic>?;
+    for (final tab in kTabSections.keys) {
+      final s = sections?[tab.name] as Map<String, dynamic>?;
+      _applySectionLayout(
+        tab,
+        storedOrder: (s?['order'] as List?)?.cast<String>(),
+        storedHidden: (s?['hidden'] as List?)?.cast<String>(),
+      );
+    }
+    notifyListeners();
+  }
 
   Future<void> _loadLocalBiens() async {
     final prefs = await SharedPreferences.getInstance();
@@ -347,9 +412,12 @@ class RendementState extends ChangeNotifier {
     _uid = uid;
     _cloudSub?.cancel();
     _cloudSub = null;
+    _layoutSub?.cancel();
+    _layoutSub = null;
     cloudError = null;
     if (uid == null) {
       _loadLocalBiens().then((_) => notifyListeners());
+      _reloadLocalLayout();
       return;
     }
     _cloudSub = _firestore.watchProperties(uid).listen((snapshot) {
@@ -368,6 +436,34 @@ class RendementState extends ChangeNotifier {
       cloudError = e.toString();
       notifyListeners();
     });
+    // La mise en page (ordre/visibilité des onglets et de leurs blocs)
+    // devient ici synchronisée entre appareils via ce même compte — voir
+    // `_applyCloudLayout`.
+    _layoutSub = _firestore.watchUserDoc(uid).listen((doc) {
+      _applyCloudLayout(doc.data()?['layout'] as Map<String, dynamic>?);
+    });
+  }
+
+  /// Recharge [tabOrder]/[hiddenTabs] et les blocs de chaque onglet depuis
+  /// les préférences locales — appelé à la déconnexion pour ne pas garder
+  /// affichée la mise en page du compte qu'on vient de quitter. Repart des
+  /// valeurs par défaut avant d'appliquer les préférences locales (s'il y
+  /// en a) : sans ça, un appareil qui n'a jamais personnalisé son affichage
+  /// localement resterait sur la dernière mise en page reçue du compte.
+  Future<void> _reloadLocalLayout() async {
+    tabOrder = List.of(kDefaultTabOrder);
+    hiddenTabs = {};
+    for (final tab in kTabSections.keys) {
+      final meta = kTabSections[tab]!;
+      _sectionOrders[tab] = List.of(meta.defaultOrder);
+      _hiddenSections[tab] = {};
+    }
+    final prefs = await SharedPreferences.getInstance();
+    _loadTabLayout(prefs);
+    for (final tab in kTabSections.keys) {
+      _loadSectionLayout(prefs, tab);
+    }
+    notifyListeners();
   }
 
   void updateForm(PropertyInput Function(PropertyInput current) updater) {
@@ -529,6 +625,7 @@ class RendementState extends ChangeNotifier {
   @override
   void dispose() {
     _cloudSub?.cancel();
+    _layoutSub?.cancel();
     super.dispose();
   }
 }

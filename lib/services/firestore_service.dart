@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Toutes les lectures/écritures Firestore passent par ce service.
 ///
 /// Structure de données recommandée :
-///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, subscriptionExpiry: Timestamp }
+///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, subscriptionExpiry: Timestamp, layout: {...} }
 ///   users/{uid}/properties/{propId} -> le bien (form + résultats calculés)
 ///   suggestions/{suggestionId}      -> { uid, title, body, createdAt, status }
 ///
@@ -82,6 +82,18 @@ class FirestoreService {
 
   Future<void> deleteProperty(String uid, String propertyId) {
     return _propertiesCol(uid).doc(propertyId).delete();
+  }
+
+  /// Mise en page personnalisée (ordre/visibilité des onglets et de leurs
+  /// blocs internes, voir `RendementState`) — synchronisée entre appareils
+  /// une fois un compte lié, contrairement au reste des préférences locales
+  /// (mode jour/nuit, niveau novice/avancé).
+  Future<void> saveLayout(String uid, Map<String, dynamic> layout) {
+    return _userDoc(uid).set({'layout': layout}, SetOptions(merge: true));
+  }
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchUserDoc(String uid) {
+    return _userDoc(uid).snapshots();
   }
 
   /// Efface toutes les données du compte (biens + document utilisateur) —
