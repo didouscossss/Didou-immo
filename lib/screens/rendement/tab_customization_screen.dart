@@ -5,6 +5,7 @@ import '../../models/app_tab.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import 'app_tab_meta.dart';
+import 'bien_section_customization_screen.dart';
 
 /// "Personnaliser mon affichage" — réordonne (glisser via la poignée) et
 /// masque/affiche les onglets principaux de l'app. [RendementState.tabOrder]
@@ -63,30 +64,42 @@ class TabCustomizationScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: ListTile(
-                  leading: Icon(meta.icon, color: hidden ? AppColors.ink.withValues(alpha: 0.3) : AppColors.accent),
-                  title: Text(
-                    meta.label,
-                    style: AppTextStyles.sans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: hidden ? AppColors.ink.withValues(alpha: 0.4) : AppColors.ink,
-                    ),
-                  ),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Switch(
-                      value: !hidden,
-                      onChanged: isOnlyVisible ? null : (v) => state.setTabHidden(tab, !v),
-                    ),
-                    const SizedBox(width: 4),
-                    ReorderableDragStartListener(
-                      index: index,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(Icons.drag_handle, color: AppColors.ink.withValues(alpha: 0.35)),
+                child: Material(
+                  type: MaterialType.transparency,
+                  borderRadius: BorderRadius.circular(12),
+                  child: ListTile(
+                    // Seul l'onglet "Bien" a, pour l'instant, ses sections
+                    // internes personnalisables — voir `BienSectionCustomizationScreen`.
+                    onTap: tab == AppTab.calc
+                        ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BienSectionCustomizationScreen()))
+                        : null,
+                    leading: Icon(meta.icon, color: hidden ? AppColors.ink.withValues(alpha: 0.3) : AppColors.accent),
+                    title: Text(
+                      meta.label,
+                      style: AppTextStyles.sans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: hidden ? AppColors.ink.withValues(alpha: 0.4) : AppColors.ink,
                       ),
                     ),
-                  ]),
+                    subtitle: tab == AppTab.calc
+                        ? Text('Personnaliser les sections →', style: AppTextStyles.sans(fontSize: 11, color: AppColors.accent))
+                        : null,
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Switch(
+                        value: !hidden,
+                        onChanged: isOnlyVisible ? null : (v) => state.setTabHidden(tab, !v),
+                      ),
+                      const SizedBox(width: 4),
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(Icons.drag_handle, color: AppColors.ink.withValues(alpha: 0.35)),
+                        ),
+                      ),
+                    ]),
+                  ),
                 ),
               );
             },
