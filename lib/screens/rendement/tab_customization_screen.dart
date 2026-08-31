@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_tab.dart';
+import '../../models/tab_sections.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import 'app_tab_meta.dart';
-import 'bien_section_customization_screen.dart';
+import 'section_customization_screen.dart';
 
 /// "Personnaliser mon affichage" — réordonne (glisser via la poignée) et
 /// masque/affiche les onglets principaux de l'app. [RendementState.tabOrder]
@@ -52,6 +53,7 @@ class TabCustomizationScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final tab = order[index];
               final meta = kTabMeta[tab]!;
+              final hasSections = kTabSections.containsKey(tab);
               final hidden = state.hiddenTabs.contains(tab);
               // Dernier onglet encore visible : son interrupteur reste
               // désactivé pour qu'on ne puisse jamais vider la barre du bas.
@@ -68,10 +70,10 @@ class TabCustomizationScreen extends StatelessWidget {
                   type: MaterialType.transparency,
                   borderRadius: BorderRadius.circular(12),
                   child: ListTile(
-                    // Seul l'onglet "Bien" a, pour l'instant, ses sections
-                    // internes personnalisables — voir `BienSectionCustomizationScreen`.
-                    onTap: tab == AppTab.calc
-                        ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BienSectionCustomizationScreen()))
+                    // "Carte" reste un seul bloc indissociable (voir
+                    // `kTabSections`) : pas de sections à personnaliser.
+                    onTap: hasSections
+                        ? () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SectionCustomizationScreen(tab: tab)))
                         : null,
                     leading: Icon(meta.icon, color: hidden ? AppColors.ink.withValues(alpha: 0.3) : AppColors.accent),
                     title: Text(
@@ -82,7 +84,7 @@ class TabCustomizationScreen extends StatelessWidget {
                         color: hidden ? AppColors.ink.withValues(alpha: 0.4) : AppColors.ink,
                       ),
                     ),
-                    subtitle: tab == AppTab.calc
+                    subtitle: hasSections
                         ? Text('Personnaliser les sections →', style: AppTextStyles.sans(fontSize: 11, color: AppColors.accent))
                         : null,
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [

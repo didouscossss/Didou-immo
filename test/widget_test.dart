@@ -27,7 +27,7 @@ Future<void> _scrollToAndTap(WidgetTester tester, Finder finder) async {
 /// Scrolle la `ListView` de l'onglet courant jusqu'en bas, sans viser un
 /// widget précis — utile pour vérifier qu'un bloc masqué/réordonné a bien
 /// disparu (ou est bien de retour) plutôt que simplement hors du viewport.
-Future<void> _scrollBienListToBottom(WidgetTester tester) async {
+Future<void> _scrollTabListToBottom(WidgetTester tester) async {
   for (var i = 0; i < 20; i++) {
     await tester.drag(find.byType(ListView).first, const Offset(0, -400));
     await tester.pump();
@@ -243,7 +243,7 @@ void main() {
     // Le bloc "Exporter en PDF" est tout en bas de l'onglet "Bien" — sans
     // le scroller jusque là, son absence ne prouverait rien (il pourrait
     // simplement être hors du viewport, comme le reste de la liste).
-    await _scrollBienListToBottom(tester);
+    await _scrollTabListToBottom(tester);
     expect(find.text('Exporter en PDF'), findsNothing);
     expect(tester.takeException(), isNull);
 
@@ -258,8 +258,60 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    await _scrollBienListToBottom(tester);
+    await _scrollTabListToBottom(tester);
     expect(find.text('Exporter en PDF'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Personnaliser "Fiscalité" : masquer une section la retire de l\'onglet, réinitialiser la ramène',
+      (WidgetTester tester) async {
+    // Vérifie que le mécanisme générique (voir `kTabSections`) fonctionne
+    // aussi pour un onglet autre que "Bien", le premier à l'avoir reçu.
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    final fiscRow = find.ancestor(of: find.text('Fiscalité'), matching: find.byType(ListTile));
+    await tester.tap(fiscRow);
+    await tester.pumpAndSettle();
+    expect(find.text('Personnaliser "Fiscalité"'), findsOneWidget);
+
+    await tester.dragUntilVisible(find.text('Structure de détention'), find.byType(Scrollable).first, const Offset(0, -100));
+    await tester.pumpAndSettle();
+    final structureRow = find.ancestor(of: find.text('Structure de détention'), matching: find.byType(ListTile));
+    await tester.tap(find.descendant(of: structureRow, matching: find.byType(Switch)));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Fiscalité'));
+    await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
+    expect(find.text('Structure de détention'), findsNothing);
+    expect(tester.takeException(), isNull);
+
+    // Réinitialiser ramène les 4 blocs dans leur ordre/visibilité d'origine.
+    await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
+    await tester.pumpAndSettle();
+    await tester.tap(find.ancestor(of: find.text('Fiscalité'), matching: find.byType(ListTile)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Réinitialiser'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fiscalité'));
+    await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
+    expect(find.text('Structure de détention'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

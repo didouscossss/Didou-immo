@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/app_tab.dart';
 import '../../models/saved_property.dart';
 import '../../services/csv_export_service.dart';
 import '../../state/rendement_state.dart';
@@ -63,6 +64,26 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
       );
     }
 
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      children: [
+        for (final id in state.visibleSections(AppTab.patrimoine)) ..._buildSection(id, context, state, tousActifs),
+      ],
+    );
+  }
+
+  List<Widget> _buildSection(String id, BuildContext context, RendementState state, List<SavedProperty> tousActifs) {
+    switch (id) {
+      case 'resume':
+        return [_sectionResume(context, tousActifs)];
+      case 'liste':
+        return [_sectionListe(context, state, tousActifs)];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _sectionResume(BuildContext context, List<SavedProperty> tousActifs) {
     // La résidence principale n'est pas un investissement locatif : exclue
     // du cash-flow/actif-passif du portefeuille, mais garde sa carte et son
     // suivi (charges réelles...).
@@ -77,60 +98,62 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
         0, (s, b) => s + b.form.suivi.fold<double>(0, (s2, e) => s2 + (e.vacant ? 0 : (e.loyerPercu ?? 0) * e.nbMois)));
     final portefeuilleSpots = _buildPortefeuilleSpots(investissements);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      children: [
-        const SectionTitle('Patrimoine'),
-        Text('Suivi réel des biens acquis, par opposition aux hypothèses de départ',
-            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SectionTitle('Patrimoine'),
+      Text('Suivi réel des biens acquis, par opposition aux hypothèses de départ',
+          style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(
+            '${investissements.length} INVESTISSEMENT${investissements.length > 1 ? 'S' : ''} · $nbActifs ACTIF${nbActifs > 1 ? 'S' : ''}, $nbPassifs PASSIF${nbPassifs > 1 ? 'S' : ''}'
+            '${tousActifs.length > investissements.length ? ' · + RÉSIDENCE PRINCIPALE' : ''}',
+            style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(
-              '${investissements.length} INVESTISSEMENT${investissements.length > 1 ? 'S' : ''} · $nbActifs ACTIF${nbActifs > 1 ? 'S' : ''}, $nbPassifs PASSIF${nbPassifs > 1 ? 'S' : ''}'
-              '${tousActifs.length > investissements.length ? ' · + RÉSIDENCE PRINCIPALE' : ''}',
-              style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1),
-            ),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(
-                child: _statBlock(
-                  'Cash-flow réel cumulé /mois',
-                  '${cashFlowPortefeuille >= 0 ? '+' : ''}${fmt(cashFlowPortefeuille)} €',
-                  color: cashFlowPortefeuille >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4),
-                ),
+          const SizedBox(height: 12),
+          Row(children: [
+            Expanded(
+              child: _statBlock(
+                'Cash-flow réel cumulé /mois',
+                '${cashFlowPortefeuille >= 0 ? '+' : ''}${fmt(cashFlowPortefeuille)} €',
+                color: cashFlowPortefeuille >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4),
               ),
-              Expanded(child: _statBlock('Loyers réels perçus (cumulé)', eur(loyersRecusTotal))),
-            ]),
-            if (portefeuilleSpots.length >= 2) ...[
-              const SizedBox(height: 16),
-              SizedBox(height: 120, child: _buildPortefeuilleChart(portefeuilleSpots)),
-            ],
+            ),
+            Expanded(child: _statBlock('Loyers réels perçus (cumulé)', eur(loyersRecusTotal))),
           ]),
+          if (portefeuilleSpots.length >= 2) ...[
+            const SizedBox(height: 16),
+            SizedBox(height: 120, child: _buildPortefeuilleChart(portefeuilleSpots)),
+          ],
+        ]),
+      ),
+      Text(
+        'Un actif fait entrer plus d\'argent qu\'il n\'en coûte chaque mois (crédit compris), un passif en fait sortir. Basé sur le dernier relevé réel connu de chaque bien, ou sur l\'estimation théorique de départ tant qu\'aucun relevé n\'a été saisi. La résidence principale n\'est pas comptée : ce n\'est pas un investissement locatif.',
+        style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
+      ),
+      const SizedBox(height: 8),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: () => _exportCsv(context, tousActifs),
+          icon: const Icon(Icons.ios_share, size: 14),
+          label: const Text('Exporter les relevés (CSV)', style: TextStyle(fontSize: 12)),
         ),
-        Text(
-          'Un actif fait entrer plus d\'argent qu\'il n\'en coûte chaque mois (crédit compris), un passif en fait sortir. Basé sur le dernier relevé réel connu de chaque bien, ou sur l\'estimation théorique de départ tant qu\'aucun relevé n\'a été saisi. La résidence principale n\'est pas comptée : ce n\'est pas un investissement locatif.',
-          style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
-        ),
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: () => _exportCsv(context, tousActifs),
-            icon: const Icon(Icons.ios_share, size: 14),
-            label: const Text('Exporter les relevés (CSV)', style: TextStyle(fontSize: 12)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        ...tousActifs.map((b) => _buildBienCard(context, state, b)),
-      ],
-    );
+      ),
+      const SizedBox(height: 16),
+    ]);
+  }
+
+  Widget _sectionListe(BuildContext context, RendementState state, List<SavedProperty> tousActifs) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      ...tousActifs.map((b) => _buildBienCard(context, state, b)),
+    ]);
   }
 
   /// Dernier cash-flow réel connu (relevé le plus récent), ou repli sur le

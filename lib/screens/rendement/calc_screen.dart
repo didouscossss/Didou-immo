@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/app_tab.dart';
 import '../../services/pdf_export_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
@@ -47,15 +48,15 @@ class _CalcScreenState extends State<CalcScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        for (final id in state.visibleBienSections) ..._buildSection(id, state, isNovice),
+        for (final id in state.visibleSections(AppTab.calc)) ..._buildSection(id, state, isNovice),
       ],
     );
   }
 
-  /// Blocs de l'onglet "Bien" — voir `kDefaultBienSections`/
-  /// `BienSectionCustomizationScreen`. 'stress_test' reste filtré par
-  /// niveau ici, quel que soit l'ordre/la visibilité choisis par
-  /// l'utilisateur (voir `bien_section.dart`).
+  /// Blocs de l'onglet "Bien" — voir `kTabSections[AppTab.calc]` et
+  /// `SectionCustomizationScreen`. 'stress_test' reste filtré par niveau
+  /// ici, quel que soit l'ordre/la visibilité choisis par l'utilisateur
+  /// (voir `tab_sections.dart`).
   List<Widget> _buildSection(String id, RendementState state, bool isNovice) {
     switch (id) {
       case 'localisation':

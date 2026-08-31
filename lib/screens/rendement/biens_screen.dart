@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/app_tab.dart';
 import '../../models/saved_property.dart';
 import '../../services/csv_export_service.dart';
 import '../../state/rendement_state.dart';
@@ -57,13 +58,39 @@ class _BiensScreenState extends State<BiensScreen> {
       );
     }
 
-    final sorted = [...biens]..sort((a, b) => b.score.score.compareTo(a.score.score));
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      children: [
+        for (final id in state.visibleSections(AppTab.biens)) ..._buildSection(id, state),
+      ],
+    );
+  }
+
+  List<Widget> _buildSection(String id, RendementState state) {
+    switch (id) {
+      case 'patrimoine':
+        return [_sectionPatrimoine(state)];
+      case 'liste':
+        return [_sectionListe(state)];
+      case 'comparatif':
+        return state.niveau == NiveauMode.avance && state.biens.length > 1 ? [_sectionComparatif(state)] : const [];
+      case 'historique':
+        final vendus = state.biens.where((b) => b.form.vendu).toList();
+        return vendus.isEmpty ? const [] : [_sectionHistorique(vendus)];
+      case 'export':
+        return [_sectionExport(state)];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _sectionPatrimoine(RendementState state) {
+    final biens = state.biens;
     // La vue consolidée ne compte que le patrimoine actuellement détenu : un
     // projet à l'étude n'en fait pas encore partie, un bien vendu n'en fait
     // plus partie (son gain rejoint l'historique des ventes à la place).
     final achetes = biens.where((b) => b.form.achete && !b.form.vendu).toList();
-    final vendus = biens.where((b) => b.form.vendu).toList()
-      ..sort((a, b) => (b.form.dateVente ?? DateTime(0)).compareTo(a.form.dateVente ?? DateTime(0)));
+    final vendus = biens.where((b) => b.form.vendu).toList();
     final enEtude = biens.length - achetes.length - vendus.length;
     final totalPatrimoine = achetes.fold<double>(0, (s, b) => s + b.core.prixTotal);
     final totalDette = achetes.fold<double>(0, (s, b) => s + b.core.montantEmprunte);
@@ -71,202 +98,220 @@ class _BiensScreenState extends State<BiensScreen> {
     final scoreMoyen = achetes.isEmpty ? null : (achetes.fold<int>(0, (s, b) => s + b.score.score) / achetes.length).round();
     final gainsRealises = vendus.fold<double>(0, (s, b) => s + _plusValueReelle(b.form, b.core).plusValueNette);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      children: [
-        const SectionTitle('Comparatif'),
-        Text('Classé par score d\'investissement', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: EdgeInsets.only(bottom: enEtude > 0 ? 6 : 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
-          ),
-          child: achetes.isEmpty && vendus.isEmpty
-              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('PATRIMOINE ACQUIS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Aucun bien encore marqué comme acquis — tape sur le badge d'un bien ci-dessous une fois l'achat conclu.",
-                    style: AppTextStyles.sans(fontSize: 12.5, color: Colors.white70),
-                  ),
-                ])
-              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    achetes.isEmpty
-                        ? 'PATRIMOINE ACQUIS'
-                        : 'PATRIMOINE ACQUIS · ${achetes.length} BIEN${achetes.length > 1 ? 'S' : ''}',
-                    style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1),
-                  ),
-                  const SizedBox(height: 12),
-                  if (achetes.isEmpty)
-                    Text('Plus aucun bien détenu actuellement — tous vendus ou encore à l\'étude.',
-                        style: AppTextStyles.sans(fontSize: 12.5, color: Colors.white70))
-                  else ...[
-                    Row(children: [
-                      Expanded(child: _statBlock('Patrimoine total', eur(totalPatrimoine))),
-                      Expanded(child: _statBlock('Dette totale', eur(totalDette))),
-                    ]),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      Expanded(child: _statBlock('Cash-flow cumulé /mois', '${totalCashflow >= 0 ? '+' : ''}${fmt(totalCashflow)} €',
-                          color: totalCashflow >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4))),
-                      Expanded(child: _statBlock('Score moyen', '$scoreMoyen')),
-                    ]),
-                  ],
-                  if (vendus.isNotEmpty) ...[
-                    Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: Colors.white24),
-                    _statBlock(
-                      'Plus-values réalisées · ${vendus.length} vente${vendus.length > 1 ? 's' : ''}',
-                      '${gainsRealises >= 0 ? '+' : ''}${eur(gainsRealises)}',
-                      color: gainsRealises >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4),
-                    ),
-                  ],
-                ]),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SectionTitle('Comparatif'),
+      Text('Classé par score d\'investissement', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: EdgeInsets.only(bottom: enEtude > 0 ? 6 : 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
         ),
-        if (enEtude > 0)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text('+ $enEtude bien${enEtude > 1 ? 's' : ''} à l\'étude, pas encore comptabilisé${enEtude > 1 ? 's' : ''} dans le patrimoine ci-dessus.',
-                style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
-          ),
-        ...sorted.map((b) => InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                state.loadPropertyForEditing(b);
-                widget.onEdit?.call();
-              },
-              child: Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-              child: Row(children: [
-                Expanded(
-                  child: Row(children: [
-                    ScoreBadge(score: b.score.score, label: b.score.label, color: colorFromHex(b.score.colorHex), size: BadgeSize.sm),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(children: [
-                          Flexible(
-                            child: Text(b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom,
-                                overflow: TextOverflow.ellipsis, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
-                          ),
-                          if (b.form.mode == RentalMode.courte) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.bed_outlined, size: 11, color: AppColors.ink.withValues(alpha: 0.35))),
-                        ]),
-                        Text('${b.form.commune?.nom ?? '—'} · ${eur(b.form.prix)} · net ${fmt(b.core.net, 1)}%',
-                            style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
-                        const SizedBox(height: 6),
-                        Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                          _statusBadge(context, state, b),
-                          if (b.form.achete && !b.form.vendu)
-                            InkWell(
-                              borderRadius: BorderRadius.circular(999),
-                              onTap: () => _marquerVendu(context, state, b),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: AppColors.border)),
-                                child: Text('Marquer vendu',
-                                    style: AppTextStyles.sans(fontSize: 9.5, fontWeight: FontWeight.w600, color: AppColors.ink.withValues(alpha: 0.6))),
-                              ),
-                            ),
-                        ]),
-                      ]),
-                    ),
+        child: achetes.isEmpty && vendus.isEmpty
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('PATRIMOINE ACQUIS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
+                const SizedBox(height: 8),
+                Text(
+                  "Aucun bien encore marqué comme acquis — tape sur le badge d'un bien ci-dessous une fois l'achat conclu.",
+                  style: AppTextStyles.sans(fontSize: 12.5, color: Colors.white70),
+                ),
+              ])
+            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(
+                  achetes.isEmpty
+                      ? 'PATRIMOINE ACQUIS'
+                      : 'PATRIMOINE ACQUIS · ${achetes.length} BIEN${achetes.length > 1 ? 'S' : ''}',
+                  style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1),
+                ),
+                const SizedBox(height: 12),
+                if (achetes.isEmpty)
+                  Text('Plus aucun bien détenu actuellement — tous vendus ou encore à l\'étude.',
+                      style: AppTextStyles.sans(fontSize: 12.5, color: Colors.white70))
+                else ...[
+                  Row(children: [
+                    Expanded(child: _statBlock('Patrimoine total', eur(totalPatrimoine))),
+                    Expanded(child: _statBlock('Dette totale', eur(totalDette))),
                   ]),
-                ),
-                IconButton(
-                  onPressed: () => state.deleteProperty(b.id),
-                  icon: const Icon(Icons.delete_outline, size: 19),
-                  color: AppColors.ink.withValues(alpha: 0.3),
-                ),
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Expanded(child: _statBlock('Cash-flow cumulé /mois', '${totalCashflow >= 0 ? '+' : ''}${fmt(totalCashflow)} €',
+                        color: totalCashflow >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4))),
+                    Expanded(child: _statBlock('Score moyen', '$scoreMoyen')),
+                  ]),
+                ],
+                if (vendus.isNotEmpty) ...[
+                  Container(margin: const EdgeInsets.symmetric(vertical: 12), height: 1, color: Colors.white24),
+                  _statBlock(
+                    'Plus-values réalisées · ${vendus.length} vente${vendus.length > 1 ? 's' : ''}',
+                    '${gainsRealises >= 0 ? '+' : ''}${eur(gainsRealises)}',
+                    color: gainsRealises >= 0 ? const Color(0xFFEDE6D2) : const Color(0xFFE8B4A4),
+                  ),
+                ],
               ]),
-              ),
-            )),
-        const SizedBox(height: 6),
-        if (state.niveau == NiveauMode.avance && biens.length > 1)
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-            child: Column(children: [
-              CompareBar(
-                label: 'Rentabilité nette (%)',
-                values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.core.net)).toList(),
-                formatFn: (v) => '${fmt(v, 1)}%',
-                color: AppColors.accent,
-              ),
-              CompareBar(
-                label: 'Cash-flow mensuel (€)',
-                values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.core.cashflowMensuel)).toList(),
-                formatFn: eur,
-                color: AppColors.gold,
-              ),
-              CompareBar(
-                label: "Score d'investissement",
-                values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.score.score.toDouble())).toList(),
-                formatFn: (v) => v.round().toString(),
-                color: AppColors.good,
-              ),
-            ]),
-          ),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              "Le score combine rendement, cash-flow, écart au marché local et taux d'occupation — un repère de comparaison, pas un conseil financier.",
-              style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
-            ),
-          ),
-        ]),
-        if (vendus.isNotEmpty) ...[
-          const SizedBox(height: 20),
-          InkWell(
-            onTap: () => setState(() => _showHistorique = !_showHistorique),
+      ),
+      if (enEtude > 0)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text('+ $enEtude bien${enEtude > 1 ? 's' : ''} à l\'étude, pas encore comptabilisé${enEtude > 1 ? 's' : ''} dans le patrimoine ci-dessus.',
+              style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+        ),
+    ]);
+  }
+
+  Widget _sectionListe(RendementState state) {
+    final sorted = [...state.biens]..sort((a, b) => b.score.score.compareTo(a.score.score));
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      ...sorted.map((b) => InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              state.loadPropertyForEditing(b);
+              widget.onEdit?.call();
+            },
             child: Container(
-              padding: const EdgeInsets.all(16),
-              margin: EdgeInsets.only(bottom: _showHistorique ? 0 : 4),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Row(children: [
-                  Icon(Icons.history, size: 15, color: AppColors.gold),
-                  const SizedBox(width: 8),
-                  Text('Historique des ventes (${vendus.length})', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Row(children: [
+              Expanded(
+                child: Row(children: [
+                  ScoreBadge(score: b.score.score, label: b.score.label, color: colorFromHex(b.score.colorHex), size: BadgeSize.sm),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Flexible(
+                          child: Text(b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom,
+                              overflow: TextOverflow.ellipsis, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
+                        ),
+                        if (b.form.mode == RentalMode.courte) Padding(padding: const EdgeInsets.only(left: 4), child: Icon(Icons.bed_outlined, size: 11, color: AppColors.ink.withValues(alpha: 0.35))),
+                      ]),
+                      Text('${b.form.commune?.nom ?? '—'} · ${eur(b.form.prix)} · net ${fmt(b.core.net, 1)}%',
+                          style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
+                      const SizedBox(height: 6),
+                      Wrap(spacing: 6, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+                        _statusBadge(context, state, b),
+                        if (b.form.achete && !b.form.vendu)
+                          InkWell(
+                            borderRadius: BorderRadius.circular(999),
+                            onTap: () => _marquerVendu(context, state, b),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: AppColors.border)),
+                              child: Text('Marquer vendu',
+                                  style: AppTextStyles.sans(fontSize: 9.5, fontWeight: FontWeight.w600, color: AppColors.ink.withValues(alpha: 0.6))),
+                            ),
+                          ),
+                      ]),
+                    ]),
+                  ),
                 ]),
-                Icon(_showHistorique ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
-              ]),
-            ),
-          ),
-          if (_showHistorique) ..._buildHistorique(vendus),
-        ],
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.table_view_outlined, size: 15, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text('Exporter en CSV', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              ),
+              IconButton(
+                onPressed: () => state.deleteProperty(b.id),
+                icon: const Icon(Icons.delete_outline, size: 19),
+                color: AppColors.ink.withValues(alpha: 0.3),
+              ),
             ]),
-            const SizedBox(height: 6),
-            Text(
-              "Génère un fichier avec tous tes biens enregistrés, un par ligne — à ouvrir dans un tableur pour croiser ou retravailler les chiffres toi-même.",
-              style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
             ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => _exportCsv(context, biens),
-              icon: const Icon(Icons.ios_share, size: 15),
-              label: const Text('Générer le CSV'),
-            ),
+          )),
+      const SizedBox(height: 16),
+    ]);
+  }
+
+  Widget _sectionComparatif(RendementState state) {
+    final sorted = [...state.biens]..sort((a, b) => b.score.score.compareTo(a.score.score));
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: Column(children: [
+        CompareBar(
+          label: 'Rentabilité nette (%)',
+          values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.core.net)).toList(),
+          formatFn: (v) => '${fmt(v, 1)}%',
+          color: AppColors.accent,
+        ),
+        CompareBar(
+          label: 'Cash-flow mensuel (€)',
+          values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.core.cashflowMensuel)).toList(),
+          formatFn: eur,
+          color: AppColors.gold,
+        ),
+        CompareBar(
+          label: "Score d'investissement",
+          values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.score.score.toDouble())).toList(),
+          formatFn: (v) => v.round().toString(),
+          color: AppColors.good,
+        ),
+      ]),
+    );
+  }
+
+  Widget _sectionHistorique(List<SavedProperty> vendus) {
+    final sortedVendus = [...vendus]..sort((a, b) => (b.form.dateVente ?? DateTime(0)).compareTo(a.form.dateVente ?? DateTime(0)));
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      InkWell(
+        onTap: () => setState(() => _showHistorique = !_showHistorique),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.only(bottom: _showHistorique ? 0 : 4),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Row(children: [
+              Icon(Icons.history, size: 15, color: AppColors.gold),
+              const SizedBox(width: 8),
+              Text('Historique des ventes (${sortedVendus.length})', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+            ]),
+            Icon(_showHistorique ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
           ]),
         ),
-      ],
-    );
+      ),
+      if (_showHistorique) ..._buildHistorique(sortedVendus),
+      const SizedBox(height: 4),
+    ]);
+  }
+
+  Widget _sectionExport(RendementState state) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(Icons.table_view_outlined, size: 15, color: AppColors.accent),
+            const SizedBox(width: 8),
+            Text('Exporter en CSV', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+          ]),
+          const SizedBox(height: 6),
+          Text(
+            "Génère un fichier avec tous tes biens enregistrés, un par ligne — à ouvrir dans un tableur pour croiser ou retravailler les chiffres toi-même.",
+            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _exportCsv(context, state.biens),
+            icon: const Icon(Icons.ios_share, size: 15),
+            label: const Text('Générer le CSV'),
+          ),
+        ]),
+      ),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            "Le score combine rendement, cash-flow, écart au marché local et taux d'occupation — un repère de comparaison, pas un conseil financier.",
+            style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
+          ),
+        ),
+      ]),
+    ]);
   }
 
   /// Marquer un bien "acquis" demande la date d'achat (préremplie avec la

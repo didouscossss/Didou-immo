@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/app_tab.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
@@ -24,196 +25,239 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RendementState>();
-    final form = state.form;
-    final core = state.core;
-    final projection = state.projection;
     final isNovice = state.niveau == NiveauMode.novice;
 
-    final last = projection.last;
-    final first = projection.first;
-    final plusValueEquity = last.equity - first.equity;
-    final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
-    final tri = state.tri;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      children: [
+        for (final id in state.visibleSections(AppTab.proj)) ..._buildSection(id, state, isNovice),
+      ],
+    );
+  }
+
+  List<Widget> _buildSection(String id, RendementState state, bool isNovice) {
+    switch (id) {
+      case 'projection':
+        return [_sectionProjection(state)];
+      case 'amortissement':
+        return [_sectionAmortissement(state)];
+      case 'revente':
+        return [_sectionRevente(state, isNovice)];
+      case 'tri':
+        return isNovice ? const [] : [_sectionTri(state)];
+      default:
+        return const [];
+    }
+  }
+
+  Widget _sectionProjection(RendementState state) {
+    final form = state.form;
+    final projection = state.projection;
     // Années écoulées depuis l'achat réel (si le bien a été marqué "acquis"
     // avec une date, voir l'onglet Comparer) — sert de repère "aujourd'hui"
     // sur le graphique et le tableau d'amortissement, année 0 du graphique
     // restant la date d'achat.
     final anneesDetention =
         (form.achete && form.dateAchat != null) ? DateTime.now().difference(form.dateAchat!).inDays / 365.25 : null;
+    final last = projection.last;
+    final first = projection.first;
+    final plusValueEquity = last.equity - first.equity;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-      children: [
-        const SectionTitle('Projection patrimoniale'),
-        Text("Évolution de la valeur et du capital restant dû",
-            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
-        const SizedBox(height: 12),
-        Row(
-          children: [10, 15, 20, 25, 30].map((y) {
-            final active = form.dureeProjection == y;
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: GestureDetector(
-                  onTap: () => state.updateForm((f) => f.copyWith(dureeProjection: y)),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: active ? AppColors.accent : AppColors.surface,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Text('$y ans',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink)),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SectionTitle('Projection patrimoniale'),
+      Text("Évolution de la valeur et du capital restant dû",
+          style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
+      const SizedBox(height: 12),
+      Row(
+        children: [10, 15, 20, 25, 30].map((y) {
+          final active = form.dureeProjection == y;
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () => state.updateForm((f) => f.copyWith(dureeProjection: y)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: active ? AppColors.accent : AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
                   ),
+                  child: Text('$y ans',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink)),
                 ),
               ),
-            );
-          }).toList(),
+            ),
+          );
+        }).toList(),
+      ),
+      if (anneesDetention != null) ...[
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+          child: Row(children: [
+            Icon(Icons.event_available_outlined, size: 14, color: AppColors.accent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Acquis le ${dateFr(form.dateAchat!)} — ${anneesDetention < 1 ? "moins d'un an" : '${anneesDetention.floor()} an${anneesDetention.floor() > 1 ? 's' : ''}'} de détention, repéré "Aujourd\'hui" sur le graphique',
+                style: AppTextStyles.sans(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.accent),
+              ),
+            ),
+          ]),
         ),
-        if (anneesDetention != null) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-            child: Row(children: [
-              Icon(Icons.event_available_outlined, size: 14, color: AppColors.accent),
+      ],
+      const SizedBox(height: 16),
+      Row(children: [
+        Expanded(child: NumberField(label: 'Croissance loyers', value: form.croissanceLoyer, suffix: '%/an', onChanged: (v) => state.updateForm((f) => f.copyWith(croissanceLoyer: v)))),
+        const SizedBox(width: 12),
+        Expanded(child: NumberField(label: 'Croissance valeur bien', value: form.croissanceValeur, suffix: '%/an', onChanged: (v) => state.updateForm((f) => f.copyWith(croissanceValeur: v)))),
+      ]),
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('PATRIMOINE NET APRÈS ${form.dureeProjection} ANS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
+          const SizedBox(height: 6),
+          Text(eur(last.equity), style: AppTextStyles.mono(fontSize: 36, color: const Color(0xFFEDE6D2))),
+          const SizedBox(height: 4),
+          Text('soit +${eur(plusValueEquity)} de patrimoine constitué', style: AppTextStyles.sans(fontSize: 12, color: Colors.white70)),
+        ]),
+      ),
+      Container(
+        padding: const EdgeInsets.fromLTRB(8, 12, 16, 8),
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        child: Column(children: [
+          SizedBox(height: 200, child: _buildChart(projection, anneesDetention)),
+          const SizedBox(height: 4),
+          Wrap(spacing: 16, alignment: WrapAlignment.center, children: [
+            _legendDot('Valeur du bien', AppColors.gold),
+            _legendDot('Capital restant dû', AppColors.alert),
+            _legendDot('Patrimoine net', AppColors.accent),
+          ]),
+        ]),
+      ),
+    ]);
+  }
+
+  Widget _sectionAmortissement(RendementState state) {
+    final form = state.form;
+    final anneesDetention =
+        (form.achete && form.dateAchat != null) ? DateTime.now().difference(form.dateAchat!).inDays / 365.25 : null;
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      InkWell(
+        onTap: () => setState(() => _showAmortissement = !_showAmortissement),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          margin: EdgeInsets.only(bottom: _showAmortissement ? 0 : 24),
+          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Row(children: [
+              Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Acquis le ${dateFr(form.dateAchat!)} — ${anneesDetention < 1 ? "moins d'un an" : '${anneesDetention.floor()} an${anneesDetention.floor() > 1 ? 's' : ''}'} de détention, repéré "Aujourd\'hui" sur le graphique',
-                  style: AppTextStyles.sans(fontSize: 11.5, fontWeight: FontWeight.w500, color: AppColors.accent),
-                ),
-              ),
+              Text("Tableau d'amortissement du prêt", style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             ]),
+            Icon(_showAmortissement ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
+          ]),
+        ),
+      ),
+      if (_showAmortissement) _buildAmortissementTable(state.amortissement, anneesDetention),
+    ]);
+  }
+
+  Widget _sectionRevente(RendementState state, bool isNovice) {
+    final form = state.form;
+    final core = state.core;
+    final last = state.projection.last;
+    final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SectionTitle('Simulation de revente'),
+      if (isNovice)
+        Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
+      NumberField(
+        label: "Frais d'agence à la revente",
+        value: form.fraisAgenceRevente,
+        suffix: '%',
+        hint: 'vente projetée dans ${form.dureeProjection} ans',
+        onChanged: (v) => state.updateForm((f) => f.copyWith(fraisAgenceRevente: v)),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        child: Column(children: [
+          if (!isNovice) ...[
+            _reventeRow('Prix de vente net (frais agence déduits)', eur(revente.prixVenteNet), AppColors.ink),
+            _reventeRow('Plus-value brute', eur(revente.plusValueBrute), AppColors.ink),
+            _reventeRow('Impôt (19 %, après ${fmt(revente.abIR * 100, 0)}% d\'abattement)', '-${eur(revente.impotIR)}', AppColors.alert),
+            _reventeRow('Prélèvements sociaux (17,2 %, après ${fmt(revente.abPS * 100, 0)}% d\'abattement)', '-${eur(revente.impotPS)}', AppColors.alert),
+            Container(margin: const EdgeInsets.symmetric(vertical: 6), height: 1, color: AppColors.border),
+          ],
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text('Plus-value nette estimée', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+            Text(eur(revente.plusValueNette), style: AppTextStyles.mono(fontSize: 16, color: AppColors.accent)),
+          ]),
+        ]),
+      ),
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            "Régime des particuliers, simplifié (les SCI à l'IS et le LMNP suivent d'autres règles). Projection basée sur une croissance constante — estimation indicative uniquement.",
+            style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
+          ),
+        ),
+      ]),
+      const SizedBox(height: 12),
+    ]);
+  }
+
+  Widget _sectionTri(RendementState state) {
+    final form = state.form;
+    final tri = state.tri;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.insights_outlined, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Text('TRI sur ${form.dureeProjection} ans', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+        ]),
+        const SizedBox(height: 10),
+        if (tri.tauxPct == null)
+          Text(
+            form.apport <= 0
+                ? 'Renseigne un apport (onglet Bien) pour calculer le taux de rendement interne.'
+                : "Le taux de rendement interne n'a pas pu être calculé avec ces paramètres.",
+            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5)),
+          )
+        else ...[
+          Text('${fmt(tri.tauxPct!, 1)} %',
+              style: AppTextStyles.mono(fontSize: 28, color: tri.tauxPct! >= 0 ? AppColors.accent : AppColors.alert)),
+          const SizedBox(height: 6),
+          Text(
+            "Rentabilité annualisée de l'argent réellement investi (l'apport), effet de levier bancaire inclus — cash-flows sur la période puis revente nette d'impôt et de capital restant dû. C'est le chiffre à comparer à d'autres placements (assurance-vie, bourse...), contrairement au rendement net qui ne regarde qu'une année type.",
+            style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55)),
           ),
         ],
-        const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: NumberField(label: 'Croissance loyers', value: form.croissanceLoyer, suffix: '%/an', onChanged: (v) => state.updateForm((f) => f.copyWith(croissanceLoyer: v)))),
-          const SizedBox(width: 12),
-          Expanded(child: NumberField(label: 'Croissance valeur bien', value: form.croissanceValeur, suffix: '%/an', onChanged: (v) => state.updateForm((f) => f.copyWith(croissanceValeur: v)))),
-        ]),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.heroGradient),
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('PATRIMOINE NET APRÈS ${form.dureeProjection} ANS', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1)),
-            const SizedBox(height: 6),
-            Text(eur(last.equity), style: AppTextStyles.mono(fontSize: 36, color: const Color(0xFFEDE6D2))),
-            const SizedBox(height: 4),
-            Text('soit +${eur(plusValueEquity)} de patrimoine constitué', style: AppTextStyles.sans(fontSize: 12, color: Colors.white70)),
-          ]),
-        ),
-        Container(
-          padding: const EdgeInsets.fromLTRB(8, 12, 16, 8),
-          margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Column(children: [
-            SizedBox(height: 200, child: _buildChart(projection, anneesDetention)),
-            const SizedBox(height: 4),
-            Wrap(spacing: 16, alignment: WrapAlignment.center, children: [
-              _legendDot('Valeur du bien', AppColors.gold),
-              _legendDot('Capital restant dû', AppColors.alert),
-              _legendDot('Patrimoine net', AppColors.accent),
-            ]),
-          ]),
-        ),
-        InkWell(
-          onTap: () => setState(() => _showAmortissement = !_showAmortissement),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            margin: EdgeInsets.only(bottom: _showAmortissement ? 0 : 24),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Row(children: [
-                Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
-                const SizedBox(width: 8),
-                Text("Tableau d'amortissement du prêt", style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-              ]),
-              Icon(_showAmortissement ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
-            ]),
-          ),
-        ),
-        if (_showAmortissement) _buildAmortissementTable(state.amortissement, anneesDetention),
-        const SectionTitle('Simulation de revente'),
-        if (isNovice)
-          Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
-        NumberField(
-          label: "Frais d'agence à la revente",
-          value: form.fraisAgenceRevente,
-          suffix: '%',
-          hint: 'vente projetée dans ${form.dureeProjection} ans',
-          onChanged: (v) => state.updateForm((f) => f.copyWith(fraisAgenceRevente: v)),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Column(children: [
-            if (!isNovice) ...[
-              _reventeRow('Prix de vente net (frais agence déduits)', eur(revente.prixVenteNet), AppColors.ink),
-              _reventeRow('Plus-value brute', eur(revente.plusValueBrute), AppColors.ink),
-              _reventeRow('Impôt (19 %, après ${fmt(revente.abIR * 100, 0)}% d\'abattement)', '-${eur(revente.impotIR)}', AppColors.alert),
-              _reventeRow('Prélèvements sociaux (17,2 %, après ${fmt(revente.abPS * 100, 0)}% d\'abattement)', '-${eur(revente.impotPS)}', AppColors.alert),
-              Container(margin: const EdgeInsets.symmetric(vertical: 6), height: 1, color: AppColors.border),
-            ],
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Plus-value nette estimée', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-              Text(eur(revente.plusValueNette), style: AppTextStyles.mono(fontSize: 16, color: AppColors.accent)),
-            ]),
-          ]),
-        ),
-        if (!isNovice)
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Icon(Icons.insights_outlined, size: 15, color: AppColors.accent),
-                const SizedBox(width: 8),
-                Text('TRI sur ${form.dureeProjection} ans', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-              ]),
-              const SizedBox(height: 10),
-              if (tri.tauxPct == null)
-                Text(
-                  form.apport <= 0
-                      ? 'Renseigne un apport (onglet Bien) pour calculer le taux de rendement interne.'
-                      : "Le taux de rendement interne n'a pas pu être calculé avec ces paramètres.",
-                  style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5)),
-                )
-              else ...[
-                Text('${fmt(tri.tauxPct!, 1)} %',
-                    style: AppTextStyles.mono(fontSize: 28, color: tri.tauxPct! >= 0 ? AppColors.accent : AppColors.alert)),
-                const SizedBox(height: 6),
-                Text(
-                  "Rentabilité annualisée de l'argent réellement investi (l'apport), effet de levier bancaire inclus — cash-flows sur la période puis revente nette d'impôt et de capital restant dû. C'est le chiffre à comparer à d'autres placements (assurance-vie, bourse...), contrairement au rendement net qui ne regarde qu'une année type.",
-                  style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55)),
-                ),
-              ],
-            ]),
-          ),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              "Régime des particuliers, simplifié (les SCI à l'IS et le LMNP suivent d'autres règles). Projection basée sur une croissance constante — estimation indicative uniquement.",
-              style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
-            ),
-          ),
-        ]),
-      ],
+      ]),
     );
   }
 
