@@ -241,6 +241,13 @@ class _CarteScreenState extends State<CarteScreen> {
                       height: 32,
                       child: GestureDetector(
                         onTap: () => _toggle(c),
+                        // `opaque` : sans ça, la zone cliquable réelle se
+                        // limite au petit disque visible (parfois 9px), pas
+                        // aux 32x32 du marqueur — beaucoup trop dur à viser
+                        // précisément (le `Center` ne fait pas remonter les
+                        // taps hors du disque tant que le comportement par
+                        // défaut `deferToChild` est utilisé).
+                        behavior: HitTestBehavior.opaque,
                         child: Center(
                           child: Container(
                             width: size,

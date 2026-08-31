@@ -868,6 +868,14 @@ class _CalcScreenState extends State<CalcScreen> {
                 decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
                 child: Text('Moins cher', style: AppTextStyles.sans(fontSize: 10, color: AppColors.accent)),
               ),
+            IconButton(
+              onPressed: () => state.updateForm((f) => f.copyWith(offres: [for (var i = 0; i < f.offres.length; i++) if (i != idx) f.offres[i]])),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              color: AppColors.ink.withValues(alpha: 0.3),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+            ),
           ]),
           const SizedBox(height: 10),
           Row(children: [
