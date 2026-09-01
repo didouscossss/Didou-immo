@@ -60,11 +60,22 @@ class _AdminScreenState extends State<AdminScreen> {
       _loyerPending = null;
       _loyerPreview = null;
     });
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-      withData: true,
-    );
+    FilePickerResult? result;
+    try {
+      // `FileType.any` plutôt que `FileType.custom` + `allowedExtensions` :
+      // sur certains navigateurs/téléphones, le filtre par extension côté
+      // sélecteur de fichiers empêche le CSV téléchargé d'apparaître comme
+      // sélectionnable (mauvais type MIME détecté...) — sans qu'aucune
+      // erreur ne remonte, ça se voit juste comme "rien ne se passe" au tap.
+      // On valide plutôt le contenu réel du fichier une fois lu (voir plus
+      // bas), pas son extension.
+      result = await FilePicker.pickFiles(type: FileType.any, withData: true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loyerError =
+          "Impossible d'ouvrir le sélecteur de fichiers sur cet appareil/navigateur — réessaie, ou essaie avec un autre navigateur.");
+      return;
+    }
     final file = (result == null || result.files.isEmpty) ? null : result.files.first;
     if (file?.bytes == null) return; // annulé
     setState(() {
@@ -131,11 +142,15 @@ class _AdminScreenState extends State<AdminScreen> {
       _prixPending = null;
       _prixPreview = null;
     });
-    final result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['csv'],
-      withData: true,
-    );
+    FilePickerResult? result;
+    try {
+      result = await FilePicker.pickFiles(type: FileType.any, withData: true);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _prixError =
+          "Impossible d'ouvrir le sélecteur de fichiers sur cet appareil/navigateur — réessaie, ou essaie avec un autre navigateur.");
+      return;
+    }
     final file = (result == null || result.files.isEmpty) ? null : result.files.first;
     if (file?.bytes == null) return; // annulé
     setState(() {
