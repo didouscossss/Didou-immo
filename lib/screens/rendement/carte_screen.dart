@@ -401,7 +401,7 @@ class _CarteScreenState extends State<CarteScreen> {
             ]),
           ),
           if (live != null)
-            Text('${live.nbTransactions} ventes (${live.annee})',
+            Text('${live.nbTransactions} ventes${live.annee != null ? ' (${live.annee})' : ' (5 ans)'}',
                 style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.4))),
         ]),
         const SizedBox(height: 10),

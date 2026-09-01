@@ -20,7 +20,12 @@ class ValorisPrice {
   final double prixMedianM2;
   final int nbTransactions;
   final double? evolution1AnPct;
-  final int annee;
+  /// `null` quand la donnée vient de notre fichier republié : celui-ci
+  /// agrège les ventes sur plusieurs années en une seule ligne par commune
+  /// (voir `PrixImportService`), sans année de référence précise ni
+  /// évolution sur 1 an calculable — contrairement à l'API VALORIS en
+  /// direct, qui fournit les deux.
+  final int? annee;
   const ValorisPrice({
     required this.prixMedianM2,
     required this.nbTransactions,
@@ -52,8 +57,8 @@ class ValorisService {
         return ValorisPrice(
           prixMedianM2: local.prixMedianM2,
           nbTransactions: local.nbVentes,
-          evolution1AnPct: local.evolution1AnPct,
-          annee: local.annee,
+          evolution1AnPct: null,
+          annee: null,
         );
       }
     }

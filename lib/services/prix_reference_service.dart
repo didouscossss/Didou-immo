@@ -11,14 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class PrixCommuneRef {
   final double prixMedianM2;
   final int nbVentes;
-  final double? evolution1AnPct;
-  final int annee;
-  const PrixCommuneRef({
-    required this.prixMedianM2,
-    required this.nbVentes,
-    required this.evolution1AnPct,
-    required this.annee,
-  });
+  const PrixCommuneRef({required this.prixMedianM2, required this.nbVentes});
 }
 
 /// Chemin Firebase Storage du fichier — republié par un compte admin depuis
@@ -115,8 +108,6 @@ class PrixReferenceService {
         entry.key: PrixCommuneRef(
           prixMedianM2: ((entry.value as Map<String, dynamic>)['p'] as num).toDouble(),
           nbVentes: (entry.value['n'] as num).toInt(),
-          evolution1AnPct: (entry.value['e'] as num?)?.toDouble(),
-          annee: (entry.value['a'] as num).toInt(),
         ),
     };
   }

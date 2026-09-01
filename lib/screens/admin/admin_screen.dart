@@ -369,17 +369,16 @@ class _AdminScreenState extends State<AdminScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
             child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Première fois : la structure du fichier a été devinée', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text('Quel fichier prendre', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               SizedBox(height: 6),
               Text(
-                "Contrairement au fichier des loyers, celui-ci n'a pas encore été essayé sur un "
-                'vrai fichier téléchargé. Sur la page data.gouv.fr, prends "Statistiques totales '
-                'DVF" (le fichier agrégé sur 5 ans, ~30 Mo) — pas "Statistiques mensuelles DVF" '
-                "(plus de 250 Mo, pas utilisable ici). Le fichier reste volumineux : la lecture "
-                "peut prendre jusqu'à une minute, mais l'app ne se fige plus pendant ce temps — "
-                'patiente le temps que "Lecture..." redevienne "Sélectionner le fichier CSV". Si '
-                "l'import échoue, le message d'erreur affichera les vraies colonnes du fichier — "
-                'envoie-le moi tel quel, je corrige en une fois.',
+                'Sur la page data.gouv.fr, prends "Statistiques totales DVF" (le fichier agrégé '
+                'sur 5 ans, ~30 Mo) — pas "Statistiques mensuelles DVF" (plus de 250 Mo, pas '
+                "utilisable ici). Ce fichier agrège déjà les 5 dernières années en une seule "
+                "ligne par commune : pas d'année précise ni d'évolution sur 1 an affichées pour "
+                "cette donnée, juste le prix médian réel sur la période. La lecture peut prendre "
+                "jusqu'à une minute, mais l'app ne se fige plus pendant ce temps — patiente le "
+                'temps que "Lecture..." redevienne "Sélectionner le fichier CSV".',
                 style: TextStyle(fontSize: 12.5),
               ),
             ]),
@@ -399,8 +398,8 @@ class _AdminScreenState extends State<AdminScreen> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_prixFileName!, style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 6),
-                  Text('${_prixPreview!.nbCommunes} communes reconnues, données les plus '
-                      'récentes datant de ${_prixPreview!.anneeMax}.'),
+                  Text('${_prixPreview!.nbCommunes} communes reconnues (prix médian agrégé sur les '
+                      '5 dernières années).'),
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _prixPublishing ? null : _publishPrixCsv,
