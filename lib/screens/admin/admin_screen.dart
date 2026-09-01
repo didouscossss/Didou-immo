@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/loyer_import_service.dart';
+import '../../services/prix_import_service.dart';
 import '../../state/user_account_state.dart';
 import 'admin_suggestions_screen.dart';
 
@@ -26,6 +27,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   static const _dataGouvUrl =
       'https://www.data.gouv.fr/datasets/carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025';
+  static const _dataGouvPrixUrl = 'https://www.data.gouv.fr/datasets/statistiques-dvf';
 
   Map<String, dynamic>? _loyerPending;
   LoyerImportResult? _loyerPreview;
@@ -34,6 +36,14 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _loyerParsing = false;
   bool _loyerPublishing = false;
   String? _loyerPublished;
+
+  Map<String, dynamic>? _prixPending;
+  PrixImportResult? _prixPreview;
+  String? _prixFileName;
+  String? _prixError;
+  bool _prixParsing = false;
+  bool _prixPublishing = false;
+  String? _prixPublished;
 
   @override
   void dispose() {
@@ -104,6 +114,73 @@ class _AdminScreenState extends State<AdminScreen> {
       setState(() {
         _loyerPublishing = false;
         _loyerError = "Échec de la publication — vérifie ta connexion, et que ton compte a "
+            'bien les droits admin sur Firebase Storage.';
+      });
+    }
+  }
+
+  Future<void> _pickPrixCsv() async {
+    setState(() {
+      _prixError = null;
+      _prixPublished = null;
+      _prixPending = null;
+      _prixPreview = null;
+    });
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+      withData: true,
+    );
+    final file = (result == null || result.files.isEmpty) ? null : result.files.first;
+    if (file?.bytes == null) return; // annulé
+    setState(() {
+      _prixFileName = file!.name;
+      _prixParsing = true;
+    });
+    try {
+      final data = PrixImportService.parseCsv(file!.bytes!);
+      final summary = PrixImportService.summarize(data);
+      setState(() {
+        _prixPending = data;
+        _prixPreview = summary;
+        _prixParsing = false;
+      });
+    } on PrixImportException catch (e) {
+      setState(() {
+        _prixError = e.message;
+        _prixParsing = false;
+      });
+    } catch (_) {
+      setState(() {
+        _prixError = 'Impossible de lire ce fichier.';
+        _prixParsing = false;
+      });
+    }
+  }
+
+  Future<void> _publishPrixCsv() async {
+    final data = _prixPending;
+    if (data == null) return;
+    setState(() {
+      _prixPublishing = true;
+      _prixError = null;
+    });
+    try {
+      await PrixImportService.publish(data);
+      if (!mounted) return;
+      setState(() {
+        _prixPublishing = false;
+        _prixPublished = 'Publié — pris en compte immédiatement dans cette session, '
+            'et pour tout le monde au prochain démarrage de leur app.';
+        _prixPending = null;
+        _prixPreview = null;
+        _prixFileName = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _prixPublishing = false;
+        _prixError = "Échec de la publication — vérifie ta connexion, et que ton compte a "
             'bien les droits admin sur Firebase Storage.';
       });
     }
@@ -242,6 +319,84 @@ class _AdminScreenState extends State<AdminScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(_loyerPublished!, style: const TextStyle(color: Colors.green)),
+            ),
+          const SizedBox(height: 36),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text('Prix/m² par commune ("Statistiques DVF")',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text(
+            "Remplace l'appel en direct à VALORIS par notre propre republication — à refaire "
+            "environ deux fois par an, quand data.gouv.fr publie une nouvelle édition (habituellement "
+            'en avril et en octobre) : plus besoin d\'attendre le rythme de VALORIS pour avoir des '
+            'chiffres à jour. 1. Télécharge le fichier "Statistiques DVF" (prix médian par commune) '
+            'depuis data.gouv.fr. 2. Sélectionne-le ci-dessous. 3. Vérifie l\'aperçu, publie.',
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(const ClipboardData(text: _dataGouvPrixUrl));
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(content: Text('Lien copié.')));
+            },
+            icon: const Icon(Icons.link, size: 16),
+            label: const Text('Copier le lien data.gouv.fr'),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+            child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Première fois : la structure du fichier a été devinée', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              SizedBox(height: 6),
+              Text(
+                "Contrairement au fichier des loyers, celui-ci n'a pas encore été essayé sur un "
+                "vrai fichier téléchargé. Sur la page data.gouv.fr, prends le fichier CSV le plus "
+                'agrégé possible (prix médian par commune, pas les transactions individuelles — '
+                'celui-là pèse plusieurs Go et n\'est pas utilisable ici). Si l\'import échoue, '
+                "le message d'erreur affichera les vraies colonnes du fichier — envoie-le "
+                "moi tel quel, je corrige en une fois.",
+                style: TextStyle(fontSize: 12.5),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: _prixParsing ? null : _pickPrixCsv,
+            icon: const Icon(Icons.upload_file_outlined, size: 18),
+            label: Text(_prixParsing ? 'Lecture...' : 'Sélectionner le fichier CSV'),
+          ),
+          if (_prixFileName != null && _prixPreview != null) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(_prixFileName!, style: const TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 6),
+                  Text('${_prixPreview!.nbCommunes} communes reconnues, données les plus '
+                      'récentes datant de ${_prixPreview!.anneeMax}.'),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _prixPublishing ? null : _publishPrixCsv,
+                    child: Text(_prixPublishing ? 'Publication...' : 'Publier cette mise à jour'),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+          if (_prixError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(_prixError!, style: const TextStyle(color: Colors.red)),
+            ),
+          if (_prixPublished != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(_prixPublished!, style: const TextStyle(color: Colors.green)),
             ),
           const SizedBox(height: 36),
           const Divider(),

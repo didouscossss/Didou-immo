@@ -2,11 +2,20 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Prix médian réel au m², issu des transactions notariales (DVF), via
-/// l'API publique et gratuite VALORIS (valoris-immo.fr) — licence ouverte
-/// Etalab. Utilisation soumise à attribution obligatoire : mentionner
-/// « VALORIS / DVF — Licence Ouverte » partout où cette donnée est
-/// affichée (voir `carte_screen.dart` et `marche_screen.dart`).
+import 'prix_reference_service.dart';
+
+/// Prix médian réel au m², issu des transactions notariales (DVF). Deux
+/// sources, dans l'ordre :
+/// 1. [PrixReferenceService] — notre republication des statistiques DVF
+///    officielles (voir `PrixImportService`, `AdminScreen`), rafraîchissable
+///    par un admin dès qu'une nouvelle édition sort, sans dépendre du
+///    rythme de mise à jour d'un tiers.
+/// 2. L'API publique et gratuite VALORIS (valoris-immo.fr) en repli, pour
+///    une commune pas encore couverte par notre fichier (ex. avant sa
+///    toute première publication) — licence ouverte Etalab. Utilisation
+///    soumise à attribution obligatoire : mentionner
+///    « VALORIS / DVF — Licence Ouverte » partout où cette donnée est
+///    affichée (voir `carte_screen.dart` et `marche_screen.dart`).
 class ValorisPrice {
   final double prixMedianM2;
   final int nbTransactions;
@@ -37,6 +46,17 @@ class ValorisService {
   /// repli, sans jamais faire planter l'écran.
   Future<ValorisPrice?> fetchPrixMedian({required String codeDepartement, String? codeInsee}) async {
     if (codeDepartement.isEmpty) return null;
+    if (codeInsee != null) {
+      final local = PrixReferenceService.lookup(codeInsee);
+      if (local != null) {
+        return ValorisPrice(
+          prixMedianM2: local.prixMedianM2,
+          nbTransactions: local.nbVentes,
+          evolution1AnPct: local.evolution1AnPct,
+          annee: local.annee,
+        );
+      }
+    }
     final cacheKey = '$codeDepartement:${codeInsee ?? ''}';
     if (_cache.containsKey(cacheKey)) return _cache[cacheKey];
 
