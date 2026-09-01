@@ -69,8 +69,14 @@ class PrixImportService {
   /// précédente est aussi présente pour la même commune ; sinon elle reste
   /// simplement absente (dégradation déjà gérée partout où elle est lue).
   static Map<String, dynamic> parseCsv(List<int> bytes) {
-    final text = _decode(bytes);
-    final lines = text.split(RegExp(r'\r\n|\r|\n')).where((l) => l.trim().isNotEmpty).toList();
+    // `LineSplitter().split(...)` (contrairement à `.convert(...)` ou à un
+    // `text.split(RegExp(...)).toList()`) parcourt le texte ligne par ligne
+    // à la demande, sans jamais matérialiser la liste complète des ~300-500
+    // milliers de lignes d'un fichier DVF en mémoire — le fichier "Prix
+    // médian" pèse plusieurs dizaines de Mo, potentiellement problématique
+    // sur un navigateur mobile sinon. Appelé via `compute()` (voir
+    // `AdminScreen`) pour ne pas geler l'interface pendant le traitement.
+    final lines = LineSplitter.split(_decode(bytes)).where((l) => l.trim().isNotEmpty);
     if (lines.isEmpty) throw const PrixImportException('Fichier vide.');
 
     final delimiter = lines.first.split(';').length >= lines.first.split(',').length ? ';' : ',';

@@ -1,4 +1,5 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -71,7 +72,11 @@ class _AdminScreenState extends State<AdminScreen> {
       _loyerParsing = true;
     });
     try {
-      final data = LoyerImportService.parseCsv(file!.bytes!);
+      // `compute()` : lit et parse le fichier dans un isolate séparé plutôt
+      // que sur le thread principal — sans ça, un gros fichier (le fichier
+      // des prix DVF peut peser plusieurs dizaines de Mo) gèle l'interface
+      // le temps du traitement, au point de sembler planté sur un mobile.
+      final data = await compute(LoyerImportService.parseCsv, file!.bytes!);
       final summary = LoyerImportService.summarize(data);
       setState(() {
         _loyerPending = data;
@@ -138,7 +143,7 @@ class _AdminScreenState extends State<AdminScreen> {
       _prixParsing = true;
     });
     try {
-      final data = PrixImportService.parseCsv(file!.bytes!);
+      final data = await compute(PrixImportService.parseCsv, file!.bytes!);
       final summary = PrixImportService.summarize(data);
       setState(() {
         _prixPending = data;
@@ -353,11 +358,13 @@ class _AdminScreenState extends State<AdminScreen> {
               SizedBox(height: 6),
               Text(
                 "Contrairement au fichier des loyers, celui-ci n'a pas encore été essayé sur un "
-                "vrai fichier téléchargé. Sur la page data.gouv.fr, prends le fichier CSV le plus "
-                'agrégé possible (prix médian par commune, pas les transactions individuelles — '
-                'celui-là pèse plusieurs Go et n\'est pas utilisable ici). Si l\'import échoue, '
-                "le message d'erreur affichera les vraies colonnes du fichier — envoie-le "
-                "moi tel quel, je corrige en une fois.",
+                'vrai fichier téléchargé. Sur la page data.gouv.fr, prends "Statistiques totales '
+                'DVF" (le fichier agrégé sur 5 ans, ~30 Mo) — pas "Statistiques mensuelles DVF" '
+                "(plus de 250 Mo, pas utilisable ici). Le fichier reste volumineux : la lecture "
+                "peut prendre jusqu'à une minute, mais l'app ne se fige plus pendant ce temps — "
+                'patiente le temps que "Lecture..." redevienne "Sélectionner le fichier CSV". Si '
+                "l'import échoue, le message d'erreur affichera les vraies colonnes du fichier — "
+                'envoie-le moi tel quel, je corrige en une fois.',
                 style: TextStyle(fontSize: 12.5),
               ),
             ]),
