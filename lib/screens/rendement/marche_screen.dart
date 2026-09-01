@@ -141,7 +141,7 @@ class MarcheScreen extends StatelessWidget {
           padding: const EdgeInsets.only(top: 10),
           child: Text(
             (live != null
-                    ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''} (${live.annee})'
+                    ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''}${live.annee != null ? ' (${live.annee})' : ' (5 dernières années)'}'
                         '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
                         ' — source DVF, Licence Ouverte (Etalab).'
                     : refInfo?.precise == true

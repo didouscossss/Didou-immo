@@ -3,15 +3,32 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:didou_immo/services/prix_import_service.dart';
 
-/// Construit un CSV synthétique de N communes (une ligne "2025" chacune,
-/// prix croissant pour les distinguer), plus quelques cas particuliers
-/// utilisés par les tests individuels ci-dessous.
+/// En-tête réel du fichier "Statistiques totales DVF" (data.gouv.fr),
+/// confirmé sur un fichier téléchargé — une seule ligne par commune,
+/// prix agrégé sur 5 ans, pas de colonne année.
+const _header = 'code_geo;libelle_geo;code_parent;echelle_geo;'
+    'nb_ventes_whole_appartement;moy_prix_m2_whole_appartement;med_prix_m2_whole_appartement;'
+    'nb_ventes_whole_maison;moy_prix_m2_whole_maison;med_prix_m2_whole_maison;'
+    'nb_ventes_whole_apt_maison;moy_prix_m2_whole_apt_maison;med_prix_m2_whole_apt_maison;'
+    'nb_ventes_whole_local;moy_prix_m2_whole_local;med_prix_m2_whole_local';
+
+/// Une ligne "commune" avec des valeurs plausibles sur toutes les colonnes
+/// (appartement/maison/apt_maison/local) — seule la colonne "apt_maison"
+/// doit être retenue par le parseur.
+String _ligneCommune(String insee, {required int nbVentes, required double prixMedian, String echelle = 'commune'}) {
+  // Les colonnes appartement/maison/local portent des valeurs différentes
+  // de "apt_maison" pour vérifier qu'on ne les confond pas.
+  return '$insee;Commune $insee;75;$echelle;'
+      '5;1000;1100;' // appartement
+      '5;1200;1300;' // maison
+      '$nbVentes;${prixMedian - 50};$prixMedian;' // apt_maison — la bonne colonne
+      '2;2000;2100'; // local
+}
+
 String _buildCsv({int nbCommunesBase = 1005, List<String> extraLines = const []}) {
-  final header = 'code_geo;echelle_geo;annee;nb_ventes;prix_m2_median';
-  final lignes = <String>[header];
+  final lignes = <String>[_header];
   for (var i = 0; i < nbCommunesBase; i++) {
-    final insee = i.toString().padLeft(5, '0');
-    lignes.add('$insee;commune;2025;10;${2000 + i}');
+    lignes.add(_ligneCommune(i.toString().padLeft(5, '0'), nbVentes: 10, prixMedian: (2000 + i).toDouble()));
   }
   lignes.addAll(extraLines);
   return lignes.join('\n');
@@ -19,49 +36,27 @@ String _buildCsv({int nbCommunesBase = 1005, List<String> extraLines = const []}
 
 void main() {
   group('PrixImportService.parseCsv', () {
-    test('reconnaît les communes et publie le prix médian', () {
-      final csv = _buildCsv();
-      final data = PrixImportService.parseCsv(utf8.encode(csv));
+    test('reconnaît les communes et publie le prix médian de la colonne "apt_maison"', () {
+      final data = PrixImportService.parseCsv(utf8.encode(_buildCsv()));
       expect(data.length, 1005);
       final commune0 = data['00000'] as Map;
       expect(commune0['p'], 2000);
       expect(commune0['n'], 10);
-      expect(commune0['a'], 2025);
-      expect(commune0.containsKey('e'), isFalse); // pas d'année précédente dans le fichier
-    });
-
-    test("calcule l'évolution sur 1 an quand l'année précédente est présente", () {
-      final csv = _buildCsv(extraLines: ['99999;commune;2024;8;2000', '99999;commune;2025;8;2200']);
-      final data = PrixImportService.parseCsv(utf8.encode(csv));
-      final commune = data['99999'] as Map;
-      expect(commune['a'], 2025);
-      expect(commune['p'], 2200);
-      expect(commune['e'], 10.0); // +200/2000 = +10%
     });
 
     test('ignore les lignes hors "commune" quand une colonne échelle_geo existe', () {
-      final csv = _buildCsv(extraLines: ['88888;departement;2025;500;3000']);
+      final csv = _buildCsv(extraLines: [
+        _ligneCommune('88888', nbVentes: 500, prixMedian: 3000, echelle: 'departement'),
+      ]);
       final data = PrixImportService.parseCsv(utf8.encode(csv));
       expect(data.containsKey('88888'), isFalse);
     });
 
-    test('pondère par le nombre de ventes quand plusieurs lignes existent pour la même année', () {
-      final csv = _buildCsv(extraLines: [
-        '77777;commune;2025;10;2000', // 10 ventes à 2000
-        '77777;commune;2025;30;3000', // 30 ventes à 3000
-      ]);
-      final data = PrixImportService.parseCsv(utf8.encode(csv));
-      final commune = data['77777'] as Map;
-      // Moyenne pondérée : (10*2000 + 30*3000) / 40 = 2750
-      expect(commune['p'], 2750);
-      expect(commune['n'], 40);
-    });
-
     test('se rabat sur le prix moyen si la colonne prix médian est absente', () {
-      final header = 'code_geo;echelle_geo;annee;nb_ventes;prix_m2_moyen';
+      final header = 'code_geo;echelle_geo;nb_ventes_whole_apt_maison;moy_prix_m2_whole_apt_maison';
       final lignes = <String>[header];
       for (var i = 0; i < 1005; i++) {
-        lignes.add('${i.toString().padLeft(5, '0')};commune;2025;10;${2000 + i}');
+        lignes.add('${i.toString().padLeft(5, '0')};commune;10;${2000 + i}');
       }
       final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n')));
       expect(data.length, 1005);
@@ -69,15 +64,23 @@ void main() {
     });
 
     test('accepte des en-têtes avec majuscules/accents/espaces équivalents', () {
-      final lignes = <String>['Code INSEE;Échelle Géo;Année;Nb Ventes;Prix M2 Médian'];
+      final lignes = <String>['Code Geo;Échelle Géo;Nb Ventes Whole Apt Maison;Med Prix M2 Whole Apt Maison'];
       for (var i = 0; i < 1005; i++) {
-        lignes.add('${i.toString().padLeft(5, '0')};commune;2025;10;${2000 + i}');
+        lignes.add('${i.toString().padLeft(5, '0')};commune;10;${2000 + i}');
       }
       final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n')));
       expect(data.length, 1005);
     });
 
-    test('lève une exception explicite si les colonnes attendues sont introuvables', () {
+    test('ignore une ligne avec un nombre de ventes ou un prix non numérique (donnée masquée "s")', () {
+      final csv = _buildCsv(extraLines: [
+        '66666;Commune 66666;75;commune;5;1000;1100;5;1200;1300;s;s;s;2;2000;2100',
+      ]);
+      final data = PrixImportService.parseCsv(utf8.encode(csv));
+      expect(data.containsKey('66666'), isFalse);
+    });
+
+    test('lève une exception explicite listant les vraies colonnes si les colonnes attendues sont introuvables', () {
       final csv = 'foo;bar;baz\n1;2;3';
       expect(
         () => PrixImportService.parseCsv(utf8.encode(csv)),
@@ -92,11 +95,10 @@ void main() {
   });
 
   group('PrixImportService.summarize', () {
-    test('renvoie le nombre de communes et l\'année la plus récente', () {
+    test('renvoie le nombre de communes reconnues', () {
       final data = PrixImportService.parseCsv(utf8.encode(_buildCsv(nbCommunesBase: 1200)));
       final summary = PrixImportService.summarize(data);
       expect(summary.nbCommunes, 1200);
-      expect(summary.anneeMax, 2025);
     });
   });
 }
