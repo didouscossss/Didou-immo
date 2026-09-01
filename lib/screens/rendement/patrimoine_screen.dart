@@ -443,7 +443,9 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
 
   Widget _releveRow(BuildContext context, RendementState state, SavedProperty b, SuiviEntry e) {
     final cf = e.cashFlowReel(b.core.mensualite);
-    final periode = '${dateFr(e.dateDebut)} → ${e.dateFin != null ? dateFr(e.dateFin!) : 'en cours'}';
+    final cloture = e.dateFin != null;
+    final cfTotal = cf * e.nbMois;
+    final periode = '${dateFr(e.dateDebut)} → ${cloture ? dateFr(e.dateFin!) : 'en cours'}';
     return InkWell(
       onTap: () => _ajouterOuModifierReleve(context, state, b, e),
       child: Container(
@@ -468,7 +470,19 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
                 ),
             ]),
           ),
-          Text('${cf >= 0 ? '+' : ''}${fmt(cf)} €', style: AppTextStyles.mono(fontSize: 12.5, color: cf >= 0 ? AppColors.good : AppColors.alert)),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text(
+              'Cash-flow ${cf >= 0 ? '+' : ''}${fmt(cf)} €/mois',
+              style: AppTextStyles.mono(fontSize: 12.5, color: cf >= 0 ? AppColors.good : AppColors.alert),
+            ),
+            if (cloture) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Total période ${cfTotal >= 0 ? '+' : ''}${fmt(cfTotal)} €',
+                style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.5)),
+              ),
+            ],
+          ]),
           IconButton(
             onPressed: () => state.deleteSuiviEntry(b.id, e),
             icon: const Icon(Icons.close, size: 16),

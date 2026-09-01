@@ -428,4 +428,59 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+      "Patrimoine : le cash-flow d'un relevé est explicitement labellisé, et le total de la période s'affiche une fois le relevé clos",
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({'onboarding-done': true});
+
+    await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await tester.pumpAndSettle();
+
+    // Marque le bien "acquis" (date du jour) pour le faire apparaître dans
+    // l'onglet Patrimoine.
+    await tester.tap(find.text('À l\'étude').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Valider'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Patrimoine'));
+    await tester.pumpAndSettle();
+    await _scrollToAndTap(tester, find.text('Bien sans nom'));
+    await tester.pumpAndSettle();
+
+    // Ajoute un relevé "en cours" (pas de date de fin) : le cash-flow doit
+    // être explicitement mentionné comme tel, sans total de période affiché.
+    await _scrollToAndTap(tester, find.text('Ajouter un relevé'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Loyer réellement perçu'), '750');
+    await tester.tap(find.text('Ajouter'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    // Le libellé du relevé ("Cash-flow -359 €/mois") se distingue du
+    // récapitulatif de la carte ("Nantes · Cash-flow réel : ...", "Cash-flow
+    // généré") par le signe qui suit directement "Cash-flow ".
+    final releveCashFlow = find.textContaining(RegExp(r'^Cash-flow [+-]'));
+    expect(releveCashFlow, findsOneWidget);
+    expect(find.textContaining('Total période'), findsNothing);
+
+    // Clôture ce relevé (date de fin = date de début, via "Valider" direct
+    // sur le sélecteur de date) : le total de la période doit apparaître.
+    await tester.ensureVisible(releveCashFlow);
+    await tester.pumpAndSettle();
+    await tester.tap(releveCashFlow);
+    await tester.pumpAndSettle();
+    expect(find.text('Modifier ce relevé'), findsOneWidget);
+    await tester.tap(find.text('En cours'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Valider'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Total période'), findsOneWidget);
+  });
 }
