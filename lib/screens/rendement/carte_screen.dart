@@ -195,7 +195,7 @@ class _CarteScreenState extends State<CarteScreen> {
         Text(
           _catalogLoading
               ? 'Chargement des communes de France (une fois, mis en cache ensuite)...'
-              : 'Tape un point pour charger son vrai prix (VALORIS / DVF) — zoome pour voir les communes (≥1500 hab.)',
+              : 'Tape un point pour charger son vrai prix (DVF) — zoome pour voir les communes (≥1500 hab.)',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45)),
         ),
         const SizedBox(height: 12),
@@ -353,8 +353,8 @@ class _CarteScreenState extends State<CarteScreen> {
           Expanded(
             child: Text(
               anyLiveData
-                  ? 'Prix marqués ✓ : données réelles VALORIS / DVF — Licence Ouverte (Etalab). Loyers : estimation indicative (DVF ne couvre que les ventes, pas les locations). Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.'
-                  : 'Aucun prix affiché par défaut — tape une ville pour charger son vrai prix (VALORIS / DVF, données réelles des ventes notariées). Fond de carte © OpenStreetMap contributors.',
+                  ? 'Prix marqués ✓ : données réelles DVF — Licence Ouverte (Etalab). Loyers : estimation indicative (DVF ne couvre que les ventes, pas les locations). Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.'
+                  : 'Aucun prix affiché par défaut — tape une ville pour charger son vrai prix (DVF, données réelles des ventes notariées). Fond de carte © OpenStreetMap contributors.',
               style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
             ),
           ),

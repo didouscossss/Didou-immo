@@ -143,7 +143,7 @@ class MarcheScreen extends StatelessWidget {
             (live != null
                     ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''} (${live.annee})'
                         '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
-                        ' — source VALORIS / DVF, Licence Ouverte (Etalab).'
+                        ' — source DVF, Licence Ouverte (Etalab).'
                     : refInfo?.precise == true
                         ? 'Prix rattaché directement à ${ref!.name} (repère indicatif).'
                         : "Pas de moyenne fiable pour une commune de cette taille — prix basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local.") +
