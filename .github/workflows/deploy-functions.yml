@@ -1,0 +1,44 @@
+name: Déployer les Cloud Functions
+
+# Ne se déclenche que si functions/ change, pour ne pas redéployer les
+# fonctions à chaque modification de l'app Flutter (déployée séparément par
+# deploy-web.yml). workflow_dispatch permet aussi un déclenchement manuel
+# depuis l'onglet Actions de GitHub, ex. pour rejouer un déploiement après
+# avoir juste changé le secret FIREBASE_SERVICE_ACCOUNT.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'functions/**'
+      - '.github/workflows/deploy-functions.yml'
+  workflow_dispatch:
+
+# Un seul déploiement de fonctions à la fois.
+concurrency:
+  group: deploy-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les dépendances
+        working-directory: functions
+        run: npm ci
+
+      - name: Écrire la clé de compte de service
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Déployer les fonctions
+        working-directory: functions
+        run: npx firebase-tools deploy --only functions --project didou-immo --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json

@@ -67,32 +67,35 @@ Il reste, dans https://console.firebase.google.com/project/didou-immo :
    depuis une machine avec un accès réseau normal (ça régénérera
    `lib/firebase_options.dart` en gardant Android + Web)
 
-### 1bis. Déployer la Cloud Function de parrainage
+### 1bis. Déployer les Cloud Functions
 Le parrainage écrit sur le compte d'un AUTRE utilisateur (le parrain) — les
 règles Firestore ne peuvent pas autoriser ça de façon sûre pour un client,
 donc cette opération passe par une Cloud Function (`functions/`), qui
-tourne avec des privilèges admin côté serveur. **Elle n'est pas encore
-déployée** : en attendant, "J'ai un code de parrainage" renverra une
-erreur (comportement voulu, pas de faille de sécurité en attendant).
+tourne avec des privilèges admin côté serveur. **Tant qu'elles ne sont pas
+déployées** : "J'ai un code de parrainage" renverra une erreur
+(comportement voulu, pas de faille de sécurité en attendant).
 
-Impossible de la déployer depuis la Console Firebase seule (pas d'éditeur
-de code pour les Functions dans le navigateur) — il faut une CLI, donc un
-ordinateur (le tien ou celui d'une personne qui t'aide) :
+Les fonctions se déploient automatiquement (`.github/workflows/deploy-functions.yml`)
+à chaque `push` sur `main` qui touche `functions/` — même principe que le
+déploiement de l'app web, sans avoir besoin d'un ordinateur ni de la CLI
+Firebase. Une seule chose à faire une fois pour l'activer :
 
 1. **Passer le projet Firebase en plan Blaze** (Firebase Console → ⚙️ →
    Utilisation et facturation) — obligatoire pour déployer *toute* Cloud
    Function, même si le volume reste dans le quota gratuit. Il faut une
-   carte bancaire enregistrée, mais l'usage prévu ici (quelques appels de
-   fonction) ne coûtera rien en pratique — voir "Repères de coûts"
-2. Installer les CLI : `npm install -g firebase-tools`, puis
-   `dart pub global activate flutterfire_cli` (déjà fait si tu as suivi
-   l'étape 1 — sinon uniquement `firebase-tools` est nécessaire ici)
-3. `firebase login` (ouvre le navigateur pour se connecter avec le compte
-   Google propriétaire du projet)
-4. Depuis la racine du projet (là où se trouve `firebase.json`) :
-   `firebase deploy --only functions`
-5. Teste "J'ai un code de parrainage" dans l'app — l'erreur doit
-   disparaître
+   carte bancaire enregistrée, mais l'usage prévu ici ne coûtera rien en
+   pratique — voir "Repères de coûts"
+2. Génère une clé de compte de service : Console Firebase → ⚙️ → Paramètres
+   du projet → Comptes de service → "Générer une nouvelle clé privée" →
+   télécharge le fichier JSON
+3. Colle le contenu de ce fichier JSON dans un secret GitHub : sur la page
+   du dépôt GitHub → Settings → Secrets and variables → Actions → "New
+   repository secret" → nom `FIREBASE_SERVICE_ACCOUNT`, valeur = tout le
+   contenu du fichier JSON
+4. Le prochain `push` sur `main` touchant `functions/` déploiera
+   automatiquement — ou déclenche-le à la main depuis l'onglet Actions de
+   GitHub → "Déployer les Cloud Functions" → "Run workflow"
+5. Teste "J'ai un code de parrainage" dans l'app — l'erreur doit disparaître
 
 ### 1ter. Notification de mise à jour du loyer/m²
 Une Cloud Function (`checkLoyerDatasetUpdate`, dans le même `functions/index.js`
@@ -105,7 +108,8 @@ Elle ne republie rien elle-même, elle prévient juste.
 
 L'envoi passe par ton compte Gmail (SMTP), via un **mot de passe
 d'application** (jamais ton vrai mot de passe Gmail, et jamais stocké en
-clair dans le dépôt — c'est un secret Firebase) :
+clair dans le dépôt — c'est un secret Firebase, distinct du secret GitHub
+de l'étape 1bis) :
 
 1. Active la validation en deux étapes sur ton compte Google si ce n'est pas
    déjà fait (obligatoire pour créer un mot de passe d'application) :
@@ -113,15 +117,23 @@ clair dans le dépôt — c'est un secret Firebase) :
 2. Crée un mot de passe d'application : https://myaccount.google.com/apppasswords
    → nom libre (ex. "Didou Immo") → copie le mot de passe généré (16
    caractères)
-3. Enregistre-le comme secret Firebase (il te le redemandera si tu ne l'as
-   pas déjà fait) : `firebase functions:secrets:set GMAIL_APP_PASSWORD` —
-   colle le mot de passe d'application quand c'est demandé
-4. Déploie avec le reste : `firebase deploy --only functions`
+3. Enregistre-le comme secret, **sans CLI** : Google Cloud Console (le
+   même compte que Firebase) → menu ☰ → Sécurité → Secret Manager →
+   "Créer un secret" → nom exactement `GMAIL_APP_PASSWORD` → colle le mot
+   de passe d'application comme valeur du secret → Créer
+4. Le déploiement automatique (étape 1bis) prend le relais dès le prochain
+   `push` — pas besoin de rejouer quoi que ce soit de spécial pour cette
+   fonction
 
 Le tout premier passage (juste après le déploiement) enregistre uniquement
 la version actuelle du fichier comme référence, sans envoyer de mail — le
 premier vrai mail n'arrivera qu'à la prochaine vraie mise à jour publiée par
 data.gouv.fr (environ une fois par an).
+
+⚠️ Si le secret `GMAIL_APP_PASSWORD` n'existe pas encore au moment d'un
+déploiement, seul `checkLoyerDatasetUpdate` échouera (visible dans l'onglet
+Actions de GitHub) — les autres fonctions (parrainage, etc.) se déploient
+normalement malgré tout.
 
 ### 2. Premier compte admin
 Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :
