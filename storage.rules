@@ -26,5 +26,14 @@ service firebase.storage {
       allow write: if request.auth != null &&
         firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
+
+    // Prix médian réel au m² par commune sur les 12 derniers mois (voir
+    // functions/index.js → refreshRecentPrix) — lecture publique comme les
+    // deux fichiers ci-dessus, mais pas de règle d'écriture pour un client :
+    // seule la Cloud Function (privilèges admin, contourne ces règles) le
+    // publie, il n'y a jamais d'écriture depuis l'app.
+    match /reference-data/prix_recents_12mois.json {
+      allow read: if true;
+    }
   }
 }

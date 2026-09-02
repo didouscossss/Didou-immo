@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
@@ -49,6 +50,8 @@ class _AdminScreenState extends State<AdminScreen> {
   String? _prixPublished;
   String? _prixLookupTest;
   String? _prixRawDiag;
+  bool _prixRecentRunning = false;
+  String? _prixRecentResult;
 
   @override
   void dispose() {
@@ -244,6 +247,41 @@ class _AdminScreenState extends State<AdminScreen> {
     final result = await PrixReferenceService.diagnosticRawFetch();
     if (!mounted) return;
     setState(() => _prixRawDiag = result);
+  }
+
+  /// Déclenche la Cloud Function `refreshRecentPrix` (voir `functions/index.js`)
+  /// — le fichier "Statistiques mensuelles DVF" (~264 Mo) est traité côté
+  /// serveur, jamais téléchargé sur ce téléphone. [dryRun] ne lit que
+  /// l'en-tête et quelques lignes du vrai fichier (rapide, ne publie rien) :
+  /// à utiliser en premier pour confirmer le format exact avant de lancer
+  /// [dryRun]: false, qui traite tout le fichier et republie le résultat.
+  Future<void> _refreshRecentPrix({required bool dryRun}) async {
+    setState(() {
+      _prixRecentRunning = true;
+      _prixRecentResult = dryRun ? "Aperçu en cours (lecture de l'en-tête seulement)..." : 'Traitement complet en cours (peut prendre plusieurs minutes)...';
+    });
+    try {
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('refreshRecentPrix', options: HttpsCallableOptions(timeout: const Duration(minutes: 9)))
+          .call({'dryRun': dryRun});
+      final data = Map<String, dynamic>.from(result.data as Map);
+      if (!mounted) return;
+      setState(() {
+        _prixRecentResult = dryRun
+            ? 'En-têtes trouvées : ${(data['headers'] as List).join(', ')}\n\n'
+                'Colonnes reconnues : ${data['colonnesReconnues']}\n\n'
+                "Échantillon :\n${(data['sample'] as List).join('\n')}"
+            : 'Publié : ${data['nbCommunes']} commune(s) sur les 12 derniers mois.';
+      });
+    } on FirebaseFunctionsException catch (e) {
+      if (!mounted) return;
+      setState(() => _prixRecentResult = 'Échec (${e.code}) : ${e.message}');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _prixRecentResult = 'Échec : $e');
+    } finally {
+      if (mounted) setState(() => _prixRecentRunning = false);
+    }
   }
 
   Future<void> _generate() async {
@@ -491,6 +529,33 @@ class _AdminScreenState extends State<AdminScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(_prixRawDiag!, style: const TextStyle(fontSize: 12.5)),
+            ),
+          const SizedBox(height: 28),
+          const Text('Prix récents (12 derniers mois glissants)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          const Text(
+            "Traité côté serveur (le fichier mensuel de data.gouv.fr pèse ~264 Mo, bien trop pour ce téléphone) — "
+            'commence par "Vérifier le format" pour confirmer que le fichier a bien la structure attendue avant '
+            'de lancer le traitement complet.',
+            style: TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 12),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            OutlinedButton.icon(
+              onPressed: _prixRecentRunning ? null : () => _refreshRecentPrix(dryRun: true),
+              icon: const Icon(Icons.preview_outlined, size: 16),
+              label: const Text('Vérifier le format'),
+            ),
+            ElevatedButton.icon(
+              onPressed: _prixRecentRunning ? null : () => _refreshRecentPrix(dryRun: false),
+              icon: const Icon(Icons.cloud_sync_outlined, size: 16),
+              label: const Text('Lancer le traitement complet'),
+            ),
+          ]),
+          if (_prixRecentResult != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(_prixRecentResult!, style: const TextStyle(fontSize: 12.5)),
             ),
           const SizedBox(height: 36),
           const Divider(),

@@ -3,6 +3,9 @@ const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
 const {getFirestore, FieldValue} = require("firebase-admin/firestore");
+const {getStorage} = require("firebase-admin/storage");
+const {Readable} = require("node:stream");
+const readline = require("node:readline");
 const nodemailer = require("nodemailer");
 
 initializeApp();
@@ -175,5 +178,201 @@ exports.checkLoyerDatasetUpdate = onSchedule(
             "Pour le mettre à jour : télécharge ce fichier, puis republie-le depuis " +
             "Mon compte > Administration > Loyer/m² par commune.",
       });
+    },
+);
+
+// Même jeu de données que celui pointé par le bouton "Copier le lien
+// data.gouv.fr" pour les prix dans l'écran Administration (voir
+// admin_screen.dart, `_dataGouvPrixUrl`) — à garder en phase si l'éditeur
+// renomme/republie le jeu de données sous un autre slug.
+const DVF_DATASET_SLUG = "statistiques-dvf";
+const DVF_DATASET_API_URL = `https://www.data.gouv.fr/api/1/datasets/${DVF_DATASET_SLUG}/`;
+
+const CODE_INSEE_CANDIDATES = ["codegeo", "codecommune", "inseecom", "codeinsee", "insee"];
+const LIBELLE_CANDIDATES = ["libellegeo", "nomcommune", "libellecommune", "nom"];
+const ECHELLE_CANDIDATES = ["echellegeo", "echelle", "niveaugeo"];
+// Candidats pour la colonne de période — le fichier "Statistiques totales
+// DVF" (voir PrixImportService, lib/services/prix_import_service.dart) n'en
+// a pas (agrégat fixe sur 5 ans), mais le fichier "Statistiques mensuelles"
+// doit forcément en avoir une pour distinguer les lignes d'une même commune
+// dans le temps. Liste de noms plausibles, jamais vérifiée sur le fichier
+// réel (accès à data.gouv.fr bloqué depuis l'environnement de dev) — si
+// aucun ne correspond, l'erreur ci-dessous liste les vraies en-têtes pour
+// ajuster rapidement, comme ça a été fait pour le fichier 5 ans (voir
+// l'historique de PrixImportService).
+const PERIODE_CANDIDATES = [
+  "periode", "annee_mois", "anneemois", "moisannee", "date", "datedebut",
+  "datemutation", "annee",
+];
+const NB_VENTES_CANDIDATES = ["nbventeswholeaptmaison", "nbventes", "nombreventes"];
+const PRIX_MEDIAN_CANDIDATES = ["medprixm2wholeaptmaison", "prixm2median", "prixmedianm2"];
+const PRIX_MOYEN_CANDIDATES = ["moyprixm2wholeaptmaison", "prixm2moyen", "prixmoyenm2"];
+
+/** Même normalisation que `PrixImportService._normalize` côté Dart : minuscules,
+ * accents et caractères non alphanumériques retirés — pour que "Code Geo" /
+ * "code_geo" / "CODE-GEO" matchent tous "codegeo". */
+function normalizeHeader(s) {
+  const accents = "àâäéèêëïîôöùûüÿçñ";
+  const sansAccents = "aaaeeeeiioouuuycn";
+  let out = s.trim().toLowerCase();
+  for (let i = 0; i < accents.length; i++) {
+    out = out.split(accents[i]).join(sansAccents[i]);
+  }
+  return out.replace(/[^a-z0-9]/g, "");
+}
+
+function splitRow(line, delimiter) {
+  return line.split(delimiter).map((f) => f.trim().replace(/"/g, ""));
+}
+
+/** Lit un flux HTTP ligne par ligne sans jamais matérialiser le fichier
+ * entier en mémoire — indispensable pour le fichier mensuel (~264 Mo) : voir
+ * `LineSplitter.split` côté Dart pour l'équivalent client (fichier "5 ans",
+ * ~30 Mo, déjà trop lourd pour être chargé d'un coup sur un téléphone). */
+function streamLines(webReadableStream) {
+  const nodeStream = Readable.fromWeb(webReadableStream);
+  return readline.createInterface({input: nodeStream, crlfDelay: Infinity});
+}
+
+/**
+ * Republie le prix médian réel au m² par commune sur la fenêtre glissante
+ * des 12 derniers mois (voir `PrixReferenceService` côté app, qui lira ce
+ * fichier séparément du fichier "5 ans" existant — travail restant, pas
+ * encore fait à ce stade). Contrairement à l'import "5 ans" (fait depuis
+ * l'app par l'admin, fichier ~30 Mo), celui-ci tourne côté serveur : le
+ * fichier "Statistiques mensuelles DVF" pèse ~264 Mo, bien trop pour être
+ * téléchargé et traité depuis un téléphone (voir la discussion avec
+ * l'utilisateur — risque réel de faire planter l'onglet du navigateur).
+ *
+ * data: { dryRun?: boolean } — en mode aperçu (dryRun: true), ne lit que
+ * l'en-tête et quelques lignes du fichier réel (rapide, ne télécharge pas
+ * tout) et les renvoie telles quelles, SANS rien publier — pour confirmer
+ * le format exact du fichier avant de lancer un vrai traitement complet,
+ * vu que sa structure précise n'a pas pu être vérifiée à l'avance.
+ */
+exports.refreshRecentPrix = onCall(
+    {timeoutSeconds: 540, memory: "1GiB"},
+    async (request) => {
+      const uid = request.auth && request.auth.uid;
+      if (!uid) {
+        throw new HttpsError("unauthenticated", "Connecte-toi pour utiliser cette fonction.");
+      }
+      const userSnap = await db.collection("users").doc(uid).get();
+      if (!userSnap.exists || userSnap.data().isAdmin !== true) {
+        throw new HttpsError("permission-denied", "Réservé aux comptes admin.");
+      }
+      const dryRun = !!(request.data && request.data.dryRun);
+
+      const datasetRes = await fetch(DVF_DATASET_API_URL);
+      if (!datasetRes.ok) {
+        throw new HttpsError("unavailable",
+            `data.gouv.fr a répondu ${datasetRes.status} pour le jeu de données ${DVF_DATASET_SLUG}.`);
+      }
+      const dataset = await datasetRes.json();
+      const resource = (dataset.resources || []).find((r) =>
+        (r.title || "").toLowerCase().includes("mensuelle"));
+      if (!resource || !resource.url) {
+        throw new HttpsError("not-found",
+            "Fichier \"Statistiques mensuelles DVF\" introuvable dans le jeu de données data.gouv.fr " +
+            `(${DVF_DATASET_SLUG}) — le nom a peut-être changé, à vérifier manuellement.`);
+      }
+
+      const csvRes = await fetch(resource.url);
+      if (!csvRes.ok) {
+        throw new HttpsError("unavailable", `HTTP ${csvRes.status} en téléchargeant le fichier mensuel.`);
+      }
+
+      const rl = streamLines(csvRes.body);
+      const lineIterator = rl[Symbol.asyncIterator]();
+
+      const first = await lineIterator.next();
+      if (first.done || !first.value.trim()) {
+        throw new HttpsError("failed-precondition", "Fichier vide.");
+      }
+      const delimiter = first.value.split(";").length >= first.value.split(",").length ? ";" : ",";
+      const rawHeader = splitRow(first.value, delimiter);
+      const header = rawHeader.map(normalizeHeader);
+
+      const idxOf = (candidates) => header.findIndex((h) => candidates.includes(h));
+      const idxInsee = idxOf(CODE_INSEE_CANDIDATES);
+      const idxLibelle = idxOf(LIBELLE_CANDIDATES);
+      const idxEchelle = idxOf(ECHELLE_CANDIDATES);
+      const idxPeriode = idxOf(PERIODE_CANDIDATES);
+      const idxNbVentes = idxOf(NB_VENTES_CANDIDATES);
+      let idxPrix = idxOf(PRIX_MEDIAN_CANDIDATES);
+      if (idxPrix === -1) idxPrix = idxOf(PRIX_MOYEN_CANDIDATES);
+
+      if (dryRun) {
+        const sample = [];
+        for (let i = 0; i < 5; i++) {
+          const next = await lineIterator.next();
+          if (next.done) break;
+          sample.push(next.value);
+        }
+        rl.close();
+        return {
+          dryRun: true,
+          headers: rawHeader,
+          colonnesReconnues: {
+            codeInsee: idxInsee !== -1 ? rawHeader[idxInsee] : null,
+            libelle: idxLibelle !== -1 ? rawHeader[idxLibelle] : null,
+            echelle: idxEchelle !== -1 ? rawHeader[idxEchelle] : null,
+            periode: idxPeriode !== -1 ? rawHeader[idxPeriode] : null,
+            nbVentes: idxNbVentes !== -1 ? rawHeader[idxNbVentes] : null,
+            prix: idxPrix !== -1 ? rawHeader[idxPrix] : null,
+          },
+          sample,
+        };
+      }
+
+      if (idxInsee === -1 || idxNbVentes === -1 || idxPrix === -1 || idxPeriode === -1) {
+        rl.close();
+        throw new HttpsError("failed-precondition",
+            "Colonnes attendues introuvables — en-têtes réelles du fichier : " + rawHeader.join(", "));
+      }
+
+      // Pour chaque commune, ne garde que la ligne de la période la plus
+      // récente (comparaison de chaînes AAAA-MM ou similaire — suppose un
+      // format de période triable lexicographiquement, à vérifier une fois
+      // le format réel connu via dryRun).
+      const latestByCommune = new Map();
+      for await (const line of rl) {
+        if (!line.trim()) continue;
+        const fields = splitRow(line, delimiter);
+        const maxIdx = Math.max(idxInsee, idxNbVentes, idxPrix, idxPeriode);
+        if (fields.length <= maxIdx) continue;
+        if (idxEchelle !== -1 && !normalizeHeader(fields[idxEchelle]).includes("commune")) continue;
+
+        const insee = fields[idxInsee].trim();
+        if (!insee) continue;
+        const periode = fields[idxPeriode].trim();
+        const nbVentes = parseInt(fields[idxNbVentes].trim(), 10);
+        const prix = parseFloat(fields[idxPrix].trim().replace(",", "."));
+        if (!Number.isFinite(nbVentes) || nbVentes <= 0 || !Number.isFinite(prix) || prix <= 0) continue;
+
+        const existing = latestByCommune.get(insee);
+        if (!existing || periode > existing.periode) {
+          latestByCommune.set(insee, {periode, p: Math.round(prix), n: nbVentes});
+        }
+      }
+
+      if (latestByCommune.size < 1000) {
+        throw new HttpsError("failed-precondition",
+            `Seulement ${latestByCommune.size} commune(s) reconnue(s) dans ce fichier — ` +
+            "il semble incomplet ou mal formé, rien n'a été publié.");
+      }
+
+      const result = {};
+      for (const [insee, {p, n}] of latestByCommune) {
+        result[insee] = {p, n};
+      }
+
+      const bucket = getStorage().bucket();
+      await bucket.file("reference-data/prix_recents_12mois.json").save(
+          JSON.stringify(result),
+          {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
+      );
+
+      return {success: true, nbCommunes: latestByCommune.size};
     },
 );
