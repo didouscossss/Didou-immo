@@ -191,22 +191,27 @@ const DVF_DATASET_API_URL = `https://www.data.gouv.fr/api/1/datasets/${DVF_DATAS
 const CODE_INSEE_CANDIDATES = ["codegeo", "codecommune", "inseecom", "codeinsee", "insee"];
 const LIBELLE_CANDIDATES = ["libellegeo", "nomcommune", "libellecommune", "nom"];
 const ECHELLE_CANDIDATES = ["echellegeo", "echelle", "niveaugeo"];
-// Candidats pour la colonne de période — le fichier "Statistiques totales
-// DVF" (voir PrixImportService, lib/services/prix_import_service.dart) n'en
-// a pas (agrégat fixe sur 5 ans), mais le fichier "Statistiques mensuelles"
-// doit forcément en avoir une pour distinguer les lignes d'une même commune
-// dans le temps. Liste de noms plausibles, jamais vérifiée sur le fichier
-// réel (accès à data.gouv.fr bloqué depuis l'environnement de dev) — si
-// aucun ne correspond, l'erreur ci-dessous liste les vraies en-têtes pour
-// ajuster rapidement, comme ça a été fait pour le fichier 5 ans (voir
-// l'historique de PrixImportService).
+// Format confirmé sur le fichier réel "Statistiques mensuelles DVF" (voir
+// dryRun) : colonne "annee_mois", une ligne par commune ET PAR MOIS (ex.
+// "2021-01") — contrairement à ce qu'on espérait, ce n'est PAS un agrégat
+// glissant déjà calculé par data.gouv.fr : il faut vraiment agréger
+// nous-mêmes les 12 derniers mois (voir plus bas).
 const PERIODE_CANDIDATES = [
-  "periode", "annee_mois", "anneemois", "moisannee", "date", "datedebut",
-  "datemutation", "annee",
+  "anneemois", "periode", "moisannee", "date", "datedebut", "datemutation", "annee",
 ];
-const NB_VENTES_CANDIDATES = ["nbventeswholeaptmaison", "nbventes", "nombreventes"];
-const PRIX_MEDIAN_CANDIDATES = ["medprixm2wholeaptmaison", "prixm2median", "prixmedianm2"];
-const PRIX_MOYEN_CANDIDATES = ["moyprixm2wholeaptmaison", "prixm2moyen", "prixmoyenm2"];
+// Confirmé sur le fichier réel : PAS de "whole" dans ces noms de colonnes,
+// contrairement au fichier "5 ans" (nb_ventes_whole_apt_maison). Les deux
+// jeux de candidats sont gardés (whole ET sans whole) au cas où data.gouv.fr
+// change de convention entre les deux fichiers à l'avenir.
+const NB_VENTES_CANDIDATES = [
+  "nbventesaptmaison", "nbventeswholeaptmaison", "nbventes", "nombreventes",
+];
+const PRIX_MEDIAN_CANDIDATES = [
+  "medprixm2aptmaison", "medprixm2wholeaptmaison", "prixm2median", "prixmedianm2",
+];
+const PRIX_MOYEN_CANDIDATES = [
+  "moyprixm2aptmaison", "moyprixm2wholeaptmaison", "prixm2moyen", "prixmoyenm2",
+];
 
 /** Même normalisation que `PrixImportService._normalize` côté Dart : minuscules,
  * accents et caractères non alphanumériques retirés — pour que "Code Geo" /
@@ -223,6 +228,15 @@ function normalizeHeader(s) {
 
 function splitRow(line, delimiter) {
   return line.split(delimiter).map((f) => f.trim().replace(/"/g, ""));
+}
+
+/** "AAAA-MM" pour le mois courant moins [monthsAgo] mois (UTC), du même
+ * format que la colonne "annee_mois" du fichier — pour comparer par simple
+ * ordre lexicographique de chaînes, sans parser de vraies dates. */
+function periodeMonthsAgo(monthsAgo) {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsAgo, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 /** Lit un flux HTTP ligne par ligne sans jamais matérialiser le fichier
@@ -331,11 +345,23 @@ exports.refreshRecentPrix = onCall(
             "Colonnes attendues introuvables — en-têtes réelles du fichier : " + rawHeader.join(", "));
       }
 
-      // Pour chaque commune, ne garde que la ligne de la période la plus
-      // récente (comparaison de chaînes AAAA-MM ou similaire — suppose un
-      // format de période triable lexicographiquement, à vérifier une fois
-      // le format réel connu via dryRun).
-      const latestByCommune = new Map();
+      // Une ligne = une commune ET un seul mois (confirmé via dryRun sur le
+      // fichier réel — PAS un agrégat glissant déjà calculé par data.gouv.fr,
+      // contrairement à ce qu'on espérait). Un seul mois de ventes par
+      // commune est statistiquement trop fragile pour une médiane fiable
+      // (voir la discussion avec l'utilisateur — c'est exactement pourquoi
+      // ce fichier existe plutôt que d'utiliser juste le dernier mois) :
+      // on agrège donc nous-mêmes les 12 derniers mois glissants par
+      // commune, plutôt que de garder une seule ligne.
+      //
+      // Sans les transactions individuelles (seulement la médiane et le
+      // nombre de ventes DE CHAQUE MOIS), une vraie médiane sur 12 mois
+      // n'est pas calculable exactement : on combine les médianes
+      // mensuelles par une moyenne pondérée par le nombre de ventes de
+      // chaque mois — une approximation raisonnable, nettement plus
+      // représentative qu'un seul mois isolé.
+      const cutoffPeriode = periodeMonthsAgo(11); // 11 mois + le mois en cours = fenêtre de 12 mois
+      const parCommune = new Map(); // insee -> {sommePonderee, sommeVentes}
       for await (const line of rl) {
         if (!line.trim()) continue;
         const fields = splitRow(line, delimiter);
@@ -346,25 +372,26 @@ exports.refreshRecentPrix = onCall(
         const insee = fields[idxInsee].trim();
         if (!insee) continue;
         const periode = fields[idxPeriode].trim();
+        if (periode < cutoffPeriode) continue;
         const nbVentes = parseInt(fields[idxNbVentes].trim(), 10);
         const prix = parseFloat(fields[idxPrix].trim().replace(",", "."));
         if (!Number.isFinite(nbVentes) || nbVentes <= 0 || !Number.isFinite(prix) || prix <= 0) continue;
 
-        const existing = latestByCommune.get(insee);
-        if (!existing || periode > existing.periode) {
-          latestByCommune.set(insee, {periode, p: Math.round(prix), n: nbVentes});
-        }
+        const existing = parCommune.get(insee) || {sommePonderee: 0, sommeVentes: 0};
+        existing.sommePonderee += prix * nbVentes;
+        existing.sommeVentes += nbVentes;
+        parCommune.set(insee, existing);
       }
 
-      if (latestByCommune.size < 1000) {
+      if (parCommune.size < 1000) {
         throw new HttpsError("failed-precondition",
-            `Seulement ${latestByCommune.size} commune(s) reconnue(s) dans ce fichier — ` +
+            `Seulement ${parCommune.size} commune(s) reconnue(s) sur les 12 derniers mois dans ce fichier — ` +
             "il semble incomplet ou mal formé, rien n'a été publié.");
       }
 
       const result = {};
-      for (const [insee, {p, n}] of latestByCommune) {
-        result[insee] = {p, n};
+      for (const [insee, {sommePonderee, sommeVentes}] of parCommune) {
+        result[insee] = {p: Math.round(sommePonderee / sommeVentes), n: sommeVentes};
       }
 
       const bucket = getStorage().bucket();
