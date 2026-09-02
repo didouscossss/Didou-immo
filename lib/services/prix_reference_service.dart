@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Prix médian réel au m² d'une commune, issu des statistiques DVF (voir
@@ -101,9 +102,7 @@ class PrixReferenceService {
           return;
         }
       }
-      final bytes = await FirebaseStorage.instance.ref(prixCommunesStoragePath).getData(10 << 20);
-      if (bytes == null) throw StateError('empty');
-      final raw = utf8.decode(bytes);
+      final raw = await _fetchFromStorage();
       _applyJson(raw);
       unawaited(prefs.setString(_cacheKey, raw));
       unawaited(prefs.setString(_cacheDateKey, DateTime.now().toIso8601String()));
@@ -125,6 +124,25 @@ class PrixReferenceService {
     } catch (_) {
       _data = {};
     }
+  }
+
+  /// Récupère le contenu du fichier via [FirebaseStorage.ref.getDownloadURL]
+  /// suivi d'un `http.get` classique, plutôt que
+  /// `FirebaseStorage.ref.getData` directement : ce dernier repose sur une
+  /// interop JS fragile sur Flutter Web, qui peut lever un `TypeError`
+  /// interne sans rapport avec le contenu du fichier ou les permissions
+  /// (bug connu du plugin, voir flutterfire#12367) — constaté en conditions
+  /// réelles via [diagnosticRawFetch] : "type 'X' is not a subtype of type
+  /// 'Y'" à chaque tentative, alors que permissions et contenu publié
+  /// étaient corrects. `getDownloadURL` + une requête HTTP classique
+  /// contourne complètement ce chemin défaillant.
+  static Future<String> _fetchFromStorage() async {
+    final url = await FirebaseStorage.instance.ref(prixCommunesStoragePath).getDownloadURL();
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw StateError('HTTP ${response.statusCode} en téléchargeant $prixCommunesStoragePath');
+    }
+    return utf8.decode(response.bodyBytes);
   }
 
   static void _applyJson(String raw) {
@@ -155,15 +173,13 @@ class PrixReferenceService {
   /// (visible ici) ou d'autre chose.
   static Future<String> diagnosticRawFetch() async {
     try {
-      final bytes = await FirebaseStorage.instance.ref(prixCommunesStoragePath).getData(10 << 20);
-      if (bytes == null) return 'Lecture Storage : bytes = null (fichier vide ou introuvable à ce chemin).';
-      final raw = utf8.decode(bytes);
+      final raw = await _fetchFromStorage();
       final json = jsonDecode(raw) as Map<String, dynamic>;
       final poitiers = json['86194'];
       final poitiersTxt = poitiers != null
           ? 'présent (${(poitiers['p'] as num).toStringAsFixed(0)} €/m²)'
           : 'ABSENT';
-      return 'Lecture Storage réussie : ${json.length} commune(s), ${bytes.length} octets, Poitiers $poitiersTxt.';
+      return 'Lecture Storage réussie : ${json.length} commune(s), ${raw.length} octets, Poitiers $poitiersTxt.';
     } catch (e) {
       return "Échec de la lecture Storage : ${e.runtimeType} — $e";
     }
