@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_tab.dart';
+import '../../services/prix_recent_reference_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
@@ -50,10 +51,14 @@ class MarcheScreen extends StatelessWidget {
     final commune = form.commune;
     final ref = refInfo?.ref;
     final live = state.liveMarketPrice;
-    // Prix réel (VALORIS/DVF) si disponible pour cette commune, sinon
-    // repère indicatif statique — le loyer, lui, reste toujours indicatif
-    // (DVF ne couvre que les ventes, pas les locations).
-    final prixEffectif = live?.prixMedianM2 ?? ref?.prixM2;
+    // Prix récent (12 derniers mois glissants, voir
+    // `PrixRecentReferenceService`) en priorité quand il couvre la commune —
+    // même logique et même source que sur la carte (`carte_screen.dart`),
+    // plus à jour que l'agrégat 5 ans/VALORIS (`live`), qui reste le repli.
+    // Sinon repère indicatif statique — le loyer, lui, reste toujours
+    // indicatif (DVF ne couvre que les ventes, pas les locations).
+    final recent = PrixRecentReferenceService.lookup(commune?.codeInsee ?? '');
+    final prixEffectif = recent?.prixMedianM2 ?? live?.prixMedianM2 ?? ref?.prixM2;
 
     final ecartPrix = (prixEffectif != null && prixEffectif > 0 && core.prixM2 > 0)
         ? ((core.prixM2 - prixEffectif) / prixEffectif) * 100
@@ -130,7 +135,9 @@ class MarcheScreen extends StatelessWidget {
         Row(children: [
           Expanded(
             child: _statCard(
-              state.loadingLiveMarketPrice ? 'Prix / m² (chargement...)' : (live != null ? 'Prix réel / m² (DVF)' : 'Prix repère / m²'),
+              state.loadingLiveMarketPrice
+                  ? 'Prix / m² (chargement...)'
+                  : (recent != null ? 'Prix récent / m² (DVF)' : (live != null ? 'Prix réel / m² (DVF)' : 'Prix repère / m²')),
               eur(prixEffectif),
             ),
           ),
@@ -140,19 +147,29 @@ class MarcheScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 10),
           child: Text(
-            (live != null
-                    ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''}${live.annee != null ? ' (${live.annee})' : ' (5 dernières années)'}'
-                        '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
-                        ' — source DVF, Licence Ouverte (Etalab).'
-                    : refInfo?.precise == true
-                        ? 'Prix rattaché directement à ${ref!.name} (repère indicatif).'
-                        : "Pas de moyenne fiable pour une commune de cette taille — prix basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local.") +
+            (recent != null
+                    ? 'Prix médian réel sur ${recent.nbVentes} vente${recent.nbVentes > 1 ? 's' : ''} (12 derniers mois) — source DVF, Licence Ouverte (Etalab).'
+                    : live != null
+                        ? 'Prix médian réel sur ${live.nbTransactions} vente${live.nbTransactions > 1 ? 's' : ''}${live.annee != null ? ' (${live.annee})' : ' (5 dernières années)'}'
+                            '${live.evolution1AnPct != null ? ', ${live.evolution1AnPct! > 0 ? '+' : ''}${live.evolution1AnPct!.toStringAsFixed(1)}% sur 1 an' : ''}'
+                            ' — source DVF, Licence Ouverte (Etalab).'
+                        : refInfo?.precise == true
+                            ? 'Prix rattaché directement à ${ref!.name} (repère indicatif).'
+                            : "Pas de moyenne fiable pour une commune de cette taille — prix basé sur ${ref?.name == 'Moyenne nationale' ? 'la moyenne nationale' : '${ref?.name}, la référence la plus proche'}. À vérifier avec un notaire local.") +
                 (form.mode == RentalMode.longue && form.meuble
                     ? ' Loyer repère majoré de ${((primeMeuble - 1) * 100).round()}% (meublé).'
                     : ''),
             style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
           ),
         ),
+        if (recent != null && live != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Référence longue durée (5 ans) : ${eur(live.prixMedianM2)} (${live.nbTransactions} ventes)',
+              style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
+            ),
+          ),
         if (loyerCaption != null)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 6),
