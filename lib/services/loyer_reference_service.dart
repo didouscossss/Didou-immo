@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Loyer/m² d'une commune, issu du jeu "Carte des loyers" (voir
@@ -116,9 +117,7 @@ class LoyerReferenceService {
       // à jour. Toute erreur (Firebase non configuré, pas de réseau, fichier
       // pas encore publié...) retombe silencieusement plus bas, jamais
       // d'erreur visible pour l'utilisateur.
-      final bytes = await FirebaseStorage.instance.ref(loyerCommunesStoragePath).getData(10 << 20);
-      if (bytes == null) throw StateError('empty');
-      final raw = utf8.decode(bytes);
+      final raw = await _fetchFromStorage();
       _applyJson(raw);
       unawaited(prefs.setString(_cacheKey, raw));
       unawaited(prefs.setString(_cacheDateKey, DateTime.now().toIso8601String()));
@@ -141,6 +140,24 @@ class LoyerReferenceService {
     } catch (_) {
       _data = {};
     }
+  }
+
+  /// Récupère le contenu du fichier via [FirebaseStorage.ref.getDownloadURL]
+  /// suivi d'un `http.get` classique, plutôt que
+  /// `FirebaseStorage.ref.getData` directement : ce dernier repose sur une
+  /// interop JS fragile sur Flutter Web, qui peut lever un `TypeError`
+  /// interne sans rapport avec le contenu du fichier ou les permissions
+  /// (bug connu du plugin, voir flutterfire#12367 — même correctif que
+  /// `PrixReferenceService`, où le souci a été constaté en conditions
+  /// réelles). `getDownloadURL` + une requête HTTP classique contourne
+  /// complètement ce chemin défaillant.
+  static Future<String> _fetchFromStorage() async {
+    final url = await FirebaseStorage.instance.ref(loyerCommunesStoragePath).getDownloadURL();
+    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+    if (response.statusCode != 200) {
+      throw StateError('HTTP ${response.statusCode} en téléchargeant $loyerCommunesStoragePath');
+    }
+    return utf8.decode(response.bodyBytes);
   }
 
   static void _applyJson(String raw) {
