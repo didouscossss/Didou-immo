@@ -162,10 +162,16 @@ class PrixImportService {
   /// Publie le nouveau fichier sur Firebase Storage, en écrasant l'ancien —
   /// réservé aux comptes admin (voir `storage.rules`). Invalide aussi le
   /// cache local de [PrixReferenceService].
+  ///
+  /// `cacheControl: 'no-cache'` explicite : sans lui, un CDN/navigateur peut
+  /// continuer à servir l'ancienne version de ce fichier après une
+  /// republication (une relecture forcée côté app, via `invalidateCache`,
+  /// n'y change rien si c'est la couche réseau qui sert du contenu périmé
+  /// avant même d'atteindre le code de l'app).
   static Future<void> publish(Map<String, dynamic> data) async {
     final bytes = utf8.encode(jsonEncode(data));
     final ref = FirebaseStorage.instance.ref(prixCommunesStoragePath);
-    await ref.putData(bytes, SettableMetadata(contentType: 'application/json'));
+    await ref.putData(bytes, SettableMetadata(contentType: 'application/json', cacheControl: 'no-cache'));
     PrixReferenceService.invalidateCache();
   }
 }

@@ -87,10 +87,15 @@ class LoyerImportService {
   /// à quiconque d'autre). Invalide aussi le cache local de
   /// [LoyerReferenceService] pour que la session en cours voie tout de
   /// suite la mise à jour.
+  ///
+  /// `cacheControl: 'no-cache'` explicite (voir `PrixImportService.publish`
+  /// pour le même correctif, appliqué là après un bug de cache CDN constaté
+  /// en conditions réelles) : sans lui, un CDN/navigateur peut continuer à
+  /// servir l'ancienne version de ce fichier après une republication.
   static Future<void> publish(Map<String, dynamic> data) async {
     final bytes = utf8.encode(jsonEncode(data));
     final ref = FirebaseStorage.instance.ref(loyerCommunesStoragePath);
-    await ref.putData(bytes, SettableMetadata(contentType: 'application/json'));
+    await ref.putData(bytes, SettableMetadata(contentType: 'application/json', cacheControl: 'no-cache'));
     LoyerReferenceService.invalidateCache();
   }
 }
