@@ -69,12 +69,14 @@ class LoyerReferenceService {
     return _loading ??= _load();
   }
 
-  /// Force un rechargement au prochain [preload] — à appeler juste après
-  /// qu'un admin a republié un nouveau fichier (voir `AdminScreen`), pour
-  /// que la session en cours reflète la mise à jour sans attendre 7 jours
-  /// ou un redémarrage de l'app.
+  /// Force un rechargement immédiat — à appeler juste après qu'un admin a
+  /// republié un nouveau fichier (voir `AdminScreen`), pour que la session
+  /// en cours reflète la mise à jour sans attendre 7 jours ou un
+  /// redémarrage de l'app. Réassigne directement [_loading] (plutôt que de
+  /// le mettre à `null` en attendant un futur appel à [preload]) : sans ça,
+  /// rien ne redéclenche jamais le rechargement dans la session en cours.
   static void invalidateCache() {
-    _loading = null;
+    _loading = _load();
   }
 
   static Future<void> _load() async {
