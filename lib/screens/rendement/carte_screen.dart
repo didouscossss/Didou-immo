@@ -145,7 +145,14 @@ class _CarteScreenState extends State<CarteScreen> {
     });
   }
 
-  double? _effectivePrixM2(_SelCity c) => _live[c.key]?.prixMedianM2;
+  /// Priorité au prix récent (12 derniers mois glissants, voir
+  /// `PrixRecentReferenceService`) quand il est disponible pour cette
+  /// commune — plus à jour que l'agrégat 5 ans/VALORIS (`_live`), qui reste
+  /// le repli tant que le fichier récent ne couvre pas encore la commune.
+  /// Source unique utilisée partout (barre "Prix au m²", couleur, tri,
+  /// score d'investissement) : les changer séparément les désynchroniserait.
+  double? _effectivePrixM2(_SelCity c) =>
+      PrixRecentReferenceService.lookup(c.codeInsee)?.prixMedianM2 ?? _live[c.key]?.prixMedianM2;
 
   /// Estimation de loyer pour une commune du catalogue (sans repère propre) :
   /// reprend celui de la préfecture de son département, sinon la moyenne
@@ -407,15 +414,22 @@ class _CarteScreenState extends State<CarteScreen> {
               Text(invest.label, style: AppTextStyles.sans(fontSize: 11.5, color: colorFromHex(invest.colorHex))),
             ]),
           ),
-          if (live != null)
+          if (recent != null)
+            Text('${recent.nbVentes} ventes (12 mois)', style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.4)))
+          else if (live != null)
             Text('${live.nbTransactions} ventes${live.annee != null ? ' (${live.annee})' : ' (5 ans)'}',
                 style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.4))),
         ]),
-        if (recent != null)
+        // Le prix principal ci-dessus (barre "Prix au m²", score) vient
+        // désormais du repère récent en priorité (voir _effectivePrixM2) —
+        // quand c'est le cas, affiche l'agrégat 5 ans/VALORIS en repère
+        // secondaire à la place (inversion volontaire de ce qui était
+        // affiché avant ce changement).
+        if (recent != null && live != null)
           Padding(
             padding: const EdgeInsets.only(top: 4),
             child: Text(
-              'Prix/m² récent (12 derniers mois) : ${eur(recent.prixMedianM2)} (${recent.nbVentes} ventes)',
+              'Référence longue durée (5 ans) : ${eur(live.prixMedianM2)} (${live.nbTransactions} ventes)',
               style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.55)),
             ),
           ),
