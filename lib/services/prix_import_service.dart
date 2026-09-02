@@ -15,6 +15,19 @@ class PrixImportResult {
   const PrixImportResult({required this.nbCommunes});
 }
 
+/// [data] : voir [PrixImportService.parseCsv]. [sample] : quelques lignes
+/// lisibles (commune → code retenu, prix, ventes) tirées du fichier, pour
+/// vérifier à l'œil dans l'admin que les codes ressemblent bien à des codes
+/// INSEE — utile pour diagnostiquer un souci de correspondance (le fichier
+/// "Statistiques totales DVF" peut utiliser une colonne "code_geo" qui n'est
+/// pas forcément un code INSEE brut selon l'échelle) sans avoir à inspecter
+/// le fichier de 30 Mo à la main.
+class PrixParseResult {
+  final Map<String, dynamic> data;
+  final List<String> sample;
+  const PrixParseResult({required this.data, required this.sample});
+}
+
 /// Traitement du CSV "Statistiques totales DVF" (data.gouv.fr — prix médian
 /// au m² par commune, calculé par la DGFiP à partir des ventes réellement
 /// constatées) et republication sur Firebase Storage, sur le même principe
@@ -42,16 +55,17 @@ class PrixImportService {
   static const _minCommunes = 1000;
 
   static const _codeInseeCandidates = ['codegeo', 'codecommune', 'inseecom', 'codeinsee', 'insee'];
+  static const _libelleCandidates = ['libellegeo', 'nomcommune', 'libellecommune', 'nom'];
   static const _echelleCandidates = ['echellegeo', 'echelle', 'niveaugeo'];
   static const _nbVentesCandidates = ['nbventeswholeaptmaison', 'nbventes', 'nombreventes'];
   static const _prixMedianCandidates = ['medprixm2wholeaptmaison', 'prixm2median', 'prixmedianm2'];
   static const _prixMoyenCandidates = ['moyprixm2wholeaptmaison', 'prixm2moyen', 'prixmoyenm2'];
 
   /// Parse le CSV brut. Détecte automatiquement le séparateur (`;` ou `,`)
-  /// et l'encodage (UTF-8, repli Latin-1). Renvoie le JSON compact
-  /// `{codeInsee: {"p": prixMedian, "n": nbVentes}}`, identique au format lu
-  /// par [PrixReferenceService].
-  static Map<String, dynamic> parseCsv(List<int> bytes) {
+  /// et l'encodage (UTF-8, repli Latin-1). [PrixParseResult.data] est le
+  /// JSON compact `{codeInsee: {"p": prixMedian, "n": nbVentes}}`, identique
+  /// au format lu par [PrixReferenceService].
+  static PrixParseResult parseCsv(List<int> bytes) {
     // `LineSplitter.split(...)` (contrairement à `.convert(...)` ou à un
     // `text.split(RegExp(...)).toList()`) parcourt le texte ligne par ligne
     // à la demande, sans jamais matérialiser la liste complète des ~35 000
@@ -67,6 +81,7 @@ class PrixImportService {
     int idxOf(List<String> candidates) => header.indexWhere((h) => candidates.contains(h));
 
     final idxInsee = idxOf(_codeInseeCandidates);
+    final idxLibelle = idxOf(_libelleCandidates);
     final idxNbVentes = idxOf(_nbVentesCandidates);
     var idxPrix = idxOf(_prixMedianCandidates);
     if (idxPrix == -1) idxPrix = idxOf(_prixMoyenCandidates);
@@ -79,6 +94,7 @@ class PrixImportService {
     }
 
     final result = <String, dynamic>{};
+    final sample = <String>[];
     for (final line in lines.skip(1)) {
       final fields = _splitRow(line, delimiter);
       final maxIdx = [idxInsee, idxNbVentes, idxPrix].reduce((a, b) => a > b ? a : b);
@@ -92,6 +108,10 @@ class PrixImportService {
       final prix = double.tryParse(fields[idxPrix].trim().replaceAll(',', '.'));
       if (nbVentes == null || nbVentes <= 0 || prix == null || prix <= 0) continue;
       result[insee] = {'p': double.parse(prix.toStringAsFixed(0)), 'n': nbVentes};
+      if (sample.length < 8) {
+        final nom = idxLibelle != -1 && idxLibelle < fields.length ? fields[idxLibelle].trim() : null;
+        sample.add('${nom != null && nom.isNotEmpty ? '$nom : ' : ''}code "$insee" — ${prix.toStringAsFixed(0)} €/m², $nbVentes ventes');
+      }
     }
 
     if (result.length < _minCommunes) {
@@ -100,7 +120,7 @@ class PrixImportService {
           'incomplet ou mal formé, rien n\'a été publié.');
     }
 
-    return result;
+    return PrixParseResult(data: result, sample: sample);
   }
 
   static String _decode(List<int> bytes) {
