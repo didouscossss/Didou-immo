@@ -120,6 +120,16 @@ class PrixImportService {
           'incomplet ou mal formé, rien n\'a été publié.');
     }
 
+    // Vérification ciblée sur une commune connue, en plus de l'échantillon
+    // des toutes premières lignes du fichier (qui ne prouve rien sur le
+    // reste) : confirme directement si une commune précise (ex. une
+    // préfecture) est bien couverte, plutôt que de le supposer.
+    const villeTest = MapEntry('86194', 'Poitiers');
+    final v = result[villeTest.key];
+    sample.add(v != null
+        ? '${villeTest.value} (${villeTest.key}) trouvé : ${(v['p'] as num).toStringAsFixed(0)} €/m², ${v['n']} ventes'
+        : '${villeTest.value} (${villeTest.key}) : ABSENT de ce fichier');
+
     return PrixParseResult(data: result, sample: sample);
   }
 
