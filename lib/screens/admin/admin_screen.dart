@@ -217,6 +217,11 @@ class _AdminScreenState extends State<AdminScreen> {
   /// relecture (`PrixReferenceService`) ou de l'écran Carte lui-même.
   Future<void> _testerLecturePoitiers() async {
     setState(() => _prixLookupTest = 'Lecture...');
+    // `preload()` ne charge qu'une seule fois (`_loading ??= ...`) : après le
+    // premier chargement au démarrage de l'app, un second appel ne fait
+    // rien et renvoie l'ancien résultat déjà résolu. Il faut explicitement
+    // invalider pour forcer une vraie relecture depuis Firebase Storage.
+    PrixReferenceService.invalidateCache();
     await PrixReferenceService.preload();
     final ref = PrixReferenceService.lookup('86194');
     if (!mounted) return;
