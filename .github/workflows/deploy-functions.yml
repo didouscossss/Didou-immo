@@ -39,6 +39,12 @@ jobs:
 
       - name: Déployer les fonctions
         working-directory: functions
-        run: npx firebase-tools deploy --only functions --project didou-immo --non-interactive
+        # --force : sans lui, le déploiement des fonctions réussit mais la
+        # commande entière échoue quand même en essayant de configurer (une
+        # seule fois, à la première exécution) la politique de nettoyage des
+        # anciennes images de build dans Artifact Registry — --non-interactive
+        # empêche le prompt normal pour ça. Les fonctions restent bien
+        # déployées malgré cet échec, mais autant l'éviter proprement.
+        run: npx firebase-tools deploy --only functions --project didou-immo --non-interactive --force
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
