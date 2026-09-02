@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../firebase_options.dart';
 
 /// Loyer/m² d'une commune, issu du jeu "Carte des loyers" (voir
 /// [LoyerReferenceService]).
@@ -142,18 +143,26 @@ class LoyerReferenceService {
     }
   }
 
-  /// Récupère le contenu du fichier via [FirebaseStorage.ref.getDownloadURL]
-  /// suivi d'un `http.get` classique, plutôt que
-  /// `FirebaseStorage.ref.getData` directement : ce dernier repose sur une
-  /// interop JS fragile sur Flutter Web, qui peut lever un `TypeError`
-  /// interne sans rapport avec le contenu du fichier ou les permissions
-  /// (bug connu du plugin, voir flutterfire#12367 — même correctif que
-  /// `PrixReferenceService`, où le souci a été constaté en conditions
-  /// réelles). `getDownloadURL` + une requête HTTP classique contourne
-  /// complètement ce chemin défaillant.
+  /// Récupère le contenu du fichier en construisant directement l'URL REST
+  /// publique de Firebase Storage, plutôt que de passer par
+  /// `FirebaseStorage.ref(...).getData()` OU `.getDownloadURL()` — les DEUX
+  /// se sont révélés lever le même `TypeError` interne sur Flutter Web
+  /// (constaté en conditions réelles sur `PrixReferenceService`, même bug
+  /// latent ici) : bug d'interop JS partagé par les méthodes de LECTURE du
+  /// plugin `firebase_storage` sur le web (l'écriture via `putData`, elle,
+  /// fonctionne — chemin de code différent). Ne fonctionne que parce que ce
+  /// fichier est public en lecture (voir `storage.rules` :
+  /// `allow read: if true`) : pas besoin de jeton d'accès, un simple
+  /// `http.get` suffit, sans passer par le SDK Storage du tout pour la
+  /// lecture.
   static Future<String> _fetchFromStorage() async {
-    final url = await FirebaseStorage.instance.ref(loyerCommunesStoragePath).getDownloadURL();
-    final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 30));
+    final bucket = DefaultFirebaseOptions.currentPlatform.storageBucket;
+    final url = Uri.https(
+      'firebasestorage.googleapis.com',
+      '/v0/b/$bucket/o/${Uri.encodeComponent(loyerCommunesStoragePath)}',
+      {'alt': 'media'},
+    );
+    final response = await http.get(url).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw StateError('HTTP ${response.statusCode} en téléchargeant $loyerCommunesStoragePath');
     }
