@@ -64,8 +64,28 @@ class PrixReferenceService {
   /// rechargement, et la session continue de lire les anciennes données
   /// (ou, avant toute première publication, retombe sur VALORIS en direct)
   /// jusqu'au prochain redémarrage complet de l'app.
+  ///
+  /// Efface aussi le cache local (SharedPreferences) avant de relancer
+  /// [_load] : sinon, tant que ce cache a moins de 7 jours, [_load] le
+  /// relit tel quel sans jamais recontacter Firebase Storage — un
+  /// "rechargement forcé" qui, en pratique, ne rechargeait jamais rien de
+  /// nouveau dans la même semaine (bug distinct de celui déjà corrigé ici :
+  /// celui-là empêchait [_load] d'être seulement rappelé, celui-ci fait
+  /// que même rappelé, il ressert la même réponse figée).
   static void invalidateCache() {
-    _loading = _load();
+    _loading = _forceReload();
+  }
+
+  static Future<void> _forceReload() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_cacheKey);
+      await prefs.remove(_cacheDateKey);
+    } catch (_) {
+      // Pas grave : si SharedPreferences est inutilisable, _load() ne
+      // trouvera de toute façon pas de cache à relire.
+    }
+    return _load();
   }
 
   static Future<void> _load() async {
