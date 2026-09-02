@@ -155,12 +155,20 @@ class LoyerReferenceService {
   /// `allow read: if true`) : pas besoin de jeton d'accès, un simple
   /// `http.get` suffit, sans passer par le SDK Storage du tout pour la
   /// lecture.
+  ///
+  /// `Uri.parse(...)` sur une chaîne déjà encodée à la main, PAS
+  /// `Uri.https(host, path, ...)` : ce dernier réencode lui-même le segment
+  /// de chemin qu'on lui passe, donc un chemin déjà encodé via
+  /// `Uri.encodeComponent` (nécessaire pour transformer le "/" du chemin
+  /// Storage en "%2F") se retrouve réencodé une seconde fois — le "%2F"
+  /// devient "%252F", pointant vers un objet inexistant. Firebase Storage
+  /// renvoie alors 403 "Permission denied" plutôt qu'un 404 (constaté en
+  /// conditions réelles sur `PrixReferenceService`), ce qui fait croire à
+  /// tort à un problème de permissions.
   static Future<String> _fetchFromStorage() async {
     final bucket = DefaultFirebaseOptions.currentPlatform.storageBucket;
-    final url = Uri.https(
-      'firebasestorage.googleapis.com',
-      '/v0/b/$bucket/o/${Uri.encodeComponent(loyerCommunesStoragePath)}',
-      {'alt': 'media'},
+    final url = Uri.parse(
+      'https://firebasestorage.googleapis.com/v0/b/$bucket/o/${Uri.encodeComponent(loyerCommunesStoragePath)}?alt=media',
     );
     final response = await http.get(url).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {

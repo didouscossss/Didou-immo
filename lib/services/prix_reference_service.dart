@@ -139,12 +139,24 @@ class PrixReferenceService {
   /// `allow read: if true`) : pas besoin de jeton d'accès, un simple
   /// `http.get` suffit, sans passer par le SDK Storage du tout pour la
   /// lecture.
+  ///
+  /// `Uri.parse(...)` sur une chaîne déjà encodée à la main, PAS
+  /// `Uri.https(host, path, ...)` : ce dernier réencode lui-même le segment
+  /// de chemin qu'on lui passe, donc un chemin déjà encodé via
+  /// `Uri.encodeComponent` (nécessaire pour transformer le "/" du chemin
+  /// Storage en "%2F", sinon `Uri.https` le prendrait pour un vrai
+  /// séparateur de segments) se retrouve réencodé une seconde fois — le "%"
+  /// devient "%25", donc "%2F" devient "%252F". Résultat constaté en
+  /// conditions réelles : l'app demandait un objet nommé littéralement
+  /// "reference-data%2Fprix_communes.json" (avec un "%2F" dans le nom, pas
+  /// un vrai chemin), qui n'existe pas — et Firebase Storage renvoie 403
+  /// "Permission denied" pour un objet INEXISTANT même avec une règle
+  /// `allow read: if true`, plutôt qu'un 404 plus explicite, ce qui a fait
+  /// croire à un problème de permissions pendant un moment.
   static Future<String> _fetchFromStorage() async {
     final bucket = DefaultFirebaseOptions.currentPlatform.storageBucket;
-    final url = Uri.https(
-      'firebasestorage.googleapis.com',
-      '/v0/b/$bucket/o/${Uri.encodeComponent(prixCommunesStoragePath)}',
-      {'alt': 'media'},
+    final url = Uri.parse(
+      'https://firebasestorage.googleapis.com/v0/b/$bucket/o/${Uri.encodeComponent(prixCommunesStoragePath)}?alt=media',
     );
     final response = await http.get(url).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
