@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/loyer_import_service.dart';
 import '../../services/prix_import_service.dart';
+import '../../services/prix_reference_service.dart';
 import '../../state/user_account_state.dart';
 import 'admin_suggestions_screen.dart';
 
@@ -46,6 +47,7 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _prixParsing = false;
   bool _prixPublishing = false;
   String? _prixPublished;
+  String? _prixLookupTest;
 
   @override
   void dispose() {
@@ -208,6 +210,22 @@ class _AdminScreenState extends State<AdminScreen> {
             'bien les droits admin sur Firebase Storage.';
       });
     }
+  }
+
+  /// Vérifie ce que l'app relit réellement pour Poitiers, en direct — sans
+  /// passer par la carte, pour isoler si le souci vient de la publication/
+  /// relecture (`PrixReferenceService`) ou de l'écran Carte lui-même.
+  Future<void> _testerLecturePoitiers() async {
+    setState(() => _prixLookupTest = 'Lecture...');
+    await PrixReferenceService.preload();
+    final ref = PrixReferenceService.lookup('86194');
+    if (!mounted) return;
+    setState(() {
+      _prixLookupTest = ref != null
+          ? "L'app trouve Poitiers : ${ref.prixMedianM2.toStringAsFixed(0)} €/m², ${ref.nbVentes} ventes."
+          : "L'app NE trouve PAS Poitiers dans les données rechargées (le fichier publié ne contient "
+              'peut-être pas encore cette mise à jour, ou la relecture échoue).';
+    });
   }
 
   Future<void> _generate() async {
@@ -433,6 +451,17 @@ class _AdminScreenState extends State<AdminScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(_prixPublished!, style: const TextStyle(color: Colors.green)),
+            ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _testerLecturePoitiers,
+            icon: const Icon(Icons.search, size: 16),
+            label: const Text('Tester ce que l\'app relit pour Poitiers'),
+          ),
+          if (_prixLookupTest != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(_prixLookupTest!, style: const TextStyle(fontSize: 12.5)),
             ),
           const SizedBox(height: 36),
           const Divider(),
