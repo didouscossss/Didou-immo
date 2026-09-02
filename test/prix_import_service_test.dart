@@ -15,10 +15,10 @@ const _header = 'code_geo;libelle_geo;code_parent;echelle_geo;'
 /// Une ligne "commune" avec des valeurs plausibles sur toutes les colonnes
 /// (appartement/maison/apt_maison/local) — seule la colonne "apt_maison"
 /// doit être retenue par le parseur.
-String _ligneCommune(String insee, {required int nbVentes, required double prixMedian, String echelle = 'commune'}) {
+String _ligneCommune(String insee, {required int nbVentes, required double prixMedian, String echelle = 'commune', String? nom}) {
   // Les colonnes appartement/maison/local portent des valeurs différentes
   // de "apt_maison" pour vérifier qu'on ne les confond pas.
-  return '$insee;Commune $insee;75;$echelle;'
+  return '$insee;${nom ?? 'Commune $insee'};75;$echelle;'
       '5;1000;1100;' // appartement
       '5;1200;1300;' // maison
       '$nbVentes;${prixMedian - 50};$prixMedian;' // apt_maison — la bonne colonne
@@ -26,29 +26,40 @@ String _ligneCommune(String insee, {required int nbVentes, required double prixM
 }
 
 String _buildCsv({int nbCommunesBase = 1005, List<String> extraLines = const []}) {
-  final lignes = <String>[_header];
+  // `extraLines` en tête (pas en queue) : l'échantillon renvoyé par
+  // `parseCsv` ne retient que les toutes premières lignes valides du
+  // fichier, donc un cas particulier ajouté en fin de liste n'y apparaîtrait
+  // jamais.
+  final lignes = <String>[_header, ...extraLines];
   for (var i = 0; i < nbCommunesBase; i++) {
     lignes.add(_ligneCommune(i.toString().padLeft(5, '0'), nbVentes: 10, prixMedian: (2000 + i).toDouble()));
   }
-  lignes.addAll(extraLines);
   return lignes.join('\n');
 }
 
 void main() {
   group('PrixImportService.parseCsv', () {
     test('reconnaît les communes et publie le prix médian de la colonne "apt_maison"', () {
-      final data = PrixImportService.parseCsv(utf8.encode(_buildCsv()));
+      final data = PrixImportService.parseCsv(utf8.encode(_buildCsv())).data;
       expect(data.length, 1005);
       final commune0 = data['00000'] as Map;
       expect(commune0['p'], 2000);
       expect(commune0['n'], 10);
     });
 
+    test("l'échantillon renvoyé donne le nom, le code et le prix — pour vérifier à l'œil dans l'admin", () {
+      final csv = _buildCsv(extraLines: [
+        _ligneCommune('86194', nbVentes: 400, prixMedian: 2100, nom: 'Poitiers'),
+      ]);
+      final sample = PrixImportService.parseCsv(utf8.encode(csv)).sample;
+      expect(sample.any((s) => s.contains('Poitiers') && s.contains('86194') && s.contains('2100')), isTrue);
+    });
+
     test('ignore les lignes hors "commune" quand une colonne échelle_geo existe', () {
       final csv = _buildCsv(extraLines: [
         _ligneCommune('88888', nbVentes: 500, prixMedian: 3000, echelle: 'departement'),
       ]);
-      final data = PrixImportService.parseCsv(utf8.encode(csv));
+      final data = PrixImportService.parseCsv(utf8.encode(csv)).data;
       expect(data.containsKey('88888'), isFalse);
     });
 
@@ -58,7 +69,7 @@ void main() {
       for (var i = 0; i < 1005; i++) {
         lignes.add('${i.toString().padLeft(5, '0')};commune;10;${2000 + i}');
       }
-      final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n')));
+      final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n'))).data;
       expect(data.length, 1005);
       expect((data['00000'] as Map)['p'], 2000);
     });
@@ -68,7 +79,7 @@ void main() {
       for (var i = 0; i < 1005; i++) {
         lignes.add('${i.toString().padLeft(5, '0')};commune;10;${2000 + i}');
       }
-      final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n')));
+      final data = PrixImportService.parseCsv(utf8.encode(lignes.join('\n'))).data;
       expect(data.length, 1005);
     });
 
@@ -76,7 +87,7 @@ void main() {
       final csv = _buildCsv(extraLines: [
         '66666;Commune 66666;75;commune;5;1000;1100;5;1200;1300;s;s;s;2;2000;2100',
       ]);
-      final data = PrixImportService.parseCsv(utf8.encode(csv));
+      final data = PrixImportService.parseCsv(utf8.encode(csv)).data;
       expect(data.containsKey('66666'), isFalse);
     });
 
@@ -96,7 +107,7 @@ void main() {
 
   group('PrixImportService.summarize', () {
     test('renvoie le nombre de communes reconnues', () {
-      final data = PrixImportService.parseCsv(utf8.encode(_buildCsv(nbCommunesBase: 1200)));
+      final data = PrixImportService.parseCsv(utf8.encode(_buildCsv(nbCommunesBase: 1200))).data;
       final summary = PrixImportService.summarize(data);
       expect(summary.nbCommunes, 1200);
     });

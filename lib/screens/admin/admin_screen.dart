@@ -40,6 +40,7 @@ class _AdminScreenState extends State<AdminScreen> {
 
   Map<String, dynamic>? _prixPending;
   PrixImportResult? _prixPreview;
+  List<String> _prixSample = [];
   String? _prixFileName;
   String? _prixError;
   bool _prixParsing = false;
@@ -141,6 +142,7 @@ class _AdminScreenState extends State<AdminScreen> {
       _prixPublished = null;
       _prixPending = null;
       _prixPreview = null;
+      _prixSample = [];
     });
     FilePickerResult? result;
     try {
@@ -158,11 +160,12 @@ class _AdminScreenState extends State<AdminScreen> {
       _prixParsing = true;
     });
     try {
-      final data = await compute(PrixImportService.parseCsv, file!.bytes!);
-      final summary = PrixImportService.summarize(data);
+      final parsed = await compute(PrixImportService.parseCsv, file!.bytes!);
+      final summary = PrixImportService.summarize(parsed.data);
       setState(() {
-        _prixPending = data;
+        _prixPending = parsed.data;
         _prixPreview = summary;
+        _prixSample = parsed.sample;
         _prixParsing = false;
       });
     } on PrixImportException catch (e) {
@@ -194,6 +197,7 @@ class _AdminScreenState extends State<AdminScreen> {
             'et pour tout le monde au prochain démarrage de leur app.';
         _prixPending = null;
         _prixPreview = null;
+        _prixSample = [];
         _prixFileName = null;
       });
     } catch (_) {
@@ -400,6 +404,17 @@ class _AdminScreenState extends State<AdminScreen> {
                   const SizedBox(height: 6),
                   Text('${_prixPreview!.nbCommunes} communes reconnues (prix médian agrégé sur les '
                       '5 dernières années).'),
+                  if (_prixSample.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    const Text('Exemples lus dans le fichier (vérifie que les codes ressemblent à '
+                        'de vrais codes INSEE à 5 chiffres) :',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    ..._prixSample.map((s) => Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(s, style: const TextStyle(fontSize: 11.5, fontFamily: 'monospace')),
+                        )),
+                  ],
                   const SizedBox(height: 12),
                   ElevatedButton(
                     onPressed: _prixPublishing ? null : _publishPrixCsv,
