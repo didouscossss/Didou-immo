@@ -115,6 +115,11 @@ class _CarteScreenState extends State<CarteScreen> {
     setState(() {
       if (_selected.contains(city.key)) {
         _selected.remove(city.key);
+        // On oublie le prix déjà chargé : sans ça, reposer le même point
+        // plus tard dans la session réaffiche la réponse d'origine au lieu
+        // de relancer la requête (utile par ex. juste après qu'un admin ait
+        // republié un nouveau fichier de prix).
+        _live.remove(city.key);
         return;
       }
       if (_selected.length >= _maxSelection) return;
