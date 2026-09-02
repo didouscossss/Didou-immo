@@ -56,10 +56,16 @@ class PrixReferenceService {
     return _loading ??= _load();
   }
 
-  /// Force un rechargement au prochain [preload] — à appeler juste après
-  /// qu'un admin a republié un nouveau fichier (voir `AdminScreen`).
+  /// Force un rechargement immédiat — à appeler juste après qu'un admin a
+  /// republié un nouveau fichier (voir `AdminScreen`), pour que la session
+  /// en cours reflète la mise à jour tout de suite. Réassigne directement
+  /// [_loading] (plutôt que de le mettre à `null` en attendant un futur
+  /// appel à [preload]) : sans ça, rien ne redéclenche jamais le
+  /// rechargement, et la session continue de lire les anciennes données
+  /// (ou, avant toute première publication, retombe sur VALORIS en direct)
+  /// jusqu'au prochain redémarrage complet de l'app.
   static void invalidateCache() {
-    _loading = null;
+    _loading = _load();
   }
 
   static Future<void> _load() async {
