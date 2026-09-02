@@ -164,7 +164,9 @@ class LoyerReferenceService {
     );
     final response = await http.get(url).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
-      throw StateError('HTTP ${response.statusCode} en téléchargeant $loyerCommunesStoragePath');
+      final body = utf8.decode(response.bodyBytes, allowMalformed: true);
+      final bodyPreview = body.length > 300 ? '${body.substring(0, 300)}...' : body;
+      throw StateError('HTTP ${response.statusCode} en téléchargeant $loyerCommunesStoragePath — corps : $bodyPreview');
     }
     return utf8.decode(response.bodyBytes);
   }

@@ -148,7 +148,15 @@ class PrixReferenceService {
     );
     final response = await http.get(url).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
-      throw StateError('HTTP ${response.statusCode} en téléchargeant $prixCommunesStoragePath');
+      // Le corps de la réponse est décisif pour diagnostiquer une erreur
+      // HTTP inattendue ici (ex. 403) : une vraie erreur Firebase a un
+      // corps JSON distinctif ("error": {"code", "message"...}), très
+      // différent d'une page d'erreur générique injectée par un opérateur
+      // mobile ou un bloqueur de contenu — sans ce corps, impossible de
+      // distinguer les deux hypothèses depuis l'admin.
+      final body = utf8.decode(response.bodyBytes, allowMalformed: true);
+      final bodyPreview = body.length > 300 ? '${body.substring(0, 300)}...' : body;
+      throw StateError('HTTP ${response.statusCode} en téléchargeant $prixCommunesStoragePath — corps : $bodyPreview');
     }
     return utf8.decode(response.bodyBytes);
   }
