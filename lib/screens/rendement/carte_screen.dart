@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/commune_catalog_service.dart';
+import '../../services/prix_recent_reference_service.dart';
 import '../../services/valoris_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
@@ -391,6 +392,7 @@ class _CarteScreenState extends State<CarteScreen> {
     }
     final cityForScore = CityRef(c.nom, prix, c.staticLoyerM2 ?? nationalAvg.loyerM2, c.tension, c.lat, c.lon, c.codeDepartement);
     final invest = computeCityInvestScore(cityForScore, evolution1AnPct: live?.evolution1AnPct);
+    final recent = PrixRecentReferenceService.lookup(c.codeInsee);
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(bottom: 10),
@@ -409,6 +411,14 @@ class _CarteScreenState extends State<CarteScreen> {
             Text('${live.nbTransactions} ventes${live.annee != null ? ' (${live.annee})' : ' (5 ans)'}',
                 style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.4))),
         ]),
+        if (recent != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'Prix/m² récent (12 derniers mois) : ${eur(recent.prixMedianM2)} (${recent.nbVentes} ventes)',
+              style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.55)),
+            ),
+          ),
         const SizedBox(height: 10),
         ...invest.raisons.map((r) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
