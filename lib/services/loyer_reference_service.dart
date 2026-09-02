@@ -75,8 +75,28 @@ class LoyerReferenceService {
   /// redémarrage de l'app. Réassigne directement [_loading] (plutôt que de
   /// le mettre à `null` en attendant un futur appel à [preload]) : sans ça,
   /// rien ne redéclenche jamais le rechargement dans la session en cours.
+  ///
+  /// Efface aussi le cache local (SharedPreferences) avant de relancer
+  /// [_load] : sinon, tant que ce cache a moins de 7 jours, [_load] le
+  /// relit tel quel sans jamais recontacter Firebase Storage — un
+  /// "rechargement forcé" qui, en pratique, ne rechargeait jamais rien de
+  /// nouveau dans la même semaine (voir `PrixReferenceService.invalidateCache`
+  /// pour le même correctif, appliqué là après un bug constaté en
+  /// conditions réelles).
   static void invalidateCache() {
-    _loading = _load();
+    _loading = _forceReload();
+  }
+
+  static Future<void> _forceReload() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_cacheKey);
+      await prefs.remove(_cacheDateKey);
+    } catch (_) {
+      // Pas grave : si SharedPreferences est inutilisable, _load() ne
+      // trouvera de toute façon pas de cache à relire.
+    }
+    return _load();
   }
 
   static Future<void> _load() async {
