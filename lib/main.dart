@@ -10,6 +10,7 @@ import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
 import 'services/loyer_reference_service.dart';
 import 'services/prix_reference_service.dart';
+import 'services/prix_recent_reference_service.dart';
 import 'state/rendement_state.dart';
 import 'state/user_account_state.dart';
 import 'theme/app_theme.dart';
@@ -33,6 +34,7 @@ Future<void> main() async {
   // doc), pour ne jamais retarder le premier affichage de l'app dessus.
   unawaited(LoyerReferenceService.preload());
   unawaited(PrixReferenceService.preload());
+  unawaited(PrixRecentReferenceService.preload());
   runApp(DidouImmoApp(firebaseReady: firebaseReady));
 }
 
