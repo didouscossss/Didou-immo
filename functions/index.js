@@ -265,141 +265,155 @@ function streamLines(webReadableStream) {
  * vu que sa structure précise n'a pas pu être vérifiée à l'avance.
  */
 exports.refreshRecentPrix = onCall(
-    {timeoutSeconds: 540, memory: "1GiB"},
+    {timeoutSeconds: 1800, memory: "2GiB"},
     async (request) => {
-      const uid = request.auth && request.auth.uid;
-      if (!uid) {
-        throw new HttpsError("unauthenticated", "Connecte-toi pour utiliser cette fonction.");
+      // Convertit toute exception inattendue (ex. panne réseau au milieu du
+      // streaming, dépassement mémoire...) en HttpsError avec le vrai
+      // message, plutôt que de laisser Firebase renvoyer un générique
+      // "internal" côté client sans aucun détail exploitable (constaté en
+      // conditions réelles lors du premier vrai run).
+      try {
+        return await runRefreshRecentPrix(request);
+      } catch (err) {
+        if (err instanceof HttpsError) throw err;
+        throw new HttpsError("internal", `Erreur inattendue : ${err && err.message ? err.message : err}`);
       }
-      const userSnap = await db.collection("users").doc(uid).get();
-      if (!userSnap.exists || userSnap.data().isAdmin !== true) {
-        throw new HttpsError("permission-denied", "Réservé aux comptes admin.");
-      }
-      const dryRun = !!(request.data && request.data.dryRun);
-
-      const datasetRes = await fetch(DVF_DATASET_API_URL);
-      if (!datasetRes.ok) {
-        throw new HttpsError("unavailable",
-            `data.gouv.fr a répondu ${datasetRes.status} pour le jeu de données ${DVF_DATASET_SLUG}.`);
-      }
-      const dataset = await datasetRes.json();
-      const resource = (dataset.resources || []).find((r) =>
-        (r.title || "").toLowerCase().includes("mensuelle"));
-      if (!resource || !resource.url) {
-        throw new HttpsError("not-found",
-            "Fichier \"Statistiques mensuelles DVF\" introuvable dans le jeu de données data.gouv.fr " +
-            `(${DVF_DATASET_SLUG}) — le nom a peut-être changé, à vérifier manuellement.`);
-      }
-
-      const csvRes = await fetch(resource.url);
-      if (!csvRes.ok) {
-        throw new HttpsError("unavailable", `HTTP ${csvRes.status} en téléchargeant le fichier mensuel.`);
-      }
-
-      const rl = streamLines(csvRes.body);
-      const lineIterator = rl[Symbol.asyncIterator]();
-
-      const first = await lineIterator.next();
-      if (first.done || !first.value.trim()) {
-        throw new HttpsError("failed-precondition", "Fichier vide.");
-      }
-      const delimiter = first.value.split(";").length >= first.value.split(",").length ? ";" : ",";
-      const rawHeader = splitRow(first.value, delimiter);
-      const header = rawHeader.map(normalizeHeader);
-
-      const idxOf = (candidates) => header.findIndex((h) => candidates.includes(h));
-      const idxInsee = idxOf(CODE_INSEE_CANDIDATES);
-      const idxLibelle = idxOf(LIBELLE_CANDIDATES);
-      const idxEchelle = idxOf(ECHELLE_CANDIDATES);
-      const idxPeriode = idxOf(PERIODE_CANDIDATES);
-      const idxNbVentes = idxOf(NB_VENTES_CANDIDATES);
-      let idxPrix = idxOf(PRIX_MEDIAN_CANDIDATES);
-      if (idxPrix === -1) idxPrix = idxOf(PRIX_MOYEN_CANDIDATES);
-
-      if (dryRun) {
-        const sample = [];
-        for (let i = 0; i < 5; i++) {
-          const next = await lineIterator.next();
-          if (next.done) break;
-          sample.push(next.value);
-        }
-        rl.close();
-        return {
-          dryRun: true,
-          headers: rawHeader,
-          colonnesReconnues: {
-            codeInsee: idxInsee !== -1 ? rawHeader[idxInsee] : null,
-            libelle: idxLibelle !== -1 ? rawHeader[idxLibelle] : null,
-            echelle: idxEchelle !== -1 ? rawHeader[idxEchelle] : null,
-            periode: idxPeriode !== -1 ? rawHeader[idxPeriode] : null,
-            nbVentes: idxNbVentes !== -1 ? rawHeader[idxNbVentes] : null,
-            prix: idxPrix !== -1 ? rawHeader[idxPrix] : null,
-          },
-          sample,
-        };
-      }
-
-      if (idxInsee === -1 || idxNbVentes === -1 || idxPrix === -1 || idxPeriode === -1) {
-        rl.close();
-        throw new HttpsError("failed-precondition",
-            "Colonnes attendues introuvables — en-têtes réelles du fichier : " + rawHeader.join(", "));
-      }
-
-      // Une ligne = une commune ET un seul mois (confirmé via dryRun sur le
-      // fichier réel — PAS un agrégat glissant déjà calculé par data.gouv.fr,
-      // contrairement à ce qu'on espérait). Un seul mois de ventes par
-      // commune est statistiquement trop fragile pour une médiane fiable
-      // (voir la discussion avec l'utilisateur — c'est exactement pourquoi
-      // ce fichier existe plutôt que d'utiliser juste le dernier mois) :
-      // on agrège donc nous-mêmes les 12 derniers mois glissants par
-      // commune, plutôt que de garder une seule ligne.
-      //
-      // Sans les transactions individuelles (seulement la médiane et le
-      // nombre de ventes DE CHAQUE MOIS), une vraie médiane sur 12 mois
-      // n'est pas calculable exactement : on combine les médianes
-      // mensuelles par une moyenne pondérée par le nombre de ventes de
-      // chaque mois — une approximation raisonnable, nettement plus
-      // représentative qu'un seul mois isolé.
-      const cutoffPeriode = periodeMonthsAgo(11); // 11 mois + le mois en cours = fenêtre de 12 mois
-      const parCommune = new Map(); // insee -> {sommePonderee, sommeVentes}
-      for await (const line of rl) {
-        if (!line.trim()) continue;
-        const fields = splitRow(line, delimiter);
-        const maxIdx = Math.max(idxInsee, idxNbVentes, idxPrix, idxPeriode);
-        if (fields.length <= maxIdx) continue;
-        if (idxEchelle !== -1 && !normalizeHeader(fields[idxEchelle]).includes("commune")) continue;
-
-        const insee = fields[idxInsee].trim();
-        if (!insee) continue;
-        const periode = fields[idxPeriode].trim();
-        if (periode < cutoffPeriode) continue;
-        const nbVentes = parseInt(fields[idxNbVentes].trim(), 10);
-        const prix = parseFloat(fields[idxPrix].trim().replace(",", "."));
-        if (!Number.isFinite(nbVentes) || nbVentes <= 0 || !Number.isFinite(prix) || prix <= 0) continue;
-
-        const existing = parCommune.get(insee) || {sommePonderee: 0, sommeVentes: 0};
-        existing.sommePonderee += prix * nbVentes;
-        existing.sommeVentes += nbVentes;
-        parCommune.set(insee, existing);
-      }
-
-      if (parCommune.size < 1000) {
-        throw new HttpsError("failed-precondition",
-            `Seulement ${parCommune.size} commune(s) reconnue(s) sur les 12 derniers mois dans ce fichier — ` +
-            "il semble incomplet ou mal formé, rien n'a été publié.");
-      }
-
-      const result = {};
-      for (const [insee, {sommePonderee, sommeVentes}] of parCommune) {
-        result[insee] = {p: Math.round(sommePonderee / sommeVentes), n: sommeVentes};
-      }
-
-      const bucket = getStorage().bucket();
-      await bucket.file("reference-data/prix_recents_12mois.json").save(
-          JSON.stringify(result),
-          {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
-      );
-
-      return {success: true, nbCommunes: latestByCommune.size};
     },
 );
+
+async function runRefreshRecentPrix(request) {
+  const uid = request.auth && request.auth.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Connecte-toi pour utiliser cette fonction.");
+  }
+  const userSnap = await db.collection("users").doc(uid).get();
+  if (!userSnap.exists || userSnap.data().isAdmin !== true) {
+    throw new HttpsError("permission-denied", "Réservé aux comptes admin.");
+  }
+  const dryRun = !!(request.data && request.data.dryRun);
+
+  const datasetRes = await fetch(DVF_DATASET_API_URL);
+  if (!datasetRes.ok) {
+    throw new HttpsError("unavailable",
+        `data.gouv.fr a répondu ${datasetRes.status} pour le jeu de données ${DVF_DATASET_SLUG}.`);
+  }
+  const dataset = await datasetRes.json();
+  const resource = (dataset.resources || []).find((r) =>
+    (r.title || "").toLowerCase().includes("mensuelle"));
+  if (!resource || !resource.url) {
+    throw new HttpsError("not-found",
+        "Fichier \"Statistiques mensuelles DVF\" introuvable dans le jeu de données data.gouv.fr " +
+        `(${DVF_DATASET_SLUG}) — le nom a peut-être changé, à vérifier manuellement.`);
+  }
+
+  const csvRes = await fetch(resource.url);
+  if (!csvRes.ok) {
+    throw new HttpsError("unavailable", `HTTP ${csvRes.status} en téléchargeant le fichier mensuel.`);
+  }
+
+  const rl = streamLines(csvRes.body);
+  const lineIterator = rl[Symbol.asyncIterator]();
+
+  const first = await lineIterator.next();
+  if (first.done || !first.value.trim()) {
+    throw new HttpsError("failed-precondition", "Fichier vide.");
+  }
+  const delimiter = first.value.split(";").length >= first.value.split(",").length ? ";" : ",";
+  const rawHeader = splitRow(first.value, delimiter);
+  const header = rawHeader.map(normalizeHeader);
+
+  const idxOf = (candidates) => header.findIndex((h) => candidates.includes(h));
+  const idxInsee = idxOf(CODE_INSEE_CANDIDATES);
+  const idxLibelle = idxOf(LIBELLE_CANDIDATES);
+  const idxEchelle = idxOf(ECHELLE_CANDIDATES);
+  const idxPeriode = idxOf(PERIODE_CANDIDATES);
+  const idxNbVentes = idxOf(NB_VENTES_CANDIDATES);
+  let idxPrix = idxOf(PRIX_MEDIAN_CANDIDATES);
+  if (idxPrix === -1) idxPrix = idxOf(PRIX_MOYEN_CANDIDATES);
+
+  if (dryRun) {
+    const sample = [];
+    for (let i = 0; i < 5; i++) {
+      const next = await lineIterator.next();
+      if (next.done) break;
+      sample.push(next.value);
+    }
+    rl.close();
+    return {
+      dryRun: true,
+      headers: rawHeader,
+      colonnesReconnues: {
+        codeInsee: idxInsee !== -1 ? rawHeader[idxInsee] : null,
+        libelle: idxLibelle !== -1 ? rawHeader[idxLibelle] : null,
+        echelle: idxEchelle !== -1 ? rawHeader[idxEchelle] : null,
+        periode: idxPeriode !== -1 ? rawHeader[idxPeriode] : null,
+        nbVentes: idxNbVentes !== -1 ? rawHeader[idxNbVentes] : null,
+        prix: idxPrix !== -1 ? rawHeader[idxPrix] : null,
+      },
+      sample,
+    };
+  }
+
+  if (idxInsee === -1 || idxNbVentes === -1 || idxPrix === -1 || idxPeriode === -1) {
+    rl.close();
+    throw new HttpsError("failed-precondition",
+        "Colonnes attendues introuvables — en-têtes réelles du fichier : " + rawHeader.join(", "));
+  }
+
+  // Une ligne = une commune ET un seul mois (confirmé via dryRun sur le
+  // fichier réel — PAS un agrégat glissant déjà calculé par data.gouv.fr,
+  // contrairement à ce qu'on espérait). Un seul mois de ventes par
+  // commune est statistiquement trop fragile pour une médiane fiable
+  // (voir la discussion avec l'utilisateur — c'est exactement pourquoi
+  // ce fichier existe plutôt que d'utiliser juste le dernier mois) :
+  // on agrège donc nous-mêmes les 12 derniers mois glissants par
+  // commune, plutôt que de garder une seule ligne.
+  //
+  // Sans les transactions individuelles (seulement la médiane et le
+  // nombre de ventes DE CHAQUE MOIS), une vraie médiane sur 12 mois
+  // n'est pas calculable exactement : on combine les médianes
+  // mensuelles par une moyenne pondérée par le nombre de ventes de
+  // chaque mois — une approximation raisonnable, nettement plus
+  // représentative qu'un seul mois isolé.
+  const cutoffPeriode = periodeMonthsAgo(11); // 11 mois + le mois en cours = fenêtre de 12 mois
+  const parCommune = new Map(); // insee -> {sommePonderee, sommeVentes}
+  for await (const line of rl) {
+    if (!line.trim()) continue;
+    const fields = splitRow(line, delimiter);
+    const maxIdx = Math.max(idxInsee, idxNbVentes, idxPrix, idxPeriode);
+    if (fields.length <= maxIdx) continue;
+    if (idxEchelle !== -1 && !normalizeHeader(fields[idxEchelle]).includes("commune")) continue;
+
+    const insee = fields[idxInsee].trim();
+    if (!insee) continue;
+    const periode = fields[idxPeriode].trim();
+    if (periode < cutoffPeriode) continue;
+    const nbVentes = parseInt(fields[idxNbVentes].trim(), 10);
+    const prix = parseFloat(fields[idxPrix].trim().replace(",", "."));
+    if (!Number.isFinite(nbVentes) || nbVentes <= 0 || !Number.isFinite(prix) || prix <= 0) continue;
+
+    const existing = parCommune.get(insee) || {sommePonderee: 0, sommeVentes: 0};
+    existing.sommePonderee += prix * nbVentes;
+    existing.sommeVentes += nbVentes;
+    parCommune.set(insee, existing);
+  }
+
+  if (parCommune.size < 1000) {
+    throw new HttpsError("failed-precondition",
+        `Seulement ${parCommune.size} commune(s) reconnue(s) sur les 12 derniers mois dans ce fichier — ` +
+        "il semble incomplet ou mal formé, rien n'a été publié.");
+  }
+
+  const result = {};
+  for (const [insee, {sommePonderee, sommeVentes}] of parCommune) {
+    result[insee] = {p: Math.round(sommePonderee / sommeVentes), n: sommeVentes};
+  }
+
+  const bucket = getStorage().bucket();
+  await bucket.file("reference-data/prix_recents_12mois.json").save(
+      JSON.stringify(result),
+      {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
+  );
+
+  return {success: true, nbCommunes: parCommune.size};
+}
