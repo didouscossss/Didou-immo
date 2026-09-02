@@ -48,6 +48,7 @@ class _AdminScreenState extends State<AdminScreen> {
   bool _prixPublishing = false;
   String? _prixPublished;
   String? _prixLookupTest;
+  String? _prixRawDiag;
 
   @override
   void dispose() {
@@ -231,6 +232,18 @@ class _AdminScreenState extends State<AdminScreen> {
           : "L'app NE trouve PAS Poitiers dans les données rechargées (le fichier publié ne contient "
               'peut-être pas encore cette mise à jour, ou la relecture échoue).';
     });
+  }
+
+  /// Lecture BRUTE de Firebase Storage (voir
+  /// `PrixReferenceService.diagnosticRawFetch`) : contrairement au test
+  /// ci-dessus, celui-ci n'avale aucune exception — s'il y a un souci de
+  /// permissions/réseau invisible jusqu'ici (masqué par le repli
+  /// silencieux normal de l'app), il apparaît ici en toutes lettres.
+  Future<void> _diagnostiquerLectureBrute() async {
+    setState(() => _prixRawDiag = 'Lecture...');
+    final result = await PrixReferenceService.diagnosticRawFetch();
+    if (!mounted) return;
+    setState(() => _prixRawDiag = result);
   }
 
   Future<void> _generate() async {
@@ -467,6 +480,17 @@ class _AdminScreenState extends State<AdminScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(_prixLookupTest!, style: const TextStyle(fontSize: 12.5)),
+            ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _diagnostiquerLectureBrute,
+            icon: const Icon(Icons.bug_report_outlined, size: 16),
+            label: const Text('Diagnostiquer la lecture Storage (brut, sans repli silencieux)'),
+          ),
+          if (_prixRawDiag != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(_prixRawDiag!, style: const TextStyle(fontSize: 12.5)),
             ),
           const SizedBox(height: 36),
           const Divider(),

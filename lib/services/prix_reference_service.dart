@@ -144,4 +144,28 @@ class PrixReferenceService {
     if (codeInsee.isEmpty) return null;
     return _data?[codeInsee];
   }
+
+  /// Diagnostic : lecture BRUTE de Firebase Storage, sans passer par le
+  /// cache local ni avaler la moindre exception (contrairement à [_load],
+  /// qui retombe silencieusement sur un repli en cas d'échec — utile en
+  /// production, mais ça masque complètement la vraie cause d'un souci).
+  /// À utiliser depuis l'admin quand [lookup] renvoie `null` de façon
+  /// persistante malgré un rechargement authentiquement forcé, pour savoir
+  /// si le problème vient de la lecture réseau/permissions elle-même
+  /// (visible ici) ou d'autre chose.
+  static Future<String> diagnosticRawFetch() async {
+    try {
+      final bytes = await FirebaseStorage.instance.ref(prixCommunesStoragePath).getData(10 << 20);
+      if (bytes == null) return 'Lecture Storage : bytes = null (fichier vide ou introuvable à ce chemin).';
+      final raw = utf8.decode(bytes);
+      final json = jsonDecode(raw) as Map<String, dynamic>;
+      final poitiers = json['86194'];
+      final poitiersTxt = poitiers != null
+          ? 'présent (${(poitiers['p'] as num).toStringAsFixed(0)} €/m²)'
+          : 'ABSENT';
+      return 'Lecture Storage réussie : ${json.length} commune(s), ${bytes.length} octets, Poitiers $poitiersTxt.';
+    } catch (e) {
+      return "Échec de la lecture Storage : ${e.runtimeType} — $e";
+    }
+  }
 }
