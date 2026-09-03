@@ -24,11 +24,13 @@ class AccountScreen extends StatelessWidget {
 
     final statusLabel = account.isSubscribed
         ? 'Abonné·e — accès illimité'
-        : account.grantedFree
-            ? 'Accès gratuit (code cadeau)'
-            : account.hasBonusAccess
-                ? 'Accès illimité offert (parrainage) jusqu\'au ${dateFr(account.bonusAccessUntil!)}'
-                : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
+        : account.grantedFreeViaReferral
+            ? 'Accès illimité à vie (palier de parrainage atteint)'
+            : account.grantedFree
+                ? 'Accès gratuit (code cadeau)'
+                : account.hasBonusAccess
+                    ? 'Accès illimité offert (parrainage) jusqu\'au ${dateFr(account.bonusAccessUntil!)}'
+                    : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mon compte')),

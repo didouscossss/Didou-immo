@@ -199,6 +199,34 @@ côté serveur, toutes deux déployées automatiquement — voir étape 1bis) :
   pourrait donc encore se déclarer abonné sans payer ; seule une vraie
   validation de reçu côté serveur fermerait ce trou.
 
+**Palier de parrainage (accès gratuit à vie)** — les jours bonus ci-dessus
+n'ont aucune valeur pour quelqu'un qui reste abonné en continu (il a déjà
+l'accès ; les jours ne servent que s'il y a un vrai trou entre deux
+abonnements). Pour un vrai avantage même en restant abonné :
+`checkReferralMilestones` (Cloud Function planifiée, chaque jour 06h00)
+compte les filleuls "qualifiés" (abonnés en continu depuis au moins 6 mois
+— `subscriptionStartedAt`, posé une seule fois par `activateSubscription`)
+de chaque parrain, et bascule son compte en accès gratuit à vie
+(`grantedFree`) une fois le seuil atteint : **10 filleuls qualifiés**, ou
+**8** si le parrain a lui-même été parrainé (`REFERRAL_MILESTONE_STANDARD`
+/ `REFERRAL_MILESTONE_HEADSTART`, `functions/index.js`). Un email est
+envoyé à l'admin (même secret `GMAIL_APP_PASSWORD`) à chaque fois que
+quelqu'un atteint le palier — c'est un vrai coût (perte d'un abonné
+payant), utile à savoir.
+
+⚠️ **Limite assumée** : sans vérification Google Play, on ne peut pas
+garantir "6 mois de paiement réel" — seulement "6 mois depuis la première
+activation, toujours marqué `isSubscribed` en base". `isSubscribed` n'étant
+jamais remis à `false` automatiquement (pas de détection d'annulation), un
+compte qui paie une fois puis annule immédiatement resterait vu comme
+abonné en continu par ce mécanisme. Le vrai frein anti-abus ici est
+économique (il faut payer réellement au moins une fois par faux compte
+pour espérer faire progresser un palier), pas une garantie stricte contre
+une chaîne de comptes créés pour l'occasion. Une vraie garantie
+demanderait l'intégration Google Play Developer API (vérification de reçu
++ suivi d'annulation), pas faite ici par choix explicite (discuté avec
+l'utilisateur).
+
 **Codes cadeaux (accès gratuit)** — deux options complémentaires :
 - **Recommandé pour du volume** : les *codes promotionnels* natifs de Play
   Console (Monétisation → Codes promotionnels). Tu génères un lot de codes,

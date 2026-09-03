@@ -2,6 +2,7 @@ const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
+const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {getStorage} = require("firebase-admin/storage");
 const {Readable} = require("node:stream");
@@ -63,9 +64,13 @@ exports.applyReferralCode = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "Tu ne peux pas utiliser ton propre code.");
     }
 
-    // Le filleul reçoit son bonus immédiatement (appliqué au prochain abonnement)
+    // Le filleul reçoit son bonus immédiatement (appliqué au prochain abonnement).
+    // `referredByUid` (en plus du code lui-même) permet à
+    // `checkReferralMilestones` ci-dessous de retrouver tous les filleuls
+    // d'un parrain sans avoir à relire `referralCodes` pour chacun.
     tx.update(userRef, {
       referredBy: enteredCode,
+      referredByUid: ownerUid,
       pendingBonusDays: FieldValue.increment(BONUS_DAYS_MONTHLY),
     });
     // Le parrain reçoit une récompense équivalente
@@ -99,7 +104,13 @@ exports.applyReferralCode = onCall(async (request) => {
  * exactement comme le faisait l'ancienne écriture directe côté client
  * qu'elle remplace (`FirestoreService.setSubscribed`, supprimée). Reste donc
  * vulnérable à un appel forgé sans achat réel — seule une vraie validation
- * de reçu côté serveur fermerait ce trou.
+ * de reçu côté serveur fermerait ce trou (ça vaut aussi, par ricochet, pour
+ * `subscriptionStartedAt` posé ci-dessous et utilisé par
+ * `checkReferralMilestones` — voir sa documentation).
+ *
+ * Pose aussi `subscriptionStartedAt` la toute première fois seulement
+ * (jamais réécrit ensuite) — sert de départ au décompte des 6 mois du
+ * palier de parrainage (voir `checkReferralMilestones`).
  */
 exports.activateSubscription = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
@@ -111,6 +122,9 @@ exports.activateSubscription = onCall(async (request) => {
     const snap = await tx.get(userRef);
     const data = snap.exists ? snap.data() : {};
     const update = {isSubscribed: true};
+    if (!data.subscriptionStartedAt) {
+      update.subscriptionStartedAt = FieldValue.serverTimestamp();
+    }
     const bonusDays = Number(data.pendingBonusDays || 0);
     if (bonusDays > 0) {
       const now = Date.now();
@@ -136,6 +150,112 @@ const gmailAppPassword = defineSecret("GMAIL_APP_PASSWORD");
 // notification — c'est le compte admin qui doit penser à republier le
 // fichier, donc il s'envoie le mail à lui-même.
 const NOTIFY_EMAIL = "valentin.champion31@gmail.com";
+
+// Palier de parrainage (accès gratuit à vie) — voir la discussion avec
+// l'utilisateur : pas de remise financière possible sur Play Billing (prix
+// fixé au niveau du produit, pas par utilisateur), et les jours bonus
+// (`pendingBonusDays`/`bonusAccessUntil` ci-dessus) n'ont aucune valeur pour
+// quelqu'un qui reste abonné en continu — seul un vrai palier qui le fait
+// arrêter de payer en a une.
+const REFERRAL_MILESTONE_STANDARD = 10;
+// -2 pour un compte qui a lui-même été parrainé (`referredByUid` posé sur
+// son propre document) — léger coup de pouce demandé explicitement.
+const REFERRAL_MILESTONE_HEADSTART = 8;
+// Ancienneté minimale d'abonnement pour qu'un filleul compte dans le
+// palier de son parrain — approximé en jours comme le reste de l'app (voir
+// BONUS_DAYS_MONTHLY plus haut), pas de vraie notion de "mois" calendaire.
+const REFERRAL_QUALIFY_DAYS = 180;
+
+/**
+ * Fait avancer le palier de parrainage (accès gratuit à vie) une fois par
+ * jour : marque `referralQualifiedAt` sur tout filleul encore abonné
+ * (`isSubscribed`) depuis au moins [REFERRAL_QUALIFY_DAYS] jours
+ * (`subscriptionStartedAt`, posé par `activateSubscription`) et pas encore
+ * compté, puis recompte le total de filleuls qualifiés de chaque parrain
+ * concerné pour basculer `grantedFree` si le seuil est atteint
+ * ([REFERRAL_MILESTONE_HEADSTART] au lieu de [REFERRAL_MILESTONE_STANDARD]
+ * si le parrain a lui-même été parrainé).
+ *
+ * ⚠️ LIMITE ASSUMÉE (voir la discussion avec l'utilisateur) : sans
+ * vérification Google Play (Real-time Developer Notifications), on ne peut
+ * pas garantir "6 mois de paiement réel" — seulement "6 mois depuis la
+ * première activation, toujours marqué `isSubscribed` dans nos données".
+ * `isSubscribed` n'étant jamais remis à `false` automatiquement (aucune
+ * détection d'annulation, voir `activateSubscription`), un compte qui paie
+ * une fois puis annule immédiatement resterait vu comme abonné en continu.
+ * Le vrai frein anti-abus ici est économique : il faut payer réellement au
+ * moins une fois par faux compte pour espérer faire progresser un palier —
+ * pas une garantie stricte contre une chaîne de comptes.
+ *
+ * Un seul passage sur toute la collection `users` (pas de requête filtrée
+ * par égalité/inégalité sur `referredByUid`) : plus simple, évite les
+ * subtilités d'index composites Firestore, et largement suffisant pour les
+ * volumes attendus d'une fonction qui ne tourne qu'une fois par jour.
+ */
+exports.checkReferralMilestones = onSchedule(
+    {
+      schedule: "0 6 * * *", // chaque jour 06h00
+      timeZone: "Europe/Paris",
+      secrets: [gmailAppPassword],
+    },
+    async () => {
+      const snap = await db.collection("users").get();
+      // Copie locale mutable : permet de refléter immédiatement, dans le
+      // second passage ci-dessous, un filleul tout juste qualifié dans le
+      // premier passage de CE MÊME run (le snapshot Firestore original,
+      // lui, resterait figé sur l'état d'avant l'écriture).
+      const records = snap.docs.map((d) => ({ref: d.ref, id: d.id, data: {...d.data()}}));
+      const cutoffMs = Date.now() - REFERRAL_QUALIFY_DAYS * 24 * 60 * 60 * 1000;
+
+      const touchedParrains = new Set();
+      for (const rec of records) {
+        if (!rec.data.referredByUid || rec.data.referralQualifiedAt) continue;
+        if (rec.data.isSubscribed !== true) continue;
+        const startedAt = rec.data.subscriptionStartedAt;
+        if (!startedAt || startedAt.toMillis() > cutoffMs) continue;
+        const now = Timestamp.now();
+        await rec.ref.update({referralQualifiedAt: now});
+        rec.data.referralQualifiedAt = now;
+        touchedParrains.add(rec.data.referredByUid);
+      }
+      if (touchedParrains.size === 0) return;
+
+      for (const parrainUid of touchedParrains) {
+        const parrainRec = records.find((r) => r.id === parrainUid);
+        if (!parrainRec || parrainRec.data.grantedFree === true) continue; // déjà acquis
+
+        const qualifiedCount = records.filter((r) =>
+          r.data.referredByUid === parrainUid && !!r.data.referralQualifiedAt).length;
+        const threshold = parrainRec.data.referredByUid ?
+          REFERRAL_MILESTONE_HEADSTART : REFERRAL_MILESTONE_STANDARD;
+
+        const update = {qualifiedReferralsCount: qualifiedCount};
+        const justReachedMilestone = qualifiedCount >= threshold;
+        if (justReachedMilestone) {
+          update.grantedFree = true;
+          update.grantedFreeVia = "parrainage";
+        }
+        await parrainRec.ref.update(update);
+
+        if (justReachedMilestone) {
+          const parrainUser = await getAuth().getUser(parrainUid).catch(() => null);
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {user: NOTIFY_EMAIL, pass: gmailAppPassword.value()},
+          });
+          await transporter.sendMail({
+            from: NOTIFY_EMAIL,
+            to: NOTIFY_EMAIL,
+            subject: "Didou Immo : palier de parrainage atteint (accès gratuit à vie accordé)",
+            text:
+                `Le compte ${parrainUser?.email || parrainUid} vient d'atteindre son palier de ` +
+                `parrainage (${qualifiedCount} filleul(s) qualifié(s)) et a été basculé en accès ` +
+                "gratuit à vie automatiquement.",
+          });
+        }
+      }
+    },
+);
 
 // Même jeu de données que celui pointé par le bouton "Copier le lien
 // data.gouv.fr" de l'écran Administration (voir admin_screen.dart) — à

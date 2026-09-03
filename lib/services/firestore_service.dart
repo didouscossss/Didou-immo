@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Toutes les lectures/écritures Firestore passent par ce service.
 ///
 /// Structure de données recommandée :
-///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, bonusAccessUntil: Timestamp, pendingBonusDays: int, layout: {...} }
+///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, subscriptionStartedAt: Timestamp, bonusAccessUntil: Timestamp, pendingBonusDays: int, referredByUid: string, referralQualifiedAt: Timestamp, qualifiedReferralsCount: int, layout: {...} }
 ///   users/{uid}/properties/{propId} -> le bien (form + résultats calculés)
 ///   suggestions/{suggestionId}      -> { uid, title, body, createdAt, status }
 ///

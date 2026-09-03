@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../services/referral_service.dart';
+import '../../state/user_account_state.dart';
 
 /// Un seul écran, deux usages : partager/saisir un code de parrainage
 /// (jours d'accès offerts), ou saisir un code cadeau (accès gratuit).
@@ -67,6 +69,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final account = context.watch<UserAccountState>();
     return Scaffold(
       appBar: AppBar(
           title: Text(ReferralScreen.referralEnabled ? 'Codes & parrainage' : 'Code cadeau')),
@@ -74,6 +77,53 @@ class _ReferralScreenState extends State<ReferralScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           if (ReferralScreen.referralEnabled) ...[
+            if (account.grantedFreeViaReferral)
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.emoji_events_outlined, color: Colors.green, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        "Palier atteint : accès illimité offert à vie, merci d'avoir fait connaître l'app !",
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else if (widget.myReferralCode != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F0E6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${account.qualifiedReferralsCount} / ${account.referralMilestoneThreshold} '
+                      'parrainages qualifiés',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Un parrainage est qualifié quand ton filleul reste abonné en continu "
+                      "pendant au moins 6 mois. Atteins ${account.referralMilestoneThreshold} "
+                      "parrainages qualifiés et tu passes en accès illimité à vie, gratuitement.",
+                      style: const TextStyle(fontSize: 11.5, color: Colors.black54),
+                    ),
+                  ],
+                ),
+              ),
             if (widget.myReferralCode != null) ...[
               const Text('Ton code de parrainage',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
