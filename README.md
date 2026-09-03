@@ -164,33 +164,44 @@ ajouter manuellement le champ `isAdmin: true` (booléen). L'écran
    `isSubscribed` / `subscriptionExpiry` dans Firestore — ne jamais faire
    confiance uniquement à l'app pour débloquer le contenu payant
 
-### 3bis. Parrainage (jours d'accès offerts) et codes cadeaux
+### 3bis. Parrainage (palier → accès gratuit à vie) et codes cadeaux
 
 **Pourquoi ce n'est pas une vraie remise Play Store** : Google Play Billing
 fixe les prix au niveau du produit, pas par utilisateur — impossible
 d'appliquer -10 % à un code généré par un utilisateur au moment du paiement.
-Le contournement implémenté (`lib/services/referral_service.dart` côté
-app, `functions/index.js` → `applyReferralCode` + `activateSubscription`
-côté serveur, toutes deux déployées automatiquement — voir étape 1bis) :
+Un bonus en jours d'accès offerts a été essayé puis retiré (voir
+l'historique du dépôt) : sans valeur réelle pour un abonné qui reste
+abonné en continu — soit il a déjà l'accès, soit il se désabonne parce
+qu'il ne veut de toute façon plus utiliser l'app.
+
+Le mécanisme actuel (`lib/services/referral_service.dart` côté app,
+`functions/index.js` → `applyReferralCode` + `activateSubscription` +
+`checkReferralMilestones` côté serveur, toutes déployées automatiquement —
+voir étape 1bis) : un **palier de parrainages qualifiés**, qui bascule le
+parrain en accès gratuit à vie une fois atteint — un vrai avantage même
+pour quelqu'un qui reste abonné en continu.
 
 - Chaque compte a un code de parrainage unique (`DIDOU-XXXX`)
-- Un nouveau compte qui saisit un code reçoit `pendingBonusDays` (+3 jours,
-  ~10 % d'un mois d'abonnement — constante `ReferralService.bonusDays` /
-  `BONUS_DAYS_MONTHLY`, à garder en phase entre le Dart et la Cloud
-  Function) ; le parrain reçoit le même bonus
-- Ces jours bonus sont ensuite transformés en accès garanti au moment où
-  l'abonnement est réellement activé : `activateSubscription` (appelée par
-  `paywall_screen.dart` juste après un achat Play Billing confirmé) lit
-  `pendingBonusDays`, l'ajoute à `bonusAccessUntil` (une date, pas juste un
-  compteur de jours — permet de cumuler plusieurs bonus dans le temps), et
-  remet `pendingBonusDays` à 0. `bonusAccessUntil` est ensuite lu comme une
-  troisième source d'accès illimité (avec `isSubscribed` et `grantedFree`)
-  par `UserAccountState.canSaveForFree` et `FirestoreService.canSaveForFree`
-  — l'accès offert reste donc actif même si l'abonnement Play Billing
-  s'arrêtait entre-temps.
-- L'écran de parrainage (`ReferralScreen.referralEnabled = true`) est
-  activé par défaut maintenant que les deux fonctions sont déployées ;
-  repasser ce flag à `false` le masque sans rien perdre côté données.
+- Un nouveau compte qui saisit un code est simplement rattaché à son
+  parrain (`applyReferralCode` pose `referredBy`/`referredByUid`) — aucun
+  bonus immédiat
+- Quand un compte active un abonnement, `activateSubscription` pose
+  `subscriptionStartedAt` (une seule fois, jamais réécrit ensuite) —
+  départ du décompte des 6 mois
+- Chaque jour à 06h00, `checkReferralMilestones` marque "qualifié" tout
+  filleul resté abonné en continu depuis au moins 6 mois
+  (`REFERRAL_QUALIFY_DAYS`), recompte le total de filleuls qualifiés de
+  chaque parrain concerné, et bascule son compte en accès gratuit à vie
+  (`grantedFree`) une fois le seuil atteint : **10 filleuls qualifiés**, ou
+  **8** si le parrain a lui-même été parrainé (`REFERRAL_MILESTONE_STANDARD`
+  / `REFERRAL_MILESTONE_HEADSTART`, `functions/index.js`). Un email est
+  envoyé à l'admin (même secret `GMAIL_APP_PASSWORD`) à chaque fois que
+  quelqu'un atteint le palier — c'est un vrai coût (perte d'un abonné
+  payant), utile à savoir.
+- L'écran de parrainage (`ReferralScreen.referralEnabled = true`) affiche
+  la progression ("X / 10 parrainages qualifiés") et est activé par défaut
+  maintenant que les fonctions sont déployées ; repasser ce flag à `false`
+  le masque sans rien perdre côté données.
 - ⚠️ Ni `applyReferralCode` ni `activateSubscription` ne valident un vrai
   reçu d'achat (pas de vérification Real-time Developer Notifications) —
   elles font confiance à l'app pour les appeler à bon escient, exactement
@@ -198,21 +209,6 @@ côté serveur, toutes deux déployées automatiquement — voir étape 1bis) :
   remplacent. Un utilisateur qui forgerait l'appel `activateSubscription`
   pourrait donc encore se déclarer abonné sans payer ; seule une vraie
   validation de reçu côté serveur fermerait ce trou.
-
-**Palier de parrainage (accès gratuit à vie)** — les jours bonus ci-dessus
-n'ont aucune valeur pour quelqu'un qui reste abonné en continu (il a déjà
-l'accès ; les jours ne servent que s'il y a un vrai trou entre deux
-abonnements). Pour un vrai avantage même en restant abonné :
-`checkReferralMilestones` (Cloud Function planifiée, chaque jour 06h00)
-compte les filleuls "qualifiés" (abonnés en continu depuis au moins 6 mois
-— `subscriptionStartedAt`, posé une seule fois par `activateSubscription`)
-de chaque parrain, et bascule son compte en accès gratuit à vie
-(`grantedFree`) une fois le seuil atteint : **10 filleuls qualifiés**, ou
-**8** si le parrain a lui-même été parrainé (`REFERRAL_MILESTONE_STANDARD`
-/ `REFERRAL_MILESTONE_HEADSTART`, `functions/index.js`). Un email est
-envoyé à l'admin (même secret `GMAIL_APP_PASSWORD`) à chaque fois que
-quelqu'un atteint le palier — c'est un vrai coût (perte d'un abonné
-payant), utile à savoir.
 
 ⚠️ **Limite assumée** : sans vérification Google Play, on ne peut pas
 garantir "6 mois de paiement réel" — seulement "6 mois depuis la première

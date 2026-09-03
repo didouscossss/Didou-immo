@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Toutes les lectures/écritures Firestore passent par ce service.
 ///
 /// Structure de données recommandée :
-///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, subscriptionStartedAt: Timestamp, bonusAccessUntil: Timestamp, pendingBonusDays: int, referredByUid: string, referralQualifiedAt: Timestamp, qualifiedReferralsCount: int, layout: {...} }
+///   users/{uid}                     -> { freeTrialsUsed: int, isSubscribed: bool, subscriptionStartedAt: Timestamp, referredByUid: string, referralQualifiedAt: Timestamp, qualifiedReferralsCount: int, layout: {...} }
 ///   users/{uid}/properties/{propId} -> le bien (form + résultats calculés)
 ///   suggestions/{suggestionId}      -> { uid, title, body, createdAt, status }
 ///
@@ -42,17 +42,13 @@ class FirestoreService {
   }
 
   /// Vérifie si l'utilisateur peut encore sauvegarder un bien gratuitement.
-  /// Prend en compte : abonnement payant actif, code cadeau (accès gratuit
-  /// à vie), bonus de parrainage en cours (voir `bonusAccessUntil`, crédité
-  /// par la Cloud Function `activateSubscription`), ou les 3 essais
-  /// gratuits classiques.
+  /// Prend en compte : abonnement payant actif, code cadeau ou palier de
+  /// parrainage (accès gratuit à vie), ou les 3 essais gratuits classiques.
   Future<bool> canSaveForFree(String uid) async {
     final status = await getUserStatus(uid);
     if (status == null) return true;
     if (status['isSubscribed'] == true) return true;
     if (status['grantedFree'] == true) return true;
-    final bonusUntil = status['bonusAccessUntil'] as Timestamp?;
-    if (bonusUntil != null && bonusUntil.toDate().isAfter(DateTime.now())) return true;
     final used = (status['freeTrialsUsed'] ?? 0) as int;
     return used < freeTrialsLimit;
   }

@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import '../../services/referral_service.dart';
 import '../../state/user_account_state.dart';
 
-/// Un seul écran, deux usages : partager/saisir un code de parrainage
-/// (jours d'accès offerts), ou saisir un code cadeau (accès gratuit).
+/// Un seul écran, deux usages : partager/saisir un code de parrainage (voir
+/// le palier — accès gratuit à vie, `UserAccountState.qualifiedReferralsCount`),
+/// ou saisir un code cadeau (accès gratuit).
 class ReferralScreen extends StatefulWidget {
   final String uid;
   final String? myReferralCode;
@@ -12,11 +13,11 @@ class ReferralScreen extends StatefulWidget {
 
   /// Le parrainage repose sur deux Cloud Functions (`applyReferralCode` et
   /// `activateSubscription`, voir `functions/index.js`) : la première
-  /// crédite le bonus au moment où le code est saisi, la seconde le
-  /// transforme en accès garanti au moment où l'abonnement est activé (voir
-  /// `ReferralService`). Repasser ce flag à `false` masque l'écran sans
-  /// rien perdre côté données si jamais l'une des deux venait à ne plus
-  /// être déployée.
+  /// rattache le filleul à son parrain au moment où le code est saisi, la
+  /// seconde pose le départ du décompte des 6 mois au moment où
+  /// l'abonnement est activé (voir `ReferralService`). Repasser ce flag à
+  /// `false` masque l'écran sans rien perdre côté données si jamais l'une
+  /// des deux venait à ne plus être déployée.
   static const bool referralEnabled = true;
 
   @override
@@ -44,9 +45,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     if (!mounted) return;
     setState(() {
       _loadingParrainage = false;
-      _parrainageMessage = error ??
-          'Code appliqué ! Tes ${ReferralService.bonusDays} jours offerts seront crédités dès '
-              "que tu actives ton abonnement.";
+      _parrainageMessage = error ?? 'Code appliqué !';
     });
   }
 
@@ -147,22 +146,20 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                'Partage-le : toi et ton filleul recevez chacun ${ReferralService.bonusDays} jours '
-                "d'accès illimité offerts (environ 10% d'un mois d'abonnement), crédités "
-                'automatiquement dès que ton filleul active son abonnement.',
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              const Text(
+                "Partage-le : chaque filleul qui reste abonné en continu pendant au moins "
+                "6 mois compte dans ton palier de parrainage, ci-dessus.",
+                style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
               const SizedBox(height: 28),
             ],
             const Text('J\'ai un code de parrainage',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 4),
-            Text(
-              "Toi et le parrain recevez chacun ${ReferralService.bonusDays} jours d'accès "
-              "illimité offerts (environ 10% d'un mois d'abonnement), crédités dès que "
-              "tu actives ton abonnement.",
-              style: const TextStyle(fontSize: 12, color: Colors.black54),
+            const Text(
+              "Ton parrainage compte pour le palier de la personne qui t'a invité·e, une "
+              "fois que tu restes abonné·e en continu pendant au moins 6 mois.",
+              style: TextStyle(fontSize: 12, color: Colors.black54),
             ),
             const SizedBox(height: 8),
             Row(

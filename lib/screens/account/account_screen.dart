@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/formatters.dart';
 import '../admin/admin_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
@@ -28,9 +27,7 @@ class AccountScreen extends StatelessWidget {
             ? 'Accès illimité à vie (palier de parrainage atteint)'
             : account.grantedFree
                 ? 'Accès gratuit (code cadeau)'
-                : account.hasBonusAccess
-                    ? 'Accès illimité offert (parrainage) jusqu\'au ${dateFr(account.bonusAccessUntil!)}'
-                    : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
+                : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mon compte')),
