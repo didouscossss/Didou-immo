@@ -249,6 +249,83 @@ function streamLines(webReadableStream) {
 }
 
 /**
+ * Vérifie chaque semaine si data.gouv.fr propose une version plus récente du
+ * fichier "Statistiques mensuelles DVF" utilisé par `refreshRecentPrix`
+ * ci-dessous, et envoie un mail à l'admin si oui — pour qu'il pense à
+ * relancer le traitement complet depuis Mon compte > Administration > "Prix
+ * récents (12 derniers mois glissants)", sans attendre de tomber dessus par
+ * hasard (le fichier source, lui, est republié environ une fois par mois).
+ *
+ * Même mécanique que `checkLoyerDatasetUpdate` plus haut (doc Firestore de
+ * suivi + pas de mail au tout premier passage, pour éviter un mail
+ * "fantôme" au premier déploiement) — voir sa documentation.
+ */
+exports.checkDvfRecentDatasetUpdate = onSchedule(
+    {
+      schedule: "0 8 * * 1", // chaque lundi 08h00
+      timeZone: "Europe/Paris",
+      secrets: [gmailAppPassword],
+    },
+    async () => {
+      const res = await fetch(DVF_DATASET_API_URL);
+      if (!res.ok) {
+        console.error(`data.gouv.fr a répondu ${res.status} pour ${DVF_DATASET_API_URL}`);
+        return;
+      }
+      const dataset = await res.json();
+
+      const resource = (dataset.resources || []).find((r) =>
+        (r.title || "").toLowerCase().includes("mensuelle"));
+      if (!resource) {
+        console.warn("Ressource \"Statistiques mensuelles DVF\" introuvable dans le jeu de données data.gouv.fr — " +
+            "le format de la page a peut-être changé, à vérifier manuellement.");
+        return;
+      }
+
+      // Selon la version de l'API udata, le champ peut s'appeler
+      // `last_modified` ou (plus rarement) `last_update` — on essaie les
+      // deux plutôt que de dépendre d'un seul nom de champ.
+      const lastModified = resource.last_modified || resource.last_update || resource.created_at;
+      if (!lastModified) {
+        console.warn("Aucune date exploitable trouvée sur la ressource — vérification manuelle nécessaire.");
+        return;
+      }
+
+      const watchRef = db.collection("system").doc("dvfRecentDatasetWatch");
+      const watchSnap = await watchRef.get();
+      const known = watchSnap.exists ? watchSnap.data().lastModified : null;
+
+      if (known === lastModified) return; // rien de nouveau depuis la dernière vérification
+
+      await watchRef.set(
+          {lastModified, resourceUrl: resource.url || null, checkedAt: FieldValue.serverTimestamp()},
+          {merge: true},
+      );
+
+      // Premier passage (pas de valeur connue en base) : on enregistre juste
+      // la référence, sans envoyer de mail — voir `checkLoyerDatasetUpdate`.
+      if (!known) return;
+
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {user: NOTIFY_EMAIL, pass: gmailAppPassword.value()},
+      });
+      await transporter.sendMail({
+        from: NOTIFY_EMAIL,
+        to: NOTIFY_EMAIL,
+        subject: "Didou Immo : nouveau fichier DVF mensuel disponible sur data.gouv.fr",
+        text:
+            "Un fichier plus récent que le dernier connu est disponible sur data.gouv.fr " +
+            "(\"Statistiques mensuelles DVF\").\n\n" +
+            `Lien : ${resource.url || `https://www.data.gouv.fr/datasets/${DVF_DATASET_SLUG}`}\n\n` +
+            "Pour mettre à jour le prix des 12 derniers mois : va dans Mon compte > Administration > " +
+            "\"Prix récents (12 derniers mois glissants)\", puis clique sur \"Lancer le traitement complet\" " +
+            "(le fichier est traité automatiquement côté serveur, rien à télécharger sur le téléphone).",
+      });
+    },
+);
+
+/**
  * Republie le prix médian réel au m² par commune sur la fenêtre glissante
  * des 12 derniers mois (voir `PrixReferenceService` côté app, qui lira ce
  * fichier séparément du fichier "5 ans" existant — travail restant, pas
