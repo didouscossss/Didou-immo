@@ -44,16 +44,23 @@ service cloud.firestore {
       // Un compte peut modifier son propre document, mais jamais les champs
       // qui débloquent l'accès payant ou l'administration lui-même, ni ceux
       // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
-      // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`
-      // ne sont écrits que par la Cloud Function `applyReferralCode`, et
-      // `isSubscribed`/`bonusAccessUntil` que par `activateSubscription`
-      // (voir functions/index.js) — ces deux fonctions tournent en admin et
-      // contournent ces règles ; `applyReferralCode` seule peut créditer le
-      // compte d'un AUTRE utilisateur (le parrain), ce qu'un client ne peut
-      // jamais faire de façon sûre.
+      // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`/
+      // `referredByUid` ne sont écrits que par la Cloud Function
+      // `applyReferralCode` ; `isSubscribed`/`bonusAccessUntil`/
+      // `subscriptionStartedAt` que par `activateSubscription` ;
+      // `referralQualifiedAt`/`qualifiedReferralsCount` que par
+      // `checkReferralMilestones` (voir functions/index.js) — ces fonctions
+      // tournent en admin et contournent ces règles. Sans ça, un client
+      // pourrait par exemple forger `subscriptionStartedAt` dans le passé ou
+      // `referralQualifiedAt` directement pour obtenir l'accès gratuit à vie
+      // sans jamais avoir payé ni parrainé personne.
       allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy', 'bonusAccessUntil']) ||
+          .hasAny([
+            'isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy',
+            'referredByUid', 'bonusAccessUntil', 'subscriptionStartedAt', 'referralQualifiedAt',
+            'qualifiedReferralsCount',
+          ]) ||
         isRedeemingValidAccessCode()
       );
 

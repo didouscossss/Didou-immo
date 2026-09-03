@@ -46,6 +46,25 @@ class UserAccountState extends ChangeNotifier {
     return until != null && until.isAfter(DateTime.now());
   }
 
+  /// `true` si CE compte a lui-même été parrainé (a saisi un code) — sert à
+  /// déterminer son propre seuil de palier (voir [referralMilestoneThreshold]).
+  bool get wasReferred => userDoc?['referredBy'] != null;
+
+  /// Nombre de filleuls "qualifiés" (abonnés en continu depuis au moins 6
+  /// mois) — recalculé et posé côté serveur par la Cloud Function
+  /// `checkReferralMilestones` (une fois par jour, pas en temps réel).
+  int get qualifiedReferralsCount => (userDoc?['qualifiedReferralsCount'] as num?)?.toInt() ?? 0;
+
+  /// Nombre de filleuls qualifiés nécessaires pour obtenir l'accès gratuit à
+  /// vie (voir `checkReferralMilestones`) — réduit de 2 si ce compte a
+  /// lui-même été parrainé.
+  int get referralMilestoneThreshold => wasReferred ? 8 : 10;
+
+  /// `true` si l'accès gratuit vient du palier de parrainage (par
+  /// opposition à un code cadeau classique) — pour afficher un message
+  /// dédié (voir `account_screen.dart`).
+  bool get grantedFreeViaReferral => grantedFree && userDoc?['grantedFreeVia'] == 'parrainage';
+
   /// Équivalent client de `FirestoreService.canSaveForFree`, pour piloter
   /// l'UI sans aller-retour réseau supplémentaire.
   bool get canSaveForFree =>
