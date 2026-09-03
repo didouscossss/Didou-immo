@@ -22,7 +22,6 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   final _billing = BillingService();
-  final _firestore = FirestoreService();
   List<ProductDetails> _products = [];
   bool _loading = true;
   bool _purchasing = false;
@@ -57,10 +56,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Future<void> _onPurchase(PurchaseDetails purchase) async {
     if (!mounted) return;
     final account = context.read<UserAccountState>();
-    final uid = account.user?.uid;
-    if (uid != null) {
-      await _firestore.setSubscribed(uid, true);
-      await account.refresh();
+    if (account.user != null) {
+      await account.activateSubscription();
     }
     if (!mounted) return;
     setState(() => _purchasing = false);

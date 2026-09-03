@@ -2,7 +2,7 @@ const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
-const {getFirestore, FieldValue} = require("firebase-admin/firestore");
+const {getFirestore, FieldValue, Timestamp} = require("firebase-admin/firestore");
 const {getStorage} = require("firebase-admin/storage");
 const {Readable} = require("node:stream");
 const readline = require("node:readline");
@@ -77,6 +77,52 @@ exports.applyReferralCode = onCall(async (request) => {
     });
   });
 
+  return {success: true};
+});
+
+/**
+ * Confirme l'abonnement côté serveur juste après un achat Play Billing (voir
+ * `paywall_screen.dart`), et applique au passage tout bonus de parrainage en
+ * attente (`pendingBonusDays`, crédité par `applyReferralCode` ci-dessus) en
+ * jours d'accès garanti supplémentaires (`bonusAccessUntil`) — voir
+ * `referral_service.dart` et `user_account_state.dart`.
+ *
+ * Tourne côté serveur (comme `applyReferralCode`) parce que les règles
+ * Firestore interdisent au client d'écrire directement `isSubscribed` et
+ * `pendingBonusDays` sur son propre document (voir firestore.rules) : un
+ * client pourrait sinon se déclarer abonné sans jamais avoir payé.
+ *
+ * Ne valide PAS le reçu d'achat lui-même (pas de vérification Real-time
+ * Developer Notifications, voir le TODO déjà présent sur
+ * `billing_service.dart`) — fait confiance à l'app pour n'appeler cette
+ * fonction qu'après un vrai achat confirmé par le SDK Play Billing,
+ * exactement comme le faisait l'ancienne écriture directe côté client
+ * qu'elle remplace (`FirestoreService.setSubscribed`, supprimée). Reste donc
+ * vulnérable à un appel forgé sans achat réel — seule une vraie validation
+ * de reçu côté serveur fermerait ce trou.
+ */
+exports.activateSubscription = onCall(async (request) => {
+  const uid = request.auth && request.auth.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Connecte-toi pour activer l'abonnement.");
+  }
+  const userRef = db.collection("users").doc(uid);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const data = snap.exists ? snap.data() : {};
+    const update = {isSubscribed: true};
+    const bonusDays = Number(data.pendingBonusDays || 0);
+    if (bonusDays > 0) {
+      const now = Date.now();
+      // Si un bonus précédent court encore, le nouveau s'ajoute à la suite
+      // plutôt que d'écraser la date restante.
+      const currentUntilMs = data.bonusAccessUntil ? data.bonusAccessUntil.toMillis() : 0;
+      const base = Math.max(now, currentUntilMs);
+      update.bonusAccessUntil = Timestamp.fromMillis(base + bonusDays * 24 * 60 * 60 * 1000);
+      update.pendingBonusDays = 0;
+    }
+    tx.update(userRef, update);
+  });
   return {success: true};
 });
 
