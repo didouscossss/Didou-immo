@@ -4,20 +4,22 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 /// Gère deux mécanismes distincts :
 ///
-/// 1. PARRAINAGE (+10 % de temps d'utilisation) : Google Play Billing ne
+/// 1. PARRAINAGE (palier → accès gratuit à vie) : Google Play Billing ne
 ///    permet pas d'appliquer une remise en % arbitraire par code
 ///    utilisateur (les prix sont fixés au niveau du produit, pas
-///    dynamiquement par personne). Le contournement implémenté : au lieu de
-///    baisser le prix payé sur le Play Store, on offre l'équivalent en
-///    JOURS D'ACCÈS ILLIMITÉ EN PLUS — [bonusDays] jours, à peu près 10 %
-///    d'un mois d'abonnement. Le filleul ET le parrain reçoivent chacun ce
-///    bonus. Concrètement : `applyReferralCode` (Cloud Function) crédite
-///    [bonusDays] en `pendingBonusDays` sur les deux comptes dès que le
-///    code est saisi ; `activateSubscription` (Cloud Function, appelée
-///    juste après un achat Play Billing — voir `paywall_screen.dart`) les
-///    transforme alors en accès garanti jusqu'à `bonusAccessUntil`, qui
-///    prolonge l'accès illimité même si l'abonnement Play Billing
-///    s'arrêtait entre-temps.
+///    dynamiquement par personne). Un bonus en jours d'accès offerts a été
+///    essayé puis retiré (voir l'historique du dépôt) : sans valeur réelle
+///    pour un abonné qui reste abonné en continu — soit il a déjà l'accès,
+///    soit il se désabonne parce qu'il ne veut de toute façon plus utiliser
+///    l'app. À la place : un palier de parrainages "qualifiés" (filleuls
+///    restés abonnés en continu depuis au moins 6 mois) qui bascule le
+///    parrain en accès gratuit à vie une fois atteint — voir la Cloud
+///    Function planifiée `checkReferralMilestones` (`functions/index.js`),
+///    et `UserAccountState.qualifiedReferralsCount` /
+///    `referralMilestoneThreshold` côté app. `applyReferralCode` se
+///    contente de rattacher le filleul à son parrain (`referredBy`/
+///    `referredByUid`) ; `activateSubscription` pose `subscriptionStartedAt`
+///    (départ du décompte des 6 mois).
 ///
 /// 2. CODES CADEAUX (accès gratuit) : deux options complémentaires —
 ///    a) Les "codes promotionnels" natifs de Google Play Console
@@ -33,8 +35,6 @@ class ReferralService {
   // que Firebase n'est pas initialisé (voir `main.dart`).
   late final FirebaseFirestore _db = FirebaseFirestore.instance;
   late final FirebaseFunctions _functions = FirebaseFunctions.instance;
-
-  static const int bonusDays = 3; // ~10% de 30 jours — voir BONUS_DAYS_MONTHLY côté Cloud Function
 
   /// Génère un code de parrainage unique et lisible (ex. "DIDOU-7F3K").
   String generateReferralCode() {
@@ -69,16 +69,18 @@ class ReferralService {
     return code;
   }
 
-  /// Applique un code de parrainage saisi par un nouvel utilisateur.
-  /// Un code ne peut être appliqué qu'une seule fois par compte.
-  /// Retourne un message d'erreur (String) ou null si succès.
+  /// Applique un code de parrainage saisi par un nouvel utilisateur — le
+  /// rattache à son parrain (voir doc de la classe). Un code ne peut être
+  /// appliqué qu'une seule fois par compte. Retourne un message d'erreur
+  /// (String) ou null si succès.
   ///
   /// Passe par la Cloud Function `applyReferralCode` (voir `functions/index.js`)
-  /// plutôt que d'écrire directement dans Firestore : l'opération crédite
-  /// aussi le compte du PARRAIN (un autre utilisateur), ce que les règles
-  /// Firestore ne peuvent pas autoriser de façon sûre pour un client — voir
-  /// la discussion dans `firestore.rules`. La fonction tourne avec les
-  /// privilèges admin et applique exactement la même logique.
+  /// plutôt que d'écrire directement dans Firestore : l'opération écrit
+  /// aussi sur le document du PARRAIN (un autre utilisateur, compteur
+  /// d'utilisation du code), ce que les règles Firestore ne peuvent pas
+  /// autoriser de façon sûre pour un client — voir la discussion dans
+  /// `firestore.rules`. La fonction tourne avec les privilèges admin et
+  /// applique exactement la même logique.
   Future<String?> applyReferralCode(String enteredCode) async {
     final code = enteredCode.trim().toUpperCase();
     try {
@@ -92,10 +94,9 @@ class ReferralService {
   }
 
   /// Confirme l'abonnement côté serveur juste après un achat Play Billing
-  /// (voir `paywall_screen.dart`) et applique au passage tout bonus de
-  /// parrainage en attente — voir la Cloud Function `activateSubscription`
-  /// (`functions/index.js`) pour le détail, et la doc de cette classe pour
-  /// le mécanisme d'ensemble.
+  /// (voir `paywall_screen.dart`) — voir la Cloud Function
+  /// `activateSubscription` (`functions/index.js`) pour le détail, et la
+  /// doc de cette classe pour le mécanisme d'ensemble.
   Future<void> activateSubscription() async {
     await _functions.httpsCallable('activateSubscription').call();
   }

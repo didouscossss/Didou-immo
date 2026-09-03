@@ -44,10 +44,9 @@ service cloud.firestore {
       // Un compte peut modifier son propre document, mais jamais les champs
       // qui débloquent l'accès payant ou l'administration lui-même, ni ceux
       // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
-      // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`/
-      // `referredByUid` ne sont écrits que par la Cloud Function
-      // `applyReferralCode` ; `isSubscribed`/`bonusAccessUntil`/
-      // `subscriptionStartedAt` que par `activateSubscription` ;
+      // validation de code cadeau légitime. `referredBy`/`referredByUid` ne
+      // sont écrits que par la Cloud Function `applyReferralCode` ;
+      // `isSubscribed`/`subscriptionStartedAt` que par `activateSubscription` ;
       // `referralQualifiedAt`/`qualifiedReferralsCount` que par
       // `checkReferralMilestones` (voir functions/index.js) — ces fonctions
       // tournent en admin et contournent ces règles. Sans ça, un client
@@ -57,9 +56,8 @@ service cloud.firestore {
       allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny([
-            'isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy',
-            'referredByUid', 'bonusAccessUntil', 'subscriptionStartedAt', 'referralQualifiedAt',
-            'qualifiedReferralsCount',
+            'isSubscribed', 'grantedFree', 'isAdmin', 'referredBy', 'referredByUid',
+            'subscriptionStartedAt', 'referralQualifiedAt', 'qualifiedReferralsCount',
           ]) ||
         isRedeemingValidAccessCode()
       );

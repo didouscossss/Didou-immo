@@ -12,14 +12,14 @@ const nodemailer = require("nodemailer");
 initializeApp();
 const db = getFirestore();
 
-// ~10 % d'un mois (~30 jours). Voir lib/services/referral_service.dart —
-// garder les deux en phase si cette valeur change.
-const BONUS_DAYS_MONTHLY = 3;
-
 /**
- * Applique un code de parrainage : crédite `pendingBonusDays` au filleul
- * (l'appelant) ET au parrain (propriétaire du code), et incrémente le
- * compteur d'utilisation du code.
+ * Applique un code de parrainage : rattache le filleul (l'appelant) à son
+ * parrain (`referredBy`/`referredByUid`, propriétaire du code) et
+ * incrémente le compteur d'utilisation du code — sert uniquement à
+ * alimenter le palier de parrainage (voir `checkReferralMilestones`), aucun
+ * bonus immédiat n'est crédité (l'ancien mécanisme en jours offerts a été
+ * retiré à la demande de l'utilisateur : sans valeur réelle pour un abonné
+ * qui reste abonné, voir la discussion).
  *
  * Tourne côté serveur (Admin SDK, contourne les règles Firestore) parce que
  * l'opération écrit sur le document d'un AUTRE utilisateur (le parrain) —
@@ -64,18 +64,12 @@ exports.applyReferralCode = onCall(async (request) => {
       throw new HttpsError("failed-precondition", "Tu ne peux pas utiliser ton propre code.");
     }
 
-    // Le filleul reçoit son bonus immédiatement (appliqué au prochain abonnement).
     // `referredByUid` (en plus du code lui-même) permet à
     // `checkReferralMilestones` ci-dessous de retrouver tous les filleuls
     // d'un parrain sans avoir à relire `referralCodes` pour chacun.
     tx.update(userRef, {
       referredBy: enteredCode,
       referredByUid: ownerUid,
-      pendingBonusDays: FieldValue.increment(BONUS_DAYS_MONTHLY),
-    });
-    // Le parrain reçoit une récompense équivalente
-    tx.update(db.collection("users").doc(ownerUid), {
-      pendingBonusDays: FieldValue.increment(BONUS_DAYS_MONTHLY),
     });
     tx.update(codeRef, {
       timesUsed: FieldValue.increment(1),
@@ -87,15 +81,15 @@ exports.applyReferralCode = onCall(async (request) => {
 
 /**
  * Confirme l'abonnement côté serveur juste après un achat Play Billing (voir
- * `paywall_screen.dart`), et applique au passage tout bonus de parrainage en
- * attente (`pendingBonusDays`, crédité par `applyReferralCode` ci-dessus) en
- * jours d'accès garanti supplémentaires (`bonusAccessUntil`) — voir
- * `referral_service.dart` et `user_account_state.dart`.
+ * `paywall_screen.dart`) : marque `isSubscribed` et pose
+ * `subscriptionStartedAt` la toute première fois seulement (jamais réécrit
+ * ensuite) — sert de départ au décompte des 6 mois du palier de parrainage
+ * (voir `checkReferralMilestones`).
  *
- * Tourne côté serveur (comme `applyReferralCode`) parce que les règles
- * Firestore interdisent au client d'écrire directement `isSubscribed` et
- * `pendingBonusDays` sur son propre document (voir firestore.rules) : un
- * client pourrait sinon se déclarer abonné sans jamais avoir payé.
+ * Tourne côté serveur parce que les règles Firestore interdisent au client
+ * d'écrire directement `isSubscribed` sur son propre document (voir
+ * firestore.rules) : un client pourrait sinon se déclarer abonné sans
+ * jamais avoir payé.
  *
  * Ne valide PAS le reçu d'achat lui-même (pas de vérification Real-time
  * Developer Notifications, voir le TODO déjà présent sur
@@ -105,12 +99,8 @@ exports.applyReferralCode = onCall(async (request) => {
  * qu'elle remplace (`FirestoreService.setSubscribed`, supprimée). Reste donc
  * vulnérable à un appel forgé sans achat réel — seule une vraie validation
  * de reçu côté serveur fermerait ce trou (ça vaut aussi, par ricochet, pour
- * `subscriptionStartedAt` posé ci-dessous et utilisé par
- * `checkReferralMilestones` — voir sa documentation).
- *
- * Pose aussi `subscriptionStartedAt` la toute première fois seulement
- * (jamais réécrit ensuite) — sert de départ au décompte des 6 mois du
- * palier de parrainage (voir `checkReferralMilestones`).
+ * `subscriptionStartedAt` — voir la documentation de
+ * `checkReferralMilestones`).
  */
 exports.activateSubscription = onCall(async (request) => {
   const uid = request.auth && request.auth.uid;
@@ -124,16 +114,6 @@ exports.activateSubscription = onCall(async (request) => {
     const update = {isSubscribed: true};
     if (!data.subscriptionStartedAt) {
       update.subscriptionStartedAt = FieldValue.serverTimestamp();
-    }
-    const bonusDays = Number(data.pendingBonusDays || 0);
-    if (bonusDays > 0) {
-      const now = Date.now();
-      // Si un bonus précédent court encore, le nouveau s'ajoute à la suite
-      // plutôt que d'écraser la date restante.
-      const currentUntilMs = data.bonusAccessUntil ? data.bonusAccessUntil.toMillis() : 0;
-      const base = Math.max(now, currentUntilMs);
-      update.bonusAccessUntil = Timestamp.fromMillis(base + bonusDays * 24 * 60 * 60 * 1000);
-      update.pendingBonusDays = 0;
     }
     tx.update(userRef, update);
   });
@@ -153,17 +133,17 @@ const NOTIFY_EMAIL = "valentin.champion31@gmail.com";
 
 // Palier de parrainage (accès gratuit à vie) — voir la discussion avec
 // l'utilisateur : pas de remise financière possible sur Play Billing (prix
-// fixé au niveau du produit, pas par utilisateur), et les jours bonus
-// (`pendingBonusDays`/`bonusAccessUntil` ci-dessus) n'ont aucune valeur pour
-// quelqu'un qui reste abonné en continu — seul un vrai palier qui le fait
-// arrêter de payer en a une.
+// fixé au niveau du produit, pas par utilisateur), et un bonus en jours
+// offerts n'a aucune valeur pour quelqu'un qui reste abonné en continu
+// (essayé puis retiré) — seul un vrai palier qui le fait arrêter de payer
+// en a une.
 const REFERRAL_MILESTONE_STANDARD = 10;
 // -2 pour un compte qui a lui-même été parrainé (`referredByUid` posé sur
 // son propre document) — léger coup de pouce demandé explicitement.
 const REFERRAL_MILESTONE_HEADSTART = 8;
 // Ancienneté minimale d'abonnement pour qu'un filleul compte dans le
-// palier de son parrain — approximé en jours comme le reste de l'app (voir
-// BONUS_DAYS_MONTHLY plus haut), pas de vraie notion de "mois" calendaire.
+// palier de son parrain — approximée en jours (6 * 30), pas de vraie
+// notion de "mois" calendaire.
 const REFERRAL_QUALIFY_DAYS = 180;
 
 /**

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 
@@ -32,20 +31,6 @@ class UserAccountState extends ChangeNotifier {
   bool get isAdmin => userDoc?['isAdmin'] == true;
   String? get referralCode => userDoc?['referralCode'] as String?;
 
-  /// Date jusqu'à laquelle un bonus de parrainage (voir
-  /// `ReferralService.activateSubscription`) garantit l'accès illimité,
-  /// indépendamment de l'abonnement Play Billing lui-même — `null` si aucun
-  /// bonus actif.
-  DateTime? get bonusAccessUntil {
-    final ts = userDoc?['bonusAccessUntil'];
-    return ts is Timestamp ? ts.toDate() : null;
-  }
-
-  bool get hasBonusAccess {
-    final until = bonusAccessUntil;
-    return until != null && until.isAfter(DateTime.now());
-  }
-
   /// `true` si CE compte a lui-même été parrainé (a saisi un code) — sert à
   /// déterminer son propre seuil de palier (voir [referralMilestoneThreshold]).
   bool get wasReferred => userDoc?['referredBy'] != null;
@@ -68,7 +53,7 @@ class UserAccountState extends ChangeNotifier {
   /// Équivalent client de `FirestoreService.canSaveForFree`, pour piloter
   /// l'UI sans aller-retour réseau supplémentaire.
   bool get canSaveForFree =>
-      isSubscribed || grantedFree || hasBonusAccess || freeTrialsUsed < FirestoreService.freeTrialsLimit;
+      isSubscribed || grantedFree || freeTrialsUsed < FirestoreService.freeTrialsLimit;
 
   void start() {
     _authSub ??= _auth.authStateChanges.listen(_onAuthChanged);
@@ -172,9 +157,9 @@ class UserAccountState extends ChangeNotifier {
   }
 
   /// À appeler juste après un achat Play Billing confirmé (voir
-  /// `paywall_screen.dart`) — marque le compte comme abonné et applique au
-  /// passage tout bonus de parrainage en attente. Voir
-  /// `ReferralService.activateSubscription`.
+  /// `paywall_screen.dart`) — marque le compte comme abonné (sert aussi de
+  /// point de départ au décompte du palier de parrainage, voir
+  /// `qualifiedReferralsCount`). Voir `ReferralService.activateSubscription`.
   Future<void> activateSubscription() async {
     if (user == null) return;
     await _referral.activateSubscription();
