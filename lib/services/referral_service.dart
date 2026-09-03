@@ -4,15 +4,20 @@ import 'package:cloud_functions/cloud_functions.dart';
 
 /// Gère deux mécanismes distincts :
 ///
-/// 1. PARRAINAGE (-10 %) : Google Play Billing ne permet pas d'appliquer une
-///    remise en % arbitraire par code utilisateur (les prix sont fixés au
-///    niveau du produit, pas dynamiquement par personne). Le contournement
-///    standard et fiable : au lieu de baisser le prix payé sur le Play
-///    Store, on crédite l'équivalent en JOURS D'ACCÈS BONUS, suivis dans
-///    Firestore et ajoutés à la date d'expiration de l'abonnement.
-///    10 % d'un mois (~30 jours) ≈ 3 jours bonus.
-///    10 % d'une année (~365 jours) ≈ 36 jours bonus.
-///    Le filleul ET le parrain reçoivent chacun ce bonus (ajustable).
+/// 1. PARRAINAGE (+10 % de temps d'utilisation) : Google Play Billing ne
+///    permet pas d'appliquer une remise en % arbitraire par code
+///    utilisateur (les prix sont fixés au niveau du produit, pas
+///    dynamiquement par personne). Le contournement implémenté : au lieu de
+///    baisser le prix payé sur le Play Store, on offre l'équivalent en
+///    JOURS D'ACCÈS ILLIMITÉ EN PLUS — [bonusDays] jours, à peu près 10 %
+///    d'un mois d'abonnement. Le filleul ET le parrain reçoivent chacun ce
+///    bonus. Concrètement : `applyReferralCode` (Cloud Function) crédite
+///    [bonusDays] en `pendingBonusDays` sur les deux comptes dès que le
+///    code est saisi ; `activateSubscription` (Cloud Function, appelée
+///    juste après un achat Play Billing — voir `paywall_screen.dart`) les
+///    transforme alors en accès garanti jusqu'à `bonusAccessUntil`, qui
+///    prolonge l'accès illimité même si l'abonnement Play Billing
+///    s'arrêtait entre-temps.
 ///
 /// 2. CODES CADEAUX (accès gratuit) : deux options complémentaires —
 ///    a) Les "codes promotionnels" natifs de Google Play Console
@@ -29,8 +34,7 @@ class ReferralService {
   late final FirebaseFirestore _db = FirebaseFirestore.instance;
   late final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
-  static const int bonusDaysMonthly = 3; // ~10% de 30 jours
-  static const int bonusDaysYearly = 36; // ~10% de 365 jours
+  static const int bonusDays = 3; // ~10% de 30 jours — voir BONUS_DAYS_MONTHLY côté Cloud Function
 
   /// Génère un code de parrainage unique et lisible (ex. "DIDOU-7F3K").
   String generateReferralCode() {
@@ -85,6 +89,15 @@ class ReferralService {
     } catch (_) {
       return 'Une erreur est survenue.';
     }
+  }
+
+  /// Confirme l'abonnement côté serveur juste après un achat Play Billing
+  /// (voir `paywall_screen.dart`) et applique au passage tout bonus de
+  /// parrainage en attente — voir la Cloud Function `activateSubscription`
+  /// (`functions/index.js`) pour le détail, et la doc de cette classe pour
+  /// le mécanisme d'ensemble.
+  Future<void> activateSubscription() async {
+    await _functions.httpsCallable('activateSubscription').call();
   }
 
   /// Codes cadeaux gérés depuis Firestore (option b, voir doc de la classe).

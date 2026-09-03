@@ -164,33 +164,40 @@ ajouter manuellement le champ `isAdmin: true` (booléen). L'écran
    `isSubscribed` / `subscriptionExpiry` dans Firestore — ne jamais faire
    confiance uniquement à l'app pour débloquer le contenu payant
 
-### 3bis. Parrainage (-10 %) et codes cadeaux
+### 3bis. Parrainage (jours d'accès offerts) et codes cadeaux
 
 **Pourquoi ce n'est pas une vraie remise Play Store** : Google Play Billing
 fixe les prix au niveau du produit, pas par utilisateur — impossible
 d'appliquer -10 % à un code généré par un utilisateur au moment du paiement.
 Le contournement implémenté (`lib/services/referral_service.dart` côté
-app, `functions/index.js` → `applyReferralCode` côté serveur, à déployer
-— voir étape 1bis) :
+app, `functions/index.js` → `applyReferralCode` + `activateSubscription`
+côté serveur, toutes deux déployées automatiquement — voir étape 1bis) :
 
 - Chaque compte a un code de parrainage unique (`DIDOU-XXXX`)
-- Un nouveau compte qui saisit un code reçoit `pendingBonusDays` (+3 jours
-  pour un mensuel, ou ajuster à +36 jours si tu factures l'annuel — voir
-  constantes `bonusDaysMonthly` / `BONUS_DAYS_MONTHLY`, à garder en phase
-  entre le Dart et la Cloud Function) ; le parrain reçoit le même bonus
-- **Ces jours bonus doivent en plus être appliqués par ta Cloud Function
-  de facturation** au
-  moment où l'abonnement réel est confirmé via RTDN : additionner
-  `pendingBonusDays` à `subscriptionExpiry`, puis remettre
-  `pendingBonusDays` à 0. Pseudo-code :
-  ```js
-  // dans la Cloud Function qui traite les notifications Play Billing
-  const bonus = userDoc.data().pendingBonusDays || 0;
-  if (bonus > 0) {
-    subscriptionExpiry = subscriptionExpiry.plusDays(bonus);
-    await userRef.update({ pendingBonusDays: 0 });
-  }
-  ```
+- Un nouveau compte qui saisit un code reçoit `pendingBonusDays` (+3 jours,
+  ~10 % d'un mois d'abonnement — constante `ReferralService.bonusDays` /
+  `BONUS_DAYS_MONTHLY`, à garder en phase entre le Dart et la Cloud
+  Function) ; le parrain reçoit le même bonus
+- Ces jours bonus sont ensuite transformés en accès garanti au moment où
+  l'abonnement est réellement activé : `activateSubscription` (appelée par
+  `paywall_screen.dart` juste après un achat Play Billing confirmé) lit
+  `pendingBonusDays`, l'ajoute à `bonusAccessUntil` (une date, pas juste un
+  compteur de jours — permet de cumuler plusieurs bonus dans le temps), et
+  remet `pendingBonusDays` à 0. `bonusAccessUntil` est ensuite lu comme une
+  troisième source d'accès illimité (avec `isSubscribed` et `grantedFree`)
+  par `UserAccountState.canSaveForFree` et `FirestoreService.canSaveForFree`
+  — l'accès offert reste donc actif même si l'abonnement Play Billing
+  s'arrêtait entre-temps.
+- L'écran de parrainage (`ReferralScreen.referralEnabled = true`) est
+  activé par défaut maintenant que les deux fonctions sont déployées ;
+  repasser ce flag à `false` le masque sans rien perdre côté données.
+- ⚠️ Ni `applyReferralCode` ni `activateSubscription` ne valident un vrai
+  reçu d'achat (pas de vérification Real-time Developer Notifications) —
+  elles font confiance à l'app pour les appeler à bon escient, exactement
+  comme le faisait l'ancienne écriture cliente `setSubscribed` qu'elles
+  remplacent. Un utilisateur qui forgerait l'appel `activateSubscription`
+  pourrait donc encore se déclarer abonné sans payer ; seule une vraie
+  validation de reçu côté serveur fermerait ce trou.
 
 **Codes cadeaux (accès gratuit)** — deux options complémentaires :
 - **Recommandé pour du volume** : les *codes promotionnels* natifs de Play

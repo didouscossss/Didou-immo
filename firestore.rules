@@ -45,13 +45,15 @@ service cloud.firestore {
       // qui débloquent l'accès payant ou l'administration lui-même, ni ceux
       // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
       // validation de code cadeau légitime. `pendingBonusDays`/`referredBy`
-      // ne sont écrits que par la Cloud Function `applyReferralCode` (voir
-      // functions/index.js), qui tourne en admin et contourne ces règles —
-      // elle seule peut créditer le compte d'un AUTRE utilisateur (le
-      // parrain), ce qu'un client ne peut jamais faire de façon sûre.
+      // ne sont écrits que par la Cloud Function `applyReferralCode`, et
+      // `isSubscribed`/`bonusAccessUntil` que par `activateSubscription`
+      // (voir functions/index.js) — ces deux fonctions tournent en admin et
+      // contournent ces règles ; `applyReferralCode` seule peut créditer le
+      // compte d'un AUTRE utilisateur (le parrain), ce qu'un client ne peut
+      // jamais faire de façon sûre.
       allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy']) ||
+          .hasAny(['isSubscribed', 'grantedFree', 'isAdmin', 'pendingBonusDays', 'referredBy', 'bonusAccessUntil']) ||
         isRedeemingValidAccessCode()
       );
 

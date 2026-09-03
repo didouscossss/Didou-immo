@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/formatters.dart';
 import '../admin/admin_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
@@ -25,7 +26,9 @@ class AccountScreen extends StatelessWidget {
         ? 'Abonné·e — accès illimité'
         : account.grantedFree
             ? 'Accès gratuit (code cadeau)'
-            : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
+            : account.hasBonusAccess
+                ? 'Accès illimité offert (parrainage) jusqu\'au ${dateFr(account.bonusAccessUntil!)}'
+                : '${account.freeTrialsUsed}/${FirestoreService.freeTrialsLimit} biens gratuits utilisés';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mon compte')),
@@ -54,7 +57,7 @@ class AccountScreen extends StatelessWidget {
               builder: (_) => ReferralScreen(uid: user.uid, myReferralCode: account.referralCode),
             )),
             icon: const Icon(Icons.card_giftcard_outlined),
-            label: const Text('Code cadeau'),
+            label: Text(ReferralScreen.referralEnabled ? 'Parrainage & code cadeau' : 'Code cadeau'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
               side: BorderSide(color: AppColors.border),
