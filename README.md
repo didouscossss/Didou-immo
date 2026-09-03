@@ -135,6 +135,15 @@ déploiement, seul `checkLoyerDatasetUpdate` échouera (visible dans l'onglet
 Actions de GitHub) — les autres fonctions (parrainage, etc.) se déploient
 normalement malgré tout.
 
+Une seconde Cloud Function du même genre, `checkDvfRecentDatasetUpdate`,
+vérifie chaque lundi si data.gouv.fr propose une version plus récente du
+fichier "Statistiques mensuelles DVF" (celui utilisé par la fonction
+`refreshRecentPrix`, déclenchée depuis l'écran Administration), et envoie un
+email au même compte si oui — pour penser à relancer le traitement complet
+depuis Mon compte → Administration → "Prix récents (12 derniers mois
+glissants)". Elle réutilise le même secret `GMAIL_APP_PASSWORD` (rien à
+créer en plus).
+
 ### 2. Premier compte admin
 Pas de compte admin par défaut. Une fois que tu t'es inscrit dans l'app :
 Firestore Console → collection `users` → ton document (par ton `uid`) →
