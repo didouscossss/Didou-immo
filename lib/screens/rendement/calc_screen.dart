@@ -11,6 +11,7 @@ import '../../widgets/commune_picker.dart';
 import '../../widgets/digit_readout.dart';
 import '../../widgets/mode_toggle.dart';
 import '../../widgets/number_field.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/synced_text_field.dart';
 import '../../widgets/tip.dart';
@@ -834,15 +835,21 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ]),
       ),
-      ElevatedButton.icon(
-        onPressed: widget.onSave,
-        icon: Icon(state.editingId == null ? Icons.add : Icons.save_outlined),
-        label: Text(state.editingId == null ? 'Enregistrer ce bien' : 'Mettre à jour ce bien'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      PulsingHighlight(
+        // Attire l'œil tant qu'il y a quelque chose à enregistrer (nouveau
+        // bien jamais sauvegardé, ou modifications en attente) — inutile de
+        // continuer à pulser une fois que tout est déjà à jour.
+        active: state.editingId == null || state.formDirty,
+        child: ElevatedButton.icon(
+          onPressed: widget.onSave,
+          icon: Icon(state.editingId == null ? Icons.add : Icons.save_outlined),
+          label: Text(state.editingId == null ? 'Enregistrer ce bien' : 'Mettre à jour ce bien'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.accent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
       ),
       if (state.formDirty) ...[

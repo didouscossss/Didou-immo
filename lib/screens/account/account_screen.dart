@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../admin/admin_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
@@ -39,15 +40,17 @@ class AccountScreen extends StatelessWidget {
           Text(statusLabel, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6))),
           const SizedBox(height: 24),
           if (!account.isSubscribed && !account.grantedFree)
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen())),
-              icon: const Icon(Icons.workspace_premium_outlined),
-              label: const Text('Passer en illimité'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            PulsingHighlight(
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen())),
+                icon: const Icon(Icons.workspace_premium_outlined),
+                label: const Text('Passer en illimité'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ),
           const SizedBox(height: 12),
