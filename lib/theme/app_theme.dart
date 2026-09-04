@@ -38,7 +38,11 @@ class AppColors {
   static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
   static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
   static Color get paper {
-    if (_novice) return _dark ? const Color(0xFF1C2617) : const Color(0xFFE6EFDA);
+    // Novice sombre : vert forêt/émeraude profond (plus de bleu que de
+    // jaune dans la teinte) — un premier réglage (0xFF1C2617) virait trop
+    // vers le kaki/olive terne au goût de l'utilisateur, corrigé ici vers
+    // une teinte plus franche et moins brune.
+    if (_novice) return _dark ? const Color(0xFF0F241A) : const Color(0xFFE6EFDA);
     // Avancé : bleu-nuit/ardoise (plutôt que le vert neutre précédent) pour
     // appuyer l'identité "analytique" du mode, y compris de jour (nuance
     // froide très légère plutôt que le beige chaud du novice).
@@ -49,7 +53,7 @@ class AppColors {
   /// sombre ; teintée en cohérence avec [paper] plutôt que de flotter en
   /// blanc/vert neutre dessus.
   static Color get surface {
-    if (_novice) return _dark ? const Color(0xFF28331F) : const Color(0xFFF6FAF0);
+    if (_novice) return _dark ? const Color(0xFF193A28) : const Color(0xFFF6FAF0);
     return _dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
   }
 
@@ -76,7 +80,7 @@ class AppColors {
   static List<Color> get backgroundGradient {
     if (_novice) {
       return _dark
-          ? const [Color(0xFF1C2617), Color(0xFF141D10)]
+          ? const [Color(0xFF123B27), Color(0xFF07160F)]
           : const [Color(0xFFF3F8ED), Color(0xFFE0EBD2)];
     }
     return _dark
