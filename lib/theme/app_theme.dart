@@ -68,9 +68,13 @@ class AppColors {
   /// à lire.
   static List<Color> get heroGradient {
     if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
+    // Avancé de jour : écart clair→foncé élargi (0xA78BFA→0x5B21B6, au lieu
+    // de 0x8B5CF6→0x6D28D9) — les deux tons précédents étaient trop proches
+    // en clarté pour qu'un dégradé diagonal se voie clairement à l'écran, ce
+    // qui donnait l'impression d'un aplat uni plutôt que d'un dégradé.
     return _dark
         ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
-        : const [Color(0xFF8B5CF6), Color(0xFF6D28D9)];
+        : const [Color(0xFFA78BFA), Color(0xFF5B21B6)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
