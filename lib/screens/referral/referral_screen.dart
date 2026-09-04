@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/referral_service.dart';
 import '../../state/user_account_state.dart';
+import '../../theme/app_theme.dart';
 
 /// Un seul écran, deux usages : partager/saisir un code de parrainage (voir
 /// le palier — accès gratuit à vie, `UserAccountState.qualifiedReferralsCount`),
@@ -81,17 +82,17 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppColors.good.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(Icons.emoji_events_outlined, color: Colors.green, size: 20),
-                    SizedBox(width: 10),
+                    Icon(Icons.emoji_events_outlined, color: AppColors.good, size: 20),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         "Palier atteint : accès illimité offert à vie, merci d'avoir fait connaître l'app !",
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                        style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
                       ),
                     ),
                   ],
@@ -102,8 +103,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 margin: const EdgeInsets.only(bottom: 20),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4F0E6),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,55 +113,53 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     Text(
                       '${account.qualifiedReferralsCount} / ${account.referralMilestoneThreshold} '
                       'parrainages qualifiés',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      style: AppTextStyles.sans(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.ink),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "Un parrainage est qualifié quand ton filleul reste abonné en continu "
                       "pendant au moins 6 mois. Atteins ${account.referralMilestoneThreshold} "
                       "parrainages qualifiés et tu passes en accès illimité à vie, gratuitement.",
-                      style: const TextStyle(fontSize: 11.5, color: Colors.black54),
+                      style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.6)),
                     ),
                   ],
                 ),
               ),
             if (widget.myReferralCode != null) ...[
-              const Text('Ton code de parrainage',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+              Text('Ton code de parrainage',
+                  style: AppTextStyles.sans(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.ink)),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4F0E6),
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(widget.myReferralCode!,
-                        style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)),
-                    const Icon(Icons.share, size: 18),
+                        style: AppTextStyles.mono(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.ink)),
+                    Icon(Icons.share, size: 18, color: AppColors.ink),
                   ],
                 ),
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 "Partage-le : chaque filleul qui reste abonné en continu pendant au moins "
                 "6 mois compte dans ton palier de parrainage, ci-dessus.",
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+                style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6)),
               ),
               const SizedBox(height: 28),
             ],
-            const Text('J\'ai un code de parrainage',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+            Text('J\'ai un code de parrainage',
+                style: AppTextStyles.sans(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.ink)),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               "Ton parrainage compte pour le palier de la personne qui t'a invité·e, une "
               "fois que tu restes abonné·e en continu pendant au moins 6 mois.",
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+              style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 8),
             Row(

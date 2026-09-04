@@ -9,6 +9,7 @@ import '../../services/loyer_import_service.dart';
 import '../../services/prix_import_service.dart';
 import '../../services/prix_reference_service.dart';
 import '../../state/user_account_state.dart';
+import '../../theme/app_theme.dart';
 import 'admin_suggestions_screen.dart';
 
 /// Génération de codes cadeaux (accès gratuit) — réservé aux comptes dont
@@ -310,10 +311,10 @@ class _AdminScreenState extends State<AdminScreen> {
         children: [
           const Text('Codes cadeaux', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Un code cadeau rend l'app gratuite à vie pour le compte qui l'utilise "
             "(bascule `grantedFree` sur son document Firestore).",
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 20),
           TextField(
@@ -335,7 +336,7 @@ class _AdminScreenState extends State<AdminScreen> {
           if (_message != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_message!, style: const TextStyle(color: Colors.green)),
+              child: Text(_message!, style: TextStyle(color: AppColors.good)),
             ),
           const SizedBox(height: 36),
           const Divider(),
@@ -343,11 +344,11 @@ class _AdminScreenState extends State<AdminScreen> {
           const Text('Loyer/m² par commune ("Carte des loyers")',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "À refaire une fois par an environ, quand l'ANIL publie une nouvelle édition. "
             '1. Télécharge le fichier "Appartements" (nom se terminant par "appmefdhup.csv") '
             'depuis data.gouv.fr. 2. Sélectionne-le ci-dessous. 3. Vérifie l\'aperçu, publie.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
@@ -362,7 +363,7 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
             child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Comment reconnaître le bon fichier', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               SizedBox(height: 6),
@@ -393,7 +394,7 @@ class _AdminScreenState extends State<AdminScreen> {
               padding: const EdgeInsets.only(top: 12),
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(8)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_loyerFileName!, style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 6),
@@ -411,12 +412,12 @@ class _AdminScreenState extends State<AdminScreen> {
           if (_loyerError != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_loyerError!, style: const TextStyle(color: Colors.red)),
+              child: Text(_loyerError!, style: TextStyle(color: AppColors.alert)),
             ),
           if (_loyerPublished != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_loyerPublished!, style: const TextStyle(color: Colors.green)),
+              child: Text(_loyerPublished!, style: TextStyle(color: AppColors.good)),
             ),
           const SizedBox(height: 36),
           const Divider(),
@@ -424,13 +425,13 @@ class _AdminScreenState extends State<AdminScreen> {
           const Text('Prix/m² par commune ("Statistiques DVF")',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Remplace l'appel en direct à VALORIS par notre propre republication — à refaire "
             "environ deux fois par an, quand data.gouv.fr publie une nouvelle édition (habituellement "
             'en avril et en octobre) : plus besoin d\'attendre le rythme de VALORIS pour avoir des '
             'chiffres à jour. 1. Télécharge le fichier "Statistiques DVF" (prix médian par commune) '
             'depuis data.gouv.fr. 2. Sélectionne-le ci-dessous. 3. Vérifie l\'aperçu, publie.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
@@ -445,7 +446,7 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.amber.shade50, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: AppColors.gold.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(8)),
             child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Quel fichier prendre', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
               SizedBox(height: 6),
@@ -472,7 +473,7 @@ class _AdminScreenState extends State<AdminScreen> {
               padding: const EdgeInsets.only(top: 12),
               child: Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(8)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_prixFileName!, style: const TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 6),
@@ -501,12 +502,12 @@ class _AdminScreenState extends State<AdminScreen> {
           if (_prixError != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_prixError!, style: const TextStyle(color: Colors.red)),
+              child: Text(_prixError!, style: TextStyle(color: AppColors.alert)),
             ),
           if (_prixPublished != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),
-              child: Text(_prixPublished!, style: const TextStyle(color: Colors.green)),
+              child: Text(_prixPublished!, style: TextStyle(color: AppColors.good)),
             ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -533,11 +534,11 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(height: 28),
           const Text('Prix récents (12 derniers mois glissants)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Traité côté serveur (le fichier mensuel de data.gouv.fr pèse ~264 Mo, bien trop pour ce téléphone) — "
             'commence par "Vérifier le format" pour confirmer que le fichier a bien la structure attendue avant '
             'de lancer le traitement complet.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           Wrap(spacing: 8, runSpacing: 8, children: [
@@ -562,9 +563,9 @@ class _AdminScreenState extends State<AdminScreen> {
           const SizedBox(height: 20),
           const Text('Suggestions des utilisateurs', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Idées d'amélioration envoyées depuis l'app (Mon compte → Proposer une amélioration).",
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+            style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
