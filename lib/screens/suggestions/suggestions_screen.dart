@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/firestore_service.dart';
+import '../../widgets/pulsing_highlight.dart';
 
 /// Petit formulaire "Proposer une amélioration" — écrit directement dans
 /// Firestore (collection `suggestions`), consultable depuis la console
@@ -66,9 +67,12 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _sending ? null : _submit,
-              child: Text(_sending ? 'Envoi...' : 'Envoyer la suggestion'),
+            PulsingHighlight(
+              active: !_sending,
+              child: ElevatedButton(
+                onPressed: _sending ? null : _submit,
+                child: Text(_sending ? 'Envoi...' : 'Envoyer la suggestion'),
+              ),
             ),
             if (_sent)
               const Padding(

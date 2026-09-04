@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/compare_bar.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../../widgets/score_badge.dart';
 import '../../widgets/section_title.dart';
 
@@ -291,10 +292,12 @@ class _BiensScreenState extends State<BiensScreen> {
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => _exportCsv(context, state.biens),
-            icon: const Icon(Icons.ios_share, size: 15),
-            label: const Text('Générer le CSV'),
+          PulsingHighlight(
+            child: OutlinedButton.icon(
+              onPressed: () => _exportCsv(context, state.biens),
+              icon: const Icon(Icons.ios_share, size: 15),
+              label: const Text('Générer le CSV'),
+            ),
           ),
         ]),
       ),
@@ -570,9 +573,12 @@ class _VenteDialogState extends State<_VenteDialog> {
       ]),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
-        TextButton(
-          onPressed: valide ? () => Navigator.of(context).pop((prix: prix, date: _date)) : null,
-          child: const Text('Valider'),
+        PulsingHighlight(
+          active: valide,
+          child: TextButton(
+            onPressed: valide ? () => Navigator.of(context).pop((prix: prix, date: _date)) : null,
+            child: const Text('Valider'),
+          ),
         ),
       ],
     );

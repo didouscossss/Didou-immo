@@ -10,6 +10,7 @@ import '../../services/prix_import_service.dart';
 import '../../services/prix_reference_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/pulsing_highlight.dart';
 import 'admin_suggestions_screen.dart';
 
 /// Génération de codes cadeaux (accès gratuit) — réservé aux comptes dont
@@ -330,9 +331,12 @@ class _AdminScreenState extends State<AdminScreen> {
             decoration: const InputDecoration(labelText: "Nombre d'utilisations", border: OutlineInputBorder()),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loading ? null : _generate,
-            child: Text(_loading ? 'Création...' : 'Générer le code'),
+          PulsingHighlight(
+            active: !_loading,
+            child: ElevatedButton(
+              onPressed: _loading ? null : _generate,
+              child: Text(_loading ? 'Création...' : 'Générer le code'),
+            ),
           ),
           if (_message != null)
             Padding(
@@ -402,9 +406,12 @@ class _AdminScreenState extends State<AdminScreen> {
                   Text('${_loyerPreview!.nbCommunes} communes reconnues, dont '
                       '${_loyerPreview!.nbEstimationZone} en estimation de zone élargie.'),
                   const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _loyerPublishing ? null : _publishLoyerCsv,
-                    child: Text(_loyerPublishing ? 'Publication...' : 'Publier cette mise à jour'),
+                  PulsingHighlight(
+                    active: !_loyerPublishing,
+                    child: ElevatedButton(
+                      onPressed: _loyerPublishing ? null : _publishLoyerCsv,
+                      child: Text(_loyerPublishing ? 'Publication...' : 'Publier cette mise à jour'),
+                    ),
                   ),
                 ]),
               ),
@@ -492,9 +499,12 @@ class _AdminScreenState extends State<AdminScreen> {
                         )),
                   ],
                   const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: _prixPublishing ? null : _publishPrixCsv,
-                    child: Text(_prixPublishing ? 'Publication...' : 'Publier cette mise à jour'),
+                  PulsingHighlight(
+                    active: !_prixPublishing,
+                    child: ElevatedButton(
+                      onPressed: _prixPublishing ? null : _publishPrixCsv,
+                      child: Text(_prixPublishing ? 'Publication...' : 'Publier cette mise à jour'),
+                    ),
                   ),
                 ]),
               ),
@@ -550,10 +560,13 @@ class _AdminScreenState extends State<AdminScreen> {
               icon: const Icon(Icons.preview_outlined, size: 16),
               label: const Text('Vérifier le format'),
             ),
-            ElevatedButton.icon(
-              onPressed: _prixRecentRunning ? null : () => _refreshRecentPrix(dryRun: false),
-              icon: const Icon(Icons.cloud_sync_outlined, size: 16),
-              label: const Text('Lancer le traitement complet'),
+            PulsingHighlight(
+              active: !_prixRecentRunning,
+              child: ElevatedButton.icon(
+                onPressed: _prixRecentRunning ? null : () => _refreshRecentPrix(dryRun: false),
+                icon: const Icon(Icons.cloud_sync_outlined, size: 16),
+                label: const Text('Lancer le traitement complet'),
+              ),
             ),
           ]),
           if (_prixRecentResult != null)
