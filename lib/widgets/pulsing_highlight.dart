@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// Halo lumineux animé (respiration douce, ~1,5 s par battement) à poser
-/// autour d'un bouton pour attirer l'œil dessus — utilisé sur les boutons
-/// d'action vraiment importants (enregistrer un changement non sauvegardé,
-/// passer en illimité...), pas systématiquement sur tous les boutons de
-/// l'app : un signal qui pulse partout n'attire plus l'attention nulle
-/// part.
+/// Halo lumineux + léger grossissement animés (respiration marquée, ~1,5 s
+/// par battement) à poser autour d'un bouton pour attirer l'œil dessus —
+/// utilisé sur les boutons de validation et de téléchargement/export de
+/// fichier. Volontairement prononcé (halo double épaisseur + zoom ~6 %) :
+/// une première version basée sur l'ombre seule s'est révélée trop discrète
+/// pour être vraiment perçue en usage réel (constaté par l'utilisateur).
 ///
 /// Bat un nombre FINI de fois ([cycles], 3 par défaut) puis se stabilise
 /// sur un halo fixe (pas de retour à zéro) plutôt que de pulser sans fin :
@@ -103,19 +103,36 @@ class _PulsingHighlightState extends State<PulsingHighlight> with SingleTickerPr
     if (!widget.active) return widget.child;
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) => Container(
-        decoration: BoxDecoration(
-          borderRadius: widget.borderRadius,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withValues(alpha: 0.12 + 0.28 * _controller.value),
-              blurRadius: 6 + 12 * _controller.value,
-              spreadRadius: 1 + 2 * _controller.value,
+      builder: (context, child) {
+        final t = _controller.value;
+        return Transform.scale(
+          // Le halo seul (juste une ombre colorée) restait trop discret en
+          // usage réel — un léger grossissement du bouton lui-même se voit
+          // beaucoup plus, même en plein soleil sur un écran de téléphone.
+          scale: 1.0 + 0.06 * t,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: widget.borderRadius,
+              boxShadow: [
+                // Halo large et doux, pour l'ambiance autour du bouton.
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.25 + 0.4 * t),
+                  blurRadius: 12 + 20 * t,
+                  spreadRadius: 2 + 5 * t,
+                ),
+                // Liseré plus net, resserré contre le bouton, pour que le
+                // contour reste net même quand le halo large est très doux.
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.35 + 0.35 * t),
+                  blurRadius: 2 + 4 * t,
+                  spreadRadius: 0.5 + 1.5 * t,
+                ),
+              ],
             ),
-          ],
-        ),
-        child: child,
-      ),
+            child: child,
+          ),
+        );
+      },
       child: widget.child,
     );
   }

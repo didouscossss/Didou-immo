@@ -9,6 +9,7 @@ import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/digit_readout.dart';
 import '../../widgets/number_field.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/tip.dart';
 
@@ -221,10 +222,12 @@ class FiscaliteScreen extends StatelessWidget {
             ]),
           )),
       const SizedBox(height: 12),
-      OutlinedButton.icon(
-        onPressed: () => _exportEcheances(context, deadlines),
-        icon: const Icon(Icons.event_available_outlined, size: 16),
-        label: const Text('Ajouter à mon agenda'),
+      PulsingHighlight(
+        child: OutlinedButton.icon(
+          onPressed: () => _exportEcheances(context, deadlines),
+          icon: const Icon(Icons.event_available_outlined, size: 16),
+          label: const Text('Ajouter à mon agenda'),
+        ),
       ),
       const SizedBox(height: 4),
       Text(

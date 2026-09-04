@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../legal/legal_screens.dart';
 
 /// Écran de connexion / inscription — équivalent d'un `AuthGate` classique.
@@ -180,17 +181,20 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(_error!, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.alert)),
                 ],
                 const SizedBox(height: 18),
-                ElevatedButton(
-                  onPressed: _loading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                PulsingHighlight(
+                  active: !_loading,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: _loading
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : Text(_isSignUp ? 'Créer mon compte' : 'Se connecter'),
                   ),
-                  child: _loading
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(_isSignUp ? 'Créer mon compte' : 'Se connecter'),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(

@@ -9,6 +9,7 @@ import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/pulsing_highlight.dart';
 import '../../widgets/section_title.dart';
 
 /// Onglet "Patrimoine" — suivi réel des biens ACQUIS (loyer réellement
@@ -140,10 +141,12 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
       const SizedBox(height: 8),
       Align(
         alignment: Alignment.centerRight,
-        child: TextButton.icon(
-          onPressed: () => _exportCsv(context, tousActifs),
-          icon: const Icon(Icons.ios_share, size: 14),
-          label: const Text('Exporter les relevés (CSV)', style: TextStyle(fontSize: 12)),
+        child: PulsingHighlight(
+          child: TextButton.icon(
+            onPressed: () => _exportCsv(context, tousActifs),
+            icon: const Icon(Icons.ios_share, size: 14),
+            label: const Text('Exporter les relevés (CSV)', style: TextStyle(fontSize: 12)),
+          ),
         ),
       ),
       const SizedBox(height: 16),
@@ -723,19 +726,21 @@ class _SuiviDialogState extends State<_SuiviDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(SuiviEntry(
-            dateDebut: _dateDebut,
-            dateFin: _dateFin,
-            loyerPercu: _vacant ? null : _parse(_loyerController.text),
-            chargesCoproReelles: _parse(_coproController.text),
-            taxeFonciereReelle: _parse(_taxeController.text),
-            assuranceReelle: _parse(_assuranceController.text),
-            vacant: _vacant,
-            travauxImprevus: _parse(_travauxController.text),
-            note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
-          )),
-          child: Text(widget.existant != null ? 'Enregistrer' : 'Ajouter'),
+        PulsingHighlight(
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pop(SuiviEntry(
+              dateDebut: _dateDebut,
+              dateFin: _dateFin,
+              loyerPercu: _vacant ? null : _parse(_loyerController.text),
+              chargesCoproReelles: _parse(_coproController.text),
+              taxeFonciereReelle: _parse(_taxeController.text),
+              assuranceReelle: _parse(_assuranceController.text),
+              vacant: _vacant,
+              travauxImprevus: _parse(_travauxController.text),
+              note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
+            )),
+            child: Text(widget.existant != null ? 'Enregistrer' : 'Ajouter'),
+          ),
         ),
       ],
     );

@@ -685,15 +685,17 @@ class _CalcScreenState extends State<CalcScreen> {
           style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7)),
         ),
         const SizedBox(height: 14),
-        ElevatedButton.icon(
-          onPressed: widget.onSave,
-          icon: const Icon(Icons.add),
-          label: const Text('Enregistrer pour voir la rentabilité'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        PulsingHighlight(
+          child: ElevatedButton.icon(
+            onPressed: widget.onSave,
+            icon: const Icon(Icons.add),
+            label: const Text('Enregistrer pour voir la rentabilité'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ),
       ]),
@@ -895,10 +897,13 @@ class _CalcScreenState extends State<CalcScreen> {
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: canExport ? () => _exportPdf(state) : null,
-            icon: const Icon(Icons.ios_share, size: 15),
-            label: const Text('Générer le PDF'),
+          PulsingHighlight(
+            active: canExport,
+            child: OutlinedButton.icon(
+              onPressed: canExport ? () => _exportPdf(state) : null,
+              icon: const Icon(Icons.ios_share, size: 15),
+              label: const Text('Générer le PDF'),
+            ),
           ),
         ]),
       ),
