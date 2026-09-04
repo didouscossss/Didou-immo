@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_tab.dart';
+import '../../services/calendar_export_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
@@ -22,19 +23,19 @@ class FiscaliteScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        for (final id in state.visibleSections(AppTab.fisc)) ..._buildSection(id, state),
+        for (final id in state.visibleSections(AppTab.fisc)) ..._buildSection(context, id, state),
       ],
     );
   }
 
-  List<Widget> _buildSection(String id, RendementState state) {
+  List<Widget> _buildSection(BuildContext context, String id, RendementState state) {
     switch (id) {
       case 'regimes':
         return [_sectionRegimes(state)];
       case 'documents':
         return [_sectionDocuments(state)];
       case 'echeances':
-        return [_sectionEcheances(state)];
+        return [_sectionEcheances(context, state)];
       case 'structure':
         return [_sectionStructure(state)];
       default:
@@ -186,7 +187,7 @@ class FiscaliteScreen extends StatelessWidget {
     ]);
   }
 
-  Widget _sectionEcheances(RendementState state) {
+  Widget _sectionEcheances(BuildContext context, RendementState state) {
     final form = state.form;
     // La CFE (Cotisation Foncière des Entreprises) concerne l'activité de
     // location meublée (LMNP) — absente des listes de base car elle ne
@@ -219,8 +220,30 @@ class FiscaliteScreen extends StatelessWidget {
               Expanded(child: Text(d.label, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink))),
             ]),
           )),
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+        onPressed: () => _exportEcheances(context, deadlines),
+        icon: const Icon(Icons.event_available_outlined, size: 16),
+        label: const Text('Ajouter à mon agenda'),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        "Seules les échéances avec un mois précis ci-dessus sont ajoutées (pas celles liées à ta date de bail "
+        "ou à ta commune) — dates indicatives qui se répètent chaque année dans ton agenda, à vérifier au cas par cas.",
+        style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
+      ),
       const SizedBox(height: 8),
     ]);
+  }
+
+  Future<void> _exportEcheances(BuildContext context, List<Deadline> deadlines) async {
+    final ok = await CalendarExportService.exportEcheances(deadlines);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok
+          ? "Fichier généré — ouvre-le pour l'ajouter à ton agenda (Google Calendar, Apple Calendar...)."
+          : "Export indisponible sur cette plateforme pour l'instant."),
+    ));
   }
 
   Widget _sectionStructure(RendementState state) {
