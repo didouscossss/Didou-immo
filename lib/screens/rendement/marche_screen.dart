@@ -1,7 +1,9 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_tab.dart';
+import '../../services/prix_historique_service.dart';
 import '../../services/prix_recent_reference_service.dart';
 import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
@@ -59,6 +61,11 @@ class MarcheScreen extends StatelessWidget {
     // indicatif (DVF ne couvre que les ventes, pas les locations).
     final recent = PrixRecentReferenceService.lookup(commune?.codeInsee ?? '');
     final prixEffectif = recent?.prixMedianM2 ?? live?.prixMedianM2 ?? ref?.prixM2;
+    // Courbe d'évolution (voir `PrixHistoriqueService`) — même source que
+    // `recent`, republiée par le même admin, mais jamais garantie disponible
+    // en même temps (l'historique demande au moins 2 années pleines avec des
+    // ventes pour cette commune, `recent` non).
+    final historique = PrixHistoriqueService.lookup(commune?.codeInsee ?? '');
 
     final ecartPrix = (prixEffectif != null && prixEffectif > 0 && core.prixM2 > 0)
         ? ((core.prixM2 - prixEffectif) / prixEffectif) * 100
@@ -169,6 +176,21 @@ class MarcheScreen extends StatelessWidget {
               'Référence longue durée (5 ans) : ${eur(live.prixMedianM2)} (${live.nbTransactions} ventes)',
               style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
             ),
+          ),
+        if (historique != null && historique.length >= 2)
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Évolution du prix au m² — ${commune.nom}',
+                  style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              const SizedBox(height: 4),
+              Text('Prix médian réel par année — source DVF, Licence Ouverte (Etalab).',
+                  style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45))),
+              const SizedBox(height: 12),
+              SizedBox(height: 140, child: _buildHistoriqueChart(historique)),
+            ]),
           ),
         if (loyerCaption != null)
           Padding(
@@ -306,6 +328,66 @@ class MarcheScreen extends StatelessWidget {
       ]),
       const SizedBox(height: 24),
     ]);
+  }
+
+  /// Courbe d'évolution du prix par commune (voir `PrixHistoriqueService`),
+  /// même style que le graphique de projection patrimoniale
+  /// (`projection_screen.dart` → `_buildChart`).
+  Widget _buildHistoriqueChart(List<PrixHistoriquePoint> points) {
+    final spots = points.map((p) => FlSpot(p.annee.toDouble(), p.prixMedianM2)).toList();
+    final prix = points.map((p) => p.prixMedianM2);
+    final maxY = prix.reduce((a, b) => a > b ? a : b);
+    final minY = prix.reduce((a, b) => a < b ? a : b);
+    final range = maxY - minY;
+    // Marge visuelle au-dessus/en-dessous des points — sur un intervalle
+    // plat (prix identique chaque année), se rabat sur 10% de la valeur
+    // plutôt que sur une marge nulle qui ferait planter le tracé du graphe.
+    final pad = range > 0 ? range * 0.15 : (maxY > 0 ? maxY * 0.1 : 1.0);
+
+    return LineChart(
+      LineChartData(
+        minY: (minY - pad).clamp(0, double.infinity),
+        maxY: maxY + pad,
+        gridData: FlGridData(
+          show: true,
+          horizontalInterval: (range > 0 ? range / 3 : maxY / 3).clamp(1, double.infinity),
+          getDrawingHorizontalLine: (_) => FlLine(color: AppColors.border, strokeWidth: 1),
+        ),
+        borderData: FlBorderData(show: false),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 20,
+              interval: 1,
+              getTitlesWidget: (value, meta) => Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(value.toInt().toString(), style: AppTextStyles.sans(fontSize: 10, color: AppColors.ink.withValues(alpha: 0.55))),
+              ),
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 46,
+              getTitlesWidget: (value, meta) => Text('${value.round()}€', style: AppTextStyles.sans(fontSize: 9, color: AppColors.ink.withValues(alpha: 0.55))),
+            ),
+          ),
+        ),
+        lineTouchData: LineTouchData(
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (_) => AppColors.surface,
+            getTooltipItems: (spots) =>
+                spots.map((s) => LineTooltipItem('${eur(s.y)}/m²\n${s.x.toInt()}', AppTextStyles.sans(fontSize: 11, color: AppColors.ink))).toList(),
+          ),
+        ),
+        lineBarsData: [
+          LineChartBarData(spots: spots, color: AppColors.accent, barWidth: 2.5, dotData: const FlDotData(show: true)),
+        ],
+      ),
+    );
   }
 
   Widget _statCard(String label, String value) {

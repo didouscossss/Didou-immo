@@ -472,14 +472,20 @@ exports.checkDvfRecentDatasetUpdate = onSchedule(
 );
 
 /**
- * Republie le prix médian réel au m² par commune sur la fenêtre glissante
- * des 12 derniers mois (voir `PrixReferenceService` côté app, qui lira ce
- * fichier séparément du fichier "5 ans" existant — travail restant, pas
- * encore fait à ce stade). Contrairement à l'import "5 ans" (fait depuis
- * l'app par l'admin, fichier ~30 Mo), celui-ci tourne côté serveur : le
- * fichier "Statistiques mensuelles DVF" pèse ~264 Mo, bien trop pour être
- * téléchargé et traité depuis un téléphone (voir la discussion avec
- * l'utilisateur — risque réel de faire planter l'onglet du navigateur).
+ * Republie, à partir du même fichier "Statistiques mensuelles DVF" (~264 Mo,
+ * lu en un seul passage streamé) :
+ * - `reference-data/prix_recents_12mois.json` : prix médian réel au m² par
+ *   commune sur la fenêtre glissante des 12 derniers mois (voir
+ *   `PrixRecentReferenceService` côté app) ;
+ * - `reference-data/prix_historique.json` : courbe d'évolution du prix par
+ *   commune sur les 5 dernières années pleines, un point par année (voir
+ *   `PrixHistoriqueService` côté app).
+ *
+ * Contrairement à l'import "5 ans" (fait depuis l'app par l'admin, fichier
+ * ~30 Mo), celui-ci tourne côté serveur : le fichier mensuel est bien trop
+ * lourd pour être téléchargé et traité depuis un téléphone (voir la
+ * discussion avec l'utilisateur — risque réel de faire planter l'onglet du
+ * navigateur).
  *
  * data: { dryRun?: boolean } — en mode aperçu (dryRun: true), ne lit que
  * l'en-tête et quelques lignes du fichier réel (rapide, ne télécharge pas
@@ -600,6 +606,10 @@ async function runRefreshRecentPrix(request) {
   // représentative qu'un seul mois isolé.
   const cutoffPeriode = periodeMonthsAgo(11); // 11 mois + le mois en cours = fenêtre de 12 mois
   const parCommune = new Map(); // insee -> {sommePonderee, sommeVentes}
+  // Historique par année (voir HISTORIQUE_ANNEES plus bas) : accumulé dans
+  // le MÊME passage sur le fichier que le 12 mois glissant ci-dessus, plutôt
+  // que de retélécharger et reparcourir les 264 Mo une seconde fois.
+  const parCommuneAnnee = new Map(); // insee -> Map(annee -> {sommePonderee, sommeVentes})
   for await (const line of rl) {
     if (!line.trim()) continue;
     const fields = splitRow(line, delimiter);
@@ -610,15 +620,24 @@ async function runRefreshRecentPrix(request) {
     const insee = fields[idxInsee].trim();
     if (!insee) continue;
     const periode = fields[idxPeriode].trim();
-    if (periode < cutoffPeriode) continue;
     const nbVentes = parseInt(fields[idxNbVentes].trim(), 10);
     const prix = parseFloat(fields[idxPrix].trim().replace(",", "."));
     if (!Number.isFinite(nbVentes) || nbVentes <= 0 || !Number.isFinite(prix) || prix <= 0) continue;
 
-    const existing = parCommune.get(insee) || {sommePonderee: 0, sommeVentes: 0};
-    existing.sommePonderee += prix * nbVentes;
-    existing.sommeVentes += nbVentes;
-    parCommune.set(insee, existing);
+    if (periode >= cutoffPeriode) {
+      const existing = parCommune.get(insee) || {sommePonderee: 0, sommeVentes: 0};
+      existing.sommePonderee += prix * nbVentes;
+      existing.sommeVentes += nbVentes;
+      parCommune.set(insee, existing);
+    }
+
+    const annee = periode.slice(0, 4);
+    const anneeMap = parCommuneAnnee.get(insee) || new Map();
+    const existingAnnee = anneeMap.get(annee) || {sommePonderee: 0, sommeVentes: 0};
+    existingAnnee.sommePonderee += prix * nbVentes;
+    existingAnnee.sommeVentes += nbVentes;
+    anneeMap.set(annee, existingAnnee);
+    parCommuneAnnee.set(insee, anneeMap);
   }
 
   if (parCommune.size < 1000) {
@@ -632,11 +651,40 @@ async function runRefreshRecentPrix(request) {
     result[insee] = {p: Math.round(sommePonderee / sommeVentes), n: sommeVentes};
   }
 
-  const bucket = getStorage().bucket();
-  await bucket.file("reference-data/prix_recents_12mois.json").save(
-      JSON.stringify(result),
-      {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
-  );
+  // 5 dernières années PLEINES (année en cours exclue : encore incomplète à
+  // n'importe quel moment de l'année, donnerait un dernier point trompeur —
+  // en baisse ou en hausse juste parce qu'elle contient moins de mois que
+  // les précédentes, pas parce que le marché a vraiment bougé) — pour une
+  // courbe d'évolution du prix par commune (voir prix_historique_service.dart
+  // côté app).
+  const HISTORIQUE_ANNEES = 5;
+  const currentYear = new Date().getUTCFullYear();
+  const minYear = currentYear - HISTORIQUE_ANNEES;
+  const historique = {};
+  for (const [insee, anneeMap] of parCommuneAnnee) {
+    const points = [];
+    for (const [annee, {sommePonderee, sommeVentes}] of anneeMap) {
+      const anneeNum = parseInt(annee, 10);
+      if (anneeNum < minYear || anneeNum >= currentYear) continue;
+      points.push({a: annee, p: Math.round(sommePonderee / sommeVentes), n: sommeVentes});
+    }
+    points.sort((x, y) => x.a.localeCompare(y.a));
+    // Une courbe à un seul point n'a pas de sens — commune ignorée plutôt
+    // que publiée avec un historique vide/trivial.
+    if (points.length >= 2) historique[insee] = points;
+  }
 
-  return {success: true, nbCommunes: parCommune.size};
+  const bucket = getStorage().bucket();
+  await Promise.all([
+    bucket.file("reference-data/prix_recents_12mois.json").save(
+        JSON.stringify(result),
+        {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
+    ),
+    bucket.file("reference-data/prix_historique.json").save(
+        JSON.stringify(historique),
+        {contentType: "application/json", metadata: {cacheControl: "no-cache"}},
+    ),
+  ]);
+
+  return {success: true, nbCommunes: parCommune.size, nbCommunesHistorique: Object.keys(historique).length};
 }

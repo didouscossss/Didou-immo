@@ -272,7 +272,8 @@ class _AdminScreenState extends State<AdminScreen> {
             ? 'En-têtes trouvées : ${(data['headers'] as List).join(', ')}\n\n'
                 'Colonnes reconnues : ${data['colonnesReconnues']}\n\n'
                 "Échantillon :\n${(data['sample'] as List).join('\n')}"
-            : 'Publié : ${data['nbCommunes']} commune(s) sur les 12 derniers mois.';
+            : 'Publié : ${data['nbCommunes']} commune(s) sur les 12 derniers mois, '
+                '${data['nbCommunesHistorique']} avec un historique sur plusieurs années.';
       });
     } on FirebaseFunctionsException catch (e) {
       if (!mounted) return;
@@ -532,12 +533,14 @@ class _AdminScreenState extends State<AdminScreen> {
               child: Text(_prixRawDiag!, style: const TextStyle(fontSize: 12.5)),
             ),
           const SizedBox(height: 28),
-          const Text('Prix récents (12 derniers mois glissants)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          const Text('Prix récents (12 derniers mois glissants) et historique',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(
             "Traité côté serveur (le fichier mensuel de data.gouv.fr pèse ~264 Mo, bien trop pour ce téléphone) — "
-            'commence par "Vérifier le format" pour confirmer que le fichier a bien la structure attendue avant '
-            'de lancer le traitement complet.',
+            "publie à la fois le prix des 12 derniers mois glissants et une courbe d'évolution sur les 5 "
+            'dernières années pleines. Commence par "Vérifier le format" pour confirmer que le fichier a bien '
+            'la structure attendue avant de lancer le traitement complet.',
             style: TextStyle(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 12),
