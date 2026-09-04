@@ -35,5 +35,13 @@ service firebase.storage {
     match /reference-data/prix_recents_12mois.json {
       allow read: if true;
     }
+
+    // Courbe d'évolution du prix par commune sur les 5 dernières années
+    // pleines (voir functions/index.js → refreshRecentPrix, même Cloud
+    // Function que le fichier ci-dessus, publié dans la même exécution) —
+    // même règle : lecture publique, écriture réservée à la Cloud Function.
+    match /reference-data/prix_historique.json {
+      allow read: if true;
+    }
   }
 }

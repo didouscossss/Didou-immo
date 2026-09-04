@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'screens/auth/auth_screen.dart';
 import 'screens/rendement/rendement_home.dart';
 import 'services/loyer_reference_service.dart';
+import 'services/prix_historique_service.dart';
 import 'services/prix_reference_service.dart';
 import 'services/prix_recent_reference_service.dart';
 import 'state/rendement_state.dart';
@@ -35,6 +36,7 @@ Future<void> main() async {
   unawaited(LoyerReferenceService.preload());
   unawaited(PrixReferenceService.preload());
   unawaited(PrixRecentReferenceService.preload());
+  unawaited(PrixHistoriqueService.preload());
   runApp(DidouImmoApp(firebaseReady: firebaseReady));
 }
 
