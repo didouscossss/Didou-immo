@@ -11,7 +11,7 @@ import '../../widgets/commune_picker.dart';
 import '../../widgets/digit_readout.dart';
 import '../../widgets/mode_toggle.dart';
 import '../../widgets/number_field.dart';
-import '../../widgets/pulsing_highlight.dart';
+import '../../widgets/arrival_bounce.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/synced_text_field.dart';
 import '../../widgets/tip.dart';
@@ -685,7 +685,7 @@ class _CalcScreenState extends State<CalcScreen> {
           style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7)),
         ),
         const SizedBox(height: 14),
-        PulsingHighlight(
+        ArrivalBounce(
           child: ElevatedButton.icon(
             onPressed: widget.onSave,
             icon: const Icon(Icons.add),
@@ -837,7 +837,7 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ]),
       ),
-      PulsingHighlight(
+      ArrivalBounce(
         // Attire l'œil tant qu'il y a quelque chose à enregistrer (nouveau
         // bien jamais sauvegardé, ou modifications en attente) — inutile de
         // continuer à pulser une fois que tout est déjà à jour.
@@ -897,7 +897,7 @@ class _CalcScreenState extends State<CalcScreen> {
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
           ),
           const SizedBox(height: 12),
-          PulsingHighlight(
+          ArrivalBounce(
             active: canExport,
             child: OutlinedButton.icon(
               onPressed: canExport ? () => _exportPdf(state) : null,

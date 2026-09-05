@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/pulsing_highlight.dart';
+import '../../widgets/arrival_bounce.dart';
 import '../admin/admin_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
@@ -40,7 +40,7 @@ class AccountScreen extends StatelessWidget {
           Text(statusLabel, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6))),
           const SizedBox(height: 24),
           if (!account.isSubscribed && !account.grantedFree)
-            PulsingHighlight(
+            ArrivalBounce(
               child: ElevatedButton.icon(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen())),
                 icon: const Icon(Icons.workspace_premium_outlined),

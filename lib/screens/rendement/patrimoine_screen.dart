@@ -9,7 +9,7 @@ import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
-import '../../widgets/pulsing_highlight.dart';
+import '../../widgets/arrival_bounce.dart';
 import '../../widgets/section_title.dart';
 
 /// Onglet "Patrimoine" — suivi réel des biens ACQUIS (loyer réellement
@@ -141,7 +141,7 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
       const SizedBox(height: 8),
       Align(
         alignment: Alignment.centerRight,
-        child: PulsingHighlight(
+        child: ArrivalBounce(
           child: TextButton.icon(
             onPressed: () => _exportCsv(context, tousActifs),
             icon: const Icon(Icons.ios_share, size: 14),
@@ -726,7 +726,7 @@ class _SuiviDialogState extends State<_SuiviDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
-        PulsingHighlight(
+        ArrivalBounce(
           child: TextButton(
             onPressed: () => Navigator.of(context).pop(SuiviEntry(
               dateDebut: _dateDebut,
