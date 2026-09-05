@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../services/referral_service.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/pulsing_highlight.dart';
+import '../../widgets/arrival_bounce.dart';
 
 /// Un seul écran, deux usages : partager/saisir un code de parrainage (voir
 /// le palier — accès gratuit à vie, `UserAccountState.qualifiedReferralsCount`),
@@ -176,7 +176,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                PulsingHighlight(
+                ArrivalBounce(
                   active: !_loadingParrainage,
                   child: ElevatedButton(
                     onPressed: _loadingParrainage ? null : _applyParrainage,
@@ -209,7 +209,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              PulsingHighlight(
+              ArrivalBounce(
                 active: !_loadingCadeau,
                 child: ElevatedButton(
                   onPressed: _loadingCadeau ? null : _applyCadeau,

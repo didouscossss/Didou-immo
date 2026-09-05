@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/pulsing_highlight.dart';
+import '../../widgets/arrival_bounce.dart';
 import '../legal/legal_screens.dart';
 
 /// Écran de connexion / inscription — équivalent d'un `AuthGate` classique.
@@ -181,7 +181,7 @@ class _AuthScreenState extends State<AuthScreen> {
                   Text(_error!, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.alert)),
                 ],
                 const SizedBox(height: 18),
-                PulsingHighlight(
+                ArrivalBounce(
                   active: !_loading,
                   child: ElevatedButton(
                     onPressed: _loading ? null : _submit,
