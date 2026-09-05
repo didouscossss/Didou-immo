@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -37,11 +38,38 @@ class RendementHome extends StatefulWidget {
 class _RendementHomeState extends State<RendementHome> {
   AppTab _active = AppTab.calc;
   bool _showMethodo = false;
+  late final PageController _pageController;
+  List<AppTab>? _lastVisibleTabs;
 
   @override
   void initState() {
     super.initState();
+    final tabs = context.read<RendementState>().visibleTabOrder;
+    _pageController = PageController(initialPage: tabs.indexOf(_active).clamp(0, tabs.length - 1));
     WidgetsBinding.instance.addPostFrameCallback((_) => context.read<RendementState>().load());
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  /// Change d'onglet — utilisé par la barre du bas et par la navigation
+  /// interne (ex. après avoir enregistré un bien). Anime le `PageView` vers
+  /// la bonne page plutôt que de simplement changer `_active` : c'est ce
+  /// `PageView` qui fait maintenant réellement défiler l'écran affiché.
+  void _setActive(AppTab tab, {bool animate = true}) {
+    if (!mounted) return;
+    final index = context.read<RendementState>().visibleTabOrder.indexOf(tab);
+    if (index == -1) return;
+    setState(() => _active = tab);
+    if (!_pageController.hasClients) return;
+    if (animate) {
+      _pageController.animateToPage(index, duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
+    } else {
+      _pageController.jumpToPage(index);
+    }
   }
 
   @override
@@ -50,10 +78,19 @@ class _RendementHomeState extends State<RendementHome> {
     // Si l'onglet actif vient d'être masqué depuis "Personnaliser mon
     // affichage", on retombe sur le premier onglet encore visible plutôt
     // que de rendre un écran caché — sans toucher à `_active` lui-même
-    // (setState pendant build), pour qu'il redevienne actif tel quel si
-    // l'utilisateur le réaffiche ensuite.
+    // pendant ce build (setState pendant build), pour qu'il redevienne actif
+    // tel quel si l'utilisateur le réaffiche ensuite.
     final visibleTabs = state.visibleTabOrder;
     final active = visibleTabs.contains(_active) ? _active : visibleTabs.first;
+    // Un simple réordonnancement (sans masquer l'onglet actif) laisse
+    // `active` inchangé mais décale sa POSITION dans la liste — sans ce
+    // repositionnement, le `PageView` resterait sur son ancien index
+    // physique et afficherait le mauvais onglet après un aller-retour sur
+    // "Personnaliser mon affichage".
+    if (!listEquals(_lastVisibleTabs, visibleTabs)) {
+      _lastVisibleTabs = visibleTabs;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _setActive(active, animate: false));
+    }
 
     return Scaffold(
       body: DecoratedBox(
@@ -139,7 +176,20 @@ class _RendementHomeState extends State<RendementHome> {
                       ],
                     ),
                   ),
-                  Expanded(child: _buildActiveScreen(state, active)),
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: visibleTabs.length,
+                      // Bloque le swipe sur l'onglet Carte : FlutterMap capte déjà
+                      // le glissement horizontal pour déplacer la carte, un swipe
+                      // de page par-dessus ferait les deux à la fois. Les autres
+                      // onglets restent swipables normalement ; un tap sur la
+                      // barre du bas continue de fonctionner partout.
+                      physics: active == AppTab.carte ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+                      onPageChanged: (i) => setState(() => _active = visibleTabs[i]),
+                      itemBuilder: (context, i) => _buildActiveScreen(state, visibleTabs[i]),
+                    ),
+                  ),
                   _buildTabBar(state, visibleTabs, active),
                 ],
               ),
@@ -185,7 +235,7 @@ class _RendementHomeState extends State<RendementHome> {
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
       if (!mounted) return;
-      setState(() => _active = AppTab.biens);
+      _setActive(AppTab.biens);
       return;
     }
     final account = context.read<UserAccountState>();
@@ -206,7 +256,7 @@ class _RendementHomeState extends State<RendementHome> {
     }
     if (isNewProperty) await account.recordFreeSave();
     if (!mounted) return;
-    setState(() => _active = AppTab.biens);
+    _setActive(AppTab.biens);
   }
 
   // Chaque écran est reconstruit entièrement (clé sur darkMode + niveau,
@@ -222,7 +272,7 @@ class _RendementHomeState extends State<RendementHome> {
       case AppTab.calc:
         return CalcScreen(key: themeKey, onSave: () => _handleSave(state));
       case AppTab.marche:
-        return MarcheScreen(key: themeKey, onGoToBien: () => setState(() => _active = AppTab.calc));
+        return MarcheScreen(key: themeKey, onGoToBien: () => _setActive(AppTab.calc));
       case AppTab.carte:
         return CarteScreen(key: themeKey);
       case AppTab.fisc:
@@ -230,7 +280,7 @@ class _RendementHomeState extends State<RendementHome> {
       case AppTab.proj:
         return ProjectionScreen(key: themeKey);
       case AppTab.biens:
-        return BiensScreen(key: themeKey, onEdit: () => setState(() => _active = AppTab.calc));
+        return BiensScreen(key: themeKey, onEdit: () => _setActive(AppTab.calc));
       case AppTab.patrimoine:
         return PatrimoineScreen(key: themeKey);
     }
@@ -247,7 +297,7 @@ class _RendementHomeState extends State<RendementHome> {
           final isActive = active == t;
           final color = isActive ? AppColors.accent : AppColors.ink.withValues(alpha: 0.62);
           return InkWell(
-            onTap: () => setState(() => _active = t),
+            onTap: () => _setActive(t),
             borderRadius: BorderRadius.circular(10),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
