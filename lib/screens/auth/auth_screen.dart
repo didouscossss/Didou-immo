@@ -102,14 +102,11 @@ class _AuthScreenState extends State<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                 Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    // Recadré autour du texte (le fichier source d'origine,
-                    // carré, laissait une grande marge vide au-dessus et en
-                    // dessous qui rendait "Didou-immo" minuscule et illisible
-                    // une fois réduit à la taille d'un logo d'écran).
-                    child: Image.asset('assets/images/didou_logo.png', width: 220, fit: BoxFit.contain),
-                  ),
+                  // Fond transparent (recadré autour du contenu, la source
+                  // carrée laissait une grande marge vide au-dessus et en
+                  // dessous) — plus besoin d'arrondir les coins comme avec
+                  // l'ancien logo sur fond plein.
+                  child: Image.asset('assets/images/didou_logo.png', width: 220, fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 16),
                 Center(
