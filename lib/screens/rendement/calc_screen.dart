@@ -56,10 +56,10 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   /// Une fois un bien enregistré, sa localisation/son prix/sa surface/son
-  /// type sont verrouillés (voir `_sectionBien`, `_sectionLocalisation`) —
-  /// seul "+ Nouveau bien" permet d'en évaluer un autre, pour qu'analyser
-  /// un bien différent consomme bien un nouvel essai gratuit plutôt que de
-  /// détourner discrètement le même bien enregistré.
+  /// type sont verrouillés (voir `_sectionBien`) — seul "+ Nouveau bien"
+  /// permet d'en évaluer un autre, pour qu'analyser un bien différent
+  /// consomme bien un nouvel essai gratuit plutôt que de détourner
+  /// discrètement le même bien enregistré.
   Widget _newPropertyBanner(RendementState state) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -117,8 +117,6 @@ class _CalcScreenState extends State<CalcScreen> {
   /// jamais été enregistré.
   List<Widget> _buildSection(String id, RendementState state, bool isNovice) {
     switch (id) {
-      case 'localisation':
-        return [_sectionLocalisation(state)];
       case 'bien':
         return [_sectionBien(state)];
       case 'revenus':
@@ -142,20 +140,45 @@ class _CalcScreenState extends State<CalcScreen> {
     }
   }
 
-  // Localisation — en premier, avant même les caractéristiques du bien :
-  // c'est elle qui détermine les repères de prix/marché.
-  Widget _sectionLocalisation(RendementState state) {
+  Widget _sectionBien(RendementState state) {
+    final form = state.form;
+    final isNovice = state.niveau == NiveauMode.novice;
+    void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Localisation'),
+      const SectionTitle('Le bien'),
+      SyncedTextField(
+        value: form.nom,
+        onChanged: (v) => set((f) => f.copyWith(nom: v)),
+        decoration: InputDecoration(
+          hintText: 'Nom du bien — ex. T2 Rue des Lilas',
+          hintStyle: AppTextStyles.sans(fontSize: 15, color: AppColors.ink.withValues(alpha: 0.45)),
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
+        ),
+        style: AppTextStyles.sans(fontSize: 15, color: AppColors.ink),
+      ),
+      const SizedBox(height: 16),
+      // Localisation — juste après le nom, avant les caractéristiques
+      // chiffrées : c'est elle qui détermine les repères de prix/marché
+      // affichés dans l'onglet "Marché" (regroupée ici avec "Le bien"
+      // plutôt qu'en bloc séparé, à la demande de l'utilisateur).
+      Text('Localisation', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+      const SizedBox(height: 4),
       Text("Recherche n'importe quelle commune de France",
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       AbsorbPointer(
         absorbing: state.identityLocked,
         child: Opacity(opacity: state.identityLocked ? 0.55 : 1, child: const CommunePicker()),
       ),
       const SizedBox(height: 20),
       // Checklist de visite
+      Text('Quoi vérifier pendant la visite du bien',
+          style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+      const SizedBox(height: 6),
       InkWell(
         onTap: () => setState(() => _showVisite = !_showVisite),
         child: Container(
@@ -228,31 +251,7 @@ class _CalcScreenState extends State<CalcScreen> {
             }),
           ),
         ),
-      const SizedBox(height: 24),
-    ]);
-  }
-
-  Widget _sectionBien(RendementState state) {
-    final form = state.form;
-    final isNovice = state.niveau == NiveauMode.novice;
-    void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Le bien'),
-      SyncedTextField(
-        value: form.nom,
-        onChanged: (v) => set((f) => f.copyWith(nom: v)),
-        decoration: InputDecoration(
-          hintText: 'Nom du bien — ex. T2 Rue des Lilas',
-          hintStyle: AppTextStyles.sans(fontSize: 15, color: AppColors.ink.withValues(alpha: 0.45)),
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppColors.border)),
-        ),
-        style: AppTextStyles.sans(fontSize: 15, color: AppColors.ink),
-      ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 20),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
       AbsorbPointer(
         absorbing: state.identityLocked,

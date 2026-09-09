@@ -24,7 +24,6 @@ class TabSections {
 const Map<AppTab, TabSections> kTabSections = {
   AppTab.calc: TabSections(
     defaultOrder: [
-      'localisation',
       'bien',
       'revenus',
       'financement',
@@ -36,7 +35,6 @@ const Map<AppTab, TabSections> kTabSections = {
       'export',
     ],
     labels: {
-      'localisation': 'Localisation',
       'bien': 'Le bien',
       'revenus': 'Revenus & charges',
       'financement': 'Financement',
