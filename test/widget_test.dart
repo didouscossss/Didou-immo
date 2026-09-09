@@ -171,6 +171,15 @@ void main() {
         (w.image as AssetImage).assetName == 'assets/images/didou_face.png'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
+    // Parcourt les 5 slides du tuto général (OnboardingSheet._tutoSlides)
+    // avant d'atteindre les deux questions d'origine (mode, budget).
+    for (var i = 0; i < 5; i++) {
+      await tester.tap(find.text('Continuer'));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Pour commencer'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
     final onboarding = find.byType(OnboardingSheet);
     await tester.tap(find.descendant(of: onboarding, matching: find.text('Courte durée')));
     await tester.pumpAndSettle();
@@ -242,7 +251,7 @@ void main() {
     expect(find.text('Personnaliser "Bien"'), findsOneWidget);
 
     // Masque "Export PDF" : le bloc disparaît de l'onglet une fois revenu dessus.
-    // La liste des 10 blocs dépasse le viewport — il faut la faire défiler
+    // La liste des 9 blocs dépasse le viewport — il faut la faire défiler
     // pour que le dernier ("Export PDF") soit construit et visible.
     await tester.dragUntilVisible(find.text('Export PDF'), find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pumpAndSettle();
@@ -262,7 +271,7 @@ void main() {
     expect(find.text('Exporter en PDF'), findsNothing);
     expect(tester.takeException(), isNull);
 
-    // Réinitialiser ramène les 10 blocs dans leur ordre/visibilité d'origine.
+    // Réinitialiser ramène les 9 blocs dans leur ordre/visibilité d'origine.
     await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
     await tester.pumpAndSettle();
     await tester.tap(find.ancestor(of: find.text('Bien'), matching: find.byType(ListTile)));

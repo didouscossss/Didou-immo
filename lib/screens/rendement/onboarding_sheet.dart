@@ -4,7 +4,21 @@ import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
 
-/// Bandeau d'accueil en 2 étapes — équivalent de `Onboarding` du prototype.
+/// Un slide du tuto général (voir [_tutoSlides]) — explique une grande ligne
+/// de l'appli plutôt qu'une question à répondre, contrairement aux étapes
+/// mode/budget qui suivent.
+class _TutoSlide {
+  final String title;
+  final String caption;
+  final String body;
+  final IconData icon;
+  const _TutoSlide({required this.title, required this.caption, required this.body, required this.icon});
+}
+
+/// Bandeau d'accueil pour la toute première connexion — équivalent de
+/// `Onboarding` du prototype, étendu d'un tuto général (voir [_tutoSlides])
+/// avant les deux questions d'origine (type de location, budget) qui
+/// préparent le premier calcul.
 class OnboardingSheet extends StatefulWidget {
   final void Function(RentalMode? mode, double? budget) onFinish;
   const OnboardingSheet({super.key, required this.onFinish});
@@ -14,9 +28,57 @@ class OnboardingSheet extends StatefulWidget {
 }
 
 class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProviderStateMixin {
+  // Tuto général (grandes lignes de l'appli) suivi des deux questions
+  // d'origine — un seul et même enchaînement d'étapes, plutôt que deux
+  // popups qui se suivraient, pour que "Retour"/"Passer" restent cohérents
+  // sur l'ensemble.
+  static const List<_TutoSlide> _tutoSlides = [
+    _TutoSlide(
+      title: 'Bienvenue 👋',
+      caption: "Je suis Didou, je t'accompagne",
+      icon: Icons.waving_hand_outlined,
+      body: "Cette appli t'aide à savoir si un bien est un bon investissement avant de te lancer : "
+          "rentabilité, financement et fiscalité, au même endroit. Un tour rapide avant de commencer.",
+    ),
+    _TutoSlide(
+      title: 'Onglet "Bien" — le point de départ',
+      caption: 'Comment remplir',
+      icon: Icons.home_work_outlined,
+      body: 'Renseigne la localisation, le prix, la surface, puis les revenus attendus — la rentabilité, '
+          'le cash-flow et le reste du calcul se mettent à jour automatiquement au fur et à mesure.',
+    ),
+    _TutoSlide(
+      title: 'Les autres onglets',
+      caption: 'À quoi ils servent',
+      icon: Icons.dashboard_outlined,
+      body: '"Marché" affiche les repères de prix du secteur, "Fiscalité" les régimes et démarches, '
+          '"Projection" l\'évolution dans le temps. "Comparer" et "Patrimoine" servent à suivre les biens '
+          'déjà enregistrés.',
+    ),
+    _TutoSlide(
+      title: 'Personnalise ton affichage',
+      caption: 'Onglets et blocs',
+      icon: Icons.dashboard_customize_outlined,
+      body: 'L\'icône en haut de l\'écran ouvre "Personnaliser mon affichage" : réordonne ou masque les '
+          'onglets, et à l\'intérieur de chacun les blocs qui te servent le moins — tout reste modifiable '
+          'ensuite.',
+    ),
+    _TutoSlide(
+      title: 'Suis tes biens',
+      caption: 'Une fois enregistrés',
+      icon: Icons.layers_outlined,
+      body: '"Enregistrer ce bien" l\'ajoute à "Comparer" et "Patrimoine" : modifie-le à tout moment, '
+          'compare plusieurs biens entre eux, et exporte tes données en PDF ou CSV.',
+    ),
+  ];
+
   int _step = 0;
   RentalMode _mode = RentalMode.longue;
   double _budget = 180000;
+
+  int get _totalSteps => _tutoSlides.length + 2;
+  bool get _onTutoSlide => _step < _tutoSlides.length;
+  bool get _onModeStep => _step == _tutoSlides.length;
 
   late final AnimationController _didouController = AnimationController(
     vsync: this,
@@ -41,8 +103,27 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
 
   void _finish() => widget.onFinish(_mode, _budget);
 
+  void _goTo(int step) {
+    setState(() => _step = step);
+    // Rejoue le petit rebond d'arrivée de Didou à chaque étape plutôt
+    // qu'une seule fois au tout premier affichage — un repère visuel que
+    // le contenu vient de changer.
+    _didouController.forward(from: 0);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final title = _onTutoSlide
+        ? _tutoSlides[_step].title
+        : _onModeStep
+            ? 'Pour commencer'
+            : 'Ton budget';
+    final caption = _onTutoSlide
+        ? _tutoSlides[_step].caption
+        : _onModeStep
+            ? 'Encore deux questions rapides'
+            : 'Une dernière question et on y est';
+
     return Positioned.fill(
       child: Container(
         color: Colors.black.withValues(alpha: 0.55),
@@ -82,26 +163,29 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(_step == 0 ? 'Bienvenue 👋' : 'Ton budget',
-                                style: AppTextStyles.serif(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                            Text(
-                              _step == 0 ? "Je suis Didou, je t'accompagne" : 'Encore une question et on y est',
-                              style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.5)),
-                            ),
+                            Text(title, style: AppTextStyles.serif(fontSize: 19, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                            Text(caption, style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.5))),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  if (_step == 0) ..._buildStepMode() else ..._buildStepBudget(),
+                  const SizedBox(height: 12),
+                  _buildStepDots(),
+                  const SizedBox(height: 8),
+                  if (_onTutoSlide)
+                    ..._buildTutoSlide(_tutoSlides[_step])
+                  else if (_onModeStep)
+                    ..._buildStepMode()
+                  else
+                    ..._buildStepBudget(),
                   const SizedBox(height: 24),
                   Row(children: [
                     if (_step > 0)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: OutlinedButton(
-                          onPressed: () => setState(() => _step -= 1),
+                          onPressed: () => _goTo(_step - 1),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.ink,
                             side: BorderSide(color: AppColors.border),
@@ -112,9 +196,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
                       ),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => _step < 1 ? setState(() => _step += 1) : _finish(),
-                        icon: Icon(_step < 1 ? Icons.arrow_forward : Icons.arrow_forward, size: 15),
-                        label: Text(_step < 1 ? 'Continuer' : "C'est parti"),
+                        onPressed: () => _step < _totalSteps - 1 ? _goTo(_step + 1) : _finish(),
+                        icon: const Icon(Icons.arrow_forward, size: 15),
+                        label: Text(_step < _totalSteps - 1 ? 'Continuer' : "C'est parti"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           foregroundColor: Colors.white,
@@ -140,11 +224,57 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
     );
   }
 
+  // Petits points de progression — repère discret sur les 7 étapes (5 du
+  // tuto + les 2 questions), pas la peine de compter le nombre exact
+  // affiché en toutes lettres.
+  Widget _buildStepDots() {
+    return Row(
+      children: List.generate(_totalSteps, (i) {
+        final active = i == _step;
+        return Padding(
+          padding: const EdgeInsets.only(right: 5),
+          child: Container(
+            width: active ? 16 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: active ? AppColors.accent : AppColors.border,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  List<Widget> _buildTutoSlide(_TutoSlide slide) {
+    return [
+      Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(top: 4, bottom: 4),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+              child: Icon(slide.icon, size: 18, color: AppColors.accent),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(slide.body, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.8))),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
   List<Widget> _buildStepMode() {
     return [
       Padding(
         padding: const EdgeInsets.only(bottom: 20, top: 8),
-        child: Text('Trois questions rapides pour préparer ton premier calcul. Tout reste modifiable ensuite.',
+        child: Text('Deux questions rapides pour préparer ton premier calcul. Tout reste modifiable ensuite.',
             style: AppTextStyles.sans(fontSize: 13.5, color: AppColors.ink.withValues(alpha: 0.7))),
       ),
       Text('Quel type de location vises-tu ?', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
