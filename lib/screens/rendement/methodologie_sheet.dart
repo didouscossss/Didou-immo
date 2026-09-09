@@ -4,7 +4,8 @@ import '../../theme/app_theme.dart';
 /// Panneau "Méthodologie" — équivalent de `MethodologieModal` du prototype.
 class MethodologieSheet extends StatelessWidget {
   final VoidCallback onClose;
-  const MethodologieSheet({super.key, required this.onClose});
+  final VoidCallback onReplayTuto;
+  const MethodologieSheet({super.key, required this.onClose, required this.onReplayTuto});
 
   static const _items = [
     (
@@ -63,6 +64,30 @@ class MethodologieSheet extends StatelessWidget {
                         ),
                       ]),
                       const SizedBox(height: 16),
+                      InkWell(
+                        onTap: onReplayTuto,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          margin: const EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(children: [
+                            ClipOval(
+                              child: Image.asset('assets/images/didou_face.png', width: 32, height: 32, fit: BoxFit.cover),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text('Revoir le tuto de prise en main',
+                                  style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+                            ),
+                            Icon(Icons.chevron_right, size: 18, color: AppColors.ink.withValues(alpha: 0.4)),
+                          ]),
+                        ),
+                      ),
                       ..._items.map((it) => Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Column(

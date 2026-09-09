@@ -38,6 +38,7 @@ class RendementHome extends StatefulWidget {
 class _RendementHomeState extends State<RendementHome> {
   AppTab _active = AppTab.calc;
   bool _showMethodo = false;
+  bool _showTutoReplay = false;
   late final PageController _pageController;
   List<AppTab>? _lastVisibleTabs;
 
@@ -198,7 +199,23 @@ class _RendementHomeState extends State<RendementHome> {
                 OnboardingSheet(
                   onFinish: (mode, budget) => state.finishOnboarding(mode: mode, budget: budget),
                 ),
-              if (_showMethodo) MethodologieSheet(onClose: () => setState(() => _showMethodo = false)),
+              if (_showMethodo)
+                MethodologieSheet(
+                  onClose: () => setState(() => _showMethodo = false),
+                  onReplayTuto: () => setState(() {
+                    _showMethodo = false;
+                    _showTutoReplay = true;
+                  }),
+                ),
+              // Relecture du tuto général depuis l'aide (voir
+              // `MethodologieSheet.onReplayTuto`) — `tutoOnly: true` n'affiche
+              // que les 5 slides, sans les questions mode/budget, et ne touche
+              // ni le formulaire en cours ni le statut "onboarding-done".
+              if (_showTutoReplay)
+                OnboardingSheet(
+                  tutoOnly: true,
+                  onFinish: (_, __) => setState(() => _showTutoReplay = false),
+                ),
             ],
           ),
         ),
