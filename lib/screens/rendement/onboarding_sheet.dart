@@ -19,9 +19,16 @@ class _TutoSlide {
 /// `Onboarding` du prototype, étendu d'un tuto général (voir [_tutoSlides])
 /// avant les deux questions d'origine (type de location, budget) qui
 /// préparent le premier calcul.
+///
+/// [tutoOnly] réaffiche uniquement les slides du tuto général, sans les
+/// deux questions — utilisé pour "Revoir le tuto" depuis l'aide, une fois
+/// la première connexion déjà passée : ni le formulaire en cours ni le
+/// statut "onboarding-done" ne doivent être touchés à cette occasion,
+/// [onFinish] est alors appelé avec `(null, null)`.
 class OnboardingSheet extends StatefulWidget {
   final void Function(RentalMode? mode, double? budget) onFinish;
-  const OnboardingSheet({super.key, required this.onFinish});
+  final bool tutoOnly;
+  const OnboardingSheet({super.key, required this.onFinish, this.tutoOnly = false});
 
   @override
   State<OnboardingSheet> createState() => _OnboardingSheetState();
@@ -76,9 +83,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
   RentalMode _mode = RentalMode.longue;
   double _budget = 180000;
 
-  int get _totalSteps => _tutoSlides.length + 2;
+  int get _totalSteps => widget.tutoOnly ? _tutoSlides.length : _tutoSlides.length + 2;
   bool get _onTutoSlide => _step < _tutoSlides.length;
-  bool get _onModeStep => _step == _tutoSlides.length;
+  bool get _onModeStep => !widget.tutoOnly && _step == _tutoSlides.length;
 
   late final AnimationController _didouController = AnimationController(
     vsync: this,
@@ -101,7 +108,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
     super.dispose();
   }
 
-  void _finish() => widget.onFinish(_mode, _budget);
+  void _finish() => widget.onFinish(widget.tutoOnly ? null : _mode, widget.tutoOnly ? null : _budget);
 
   void _goTo(int step) {
     setState(() => _step = step);
@@ -198,7 +205,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
                       child: ElevatedButton.icon(
                         onPressed: () => _step < _totalSteps - 1 ? _goTo(_step + 1) : _finish(),
                         icon: const Icon(Icons.arrow_forward, size: 15),
-                        label: Text(_step < _totalSteps - 1 ? 'Continuer' : "C'est parti"),
+                        label: Text(_step < _totalSteps - 1 ? 'Continuer' : (widget.tutoOnly ? 'Fermer' : "C'est parti")),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.accent,
                           foregroundColor: Colors.white,
@@ -208,13 +215,18 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
                       ),
                     ),
                   ]),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => widget.onFinish(null, null),
-                      child: Text('Passer', style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.4))),
+                  // "Passer" n'a de sens que pour sauter aux questions
+                  // mode/budget — en relecture du tuto seul ([tutoOnly]),
+                  // il n'y a rien de plus à sauter, "Fermer" suffit.
+                  if (!widget.tutoOnly) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => widget.onFinish(null, null),
+                        child: Text('Passer', style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.4))),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -224,9 +236,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
     );
   }
 
-  // Petits points de progression — repère discret sur les 7 étapes (5 du
-  // tuto + les 2 questions), pas la peine de compter le nombre exact
-  // affiché en toutes lettres.
+  // Petits points de progression — repère discret sur les étapes (5 du
+  // tuto, plus les 2 questions hors du mode [tutoOnly]), pas la peine de
+  // compter le nombre exact affiché en toutes lettres.
   Widget _buildStepDots() {
     return Row(
       children: List.generate(_totalSteps, (i) {
