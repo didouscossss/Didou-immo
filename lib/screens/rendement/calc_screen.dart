@@ -147,11 +147,18 @@ class _CalcScreenState extends State<CalcScreen> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       const SectionTitle('Le bien'),
+      // Chaque bloc démarre par un petit intitulé en gras/couleur accent
+      // (voir _blockLabel) et un espacement régulier les sépare tous —
+      // uniquement de la typographie et du rythme, sans carte ni bordure
+      // ni icône, pour rester net et épuré tout en rendant chaque bloc
+      // immédiatement reconnaissable d'un coup d'œil.
+      _blockLabel('Nom du bien'),
+      const SizedBox(height: 8),
       SyncedTextField(
         value: form.nom,
         onChanged: (v) => set((f) => f.copyWith(nom: v)),
         decoration: InputDecoration(
-          hintText: 'Nom du bien — ex. T2 Rue des Lilas',
+          hintText: 'ex. T2 Rue des Lilas',
           hintStyle: AppTextStyles.sans(fontSize: 15, color: AppColors.ink.withValues(alpha: 0.45)),
           filled: true,
           fillColor: AppColors.surface,
@@ -160,12 +167,12 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
         style: AppTextStyles.sans(fontSize: 15, color: AppColors.ink),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 26),
       // Localisation — juste après le nom, avant les caractéristiques
       // chiffrées : c'est elle qui détermine les repères de prix/marché
       // affichés dans l'onglet "Marché" (regroupée ici avec "Le bien"
       // plutôt qu'en bloc séparé, à la demande de l'utilisateur).
-      Text('Localisation', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+      _blockLabel('Localisation'),
       const SizedBox(height: 4),
       Text("Recherche n'importe quelle commune de France",
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -174,11 +181,10 @@ class _CalcScreenState extends State<CalcScreen> {
         absorbing: state.identityLocked,
         child: Opacity(opacity: state.identityLocked ? 0.55 : 1, child: const CommunePicker()),
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 26),
       // Checklist de visite
-      Text('Quoi vérifier pendant la visite du bien',
-          style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
-      const SizedBox(height: 6),
+      _blockLabel('Quoi vérifier pendant la visite du bien'),
+      const SizedBox(height: 8),
       InkWell(
         onTap: () => setState(() => _showVisite = !_showVisite),
         child: Container(
@@ -251,8 +257,9 @@ class _CalcScreenState extends State<CalcScreen> {
             }),
           ),
         ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 26),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
+      const SizedBox(height: 26),
       AbsorbPointer(
         absorbing: state.identityLocked,
         child: Opacity(
@@ -281,9 +288,9 @@ class _CalcScreenState extends State<CalcScreen> {
           ]),
         ),
       ),
-      const SizedBox(height: 12),
-      Text('Typologie', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
-      const SizedBox(height: 6),
+      const SizedBox(height: 26),
+      _blockLabel('Typologie'),
+      const SizedBox(height: 8),
       Opacity(
         opacity: state.identityLocked ? 0.55 : 1,
         child: Row(
@@ -312,9 +319,9 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
       ),
       if (form.mode == RentalMode.longue) ...[
-        const SizedBox(height: 12),
-        Text('Location', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
-        const SizedBox(height: 6),
+        const SizedBox(height: 26),
+        _blockLabel('Location'),
+        const SizedBox(height: 8),
         Row(children: [
           Expanded(
             child: GestureDetector(
@@ -357,9 +364,9 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ),
       ],
-      const SizedBox(height: 12),
+      const SizedBox(height: 26),
       NumberField(label: "Capacité d'accueil", value: form.capacite, suffix: 'pers.', hint: 'utile surtout en courte durée', onChanged: (v) => set((f) => f.copyWith(capacite: v))),
-      const SizedBox(height: 12),
+      const SizedBox(height: 26),
       if (isNovice) ...[
         // En novice, ces deux champs restent inclus dans le calcul avec
         // une estimation raisonnable par défaut — repliés pour ne pas
@@ -386,9 +393,9 @@ class _CalcScreenState extends State<CalcScreen> {
         ],
       ] else
         _fraisAnnexesFields(form, set),
-      const SizedBox(height: 12),
-      Text('Diagnostic de performance énergétique (DPE)', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
-      const SizedBox(height: 6),
+      const SizedBox(height: 26),
+      _blockLabel('Diagnostic de performance énergétique (DPE)'),
+      const SizedBox(height: 8),
       Row(
         children: dpeInfo.keys.map((letter) {
           final info = dpeInfo[letter]!;
@@ -432,6 +439,14 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
       const SizedBox(height: 24),
     ]);
+  }
+
+  /// Intitulé de bloc pour l'onglet "Bien" — gras + couleur accent plutôt
+  /// qu'une carte, une icône ou un liseré : uniquement de la typographie,
+  /// pour distinguer chaque bloc d'un coup d'œil sans ajouter d'élément
+  /// graphique (à la demande explicite de l'utilisateur).
+  Widget _blockLabel(String text) {
+    return Text(text, style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent, letterSpacing: 0.2));
   }
 
   Widget _sectionRevenus(RendementState state) {

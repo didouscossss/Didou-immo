@@ -171,9 +171,9 @@ void main() {
         (w.image as AssetImage).assetName == 'assets/images/didou_face.png'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    // Parcourt les 5 slides du tuto général (OnboardingSheet._tutoSlides)
+    // Parcourt les 8 slides du tuto général (OnboardingSheet._tutoSlides)
     // avant d'atteindre les deux questions d'origine (mode, budget).
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 8; i++) {
       await tester.tap(find.text('Continuer'));
       await tester.pumpAndSettle();
     }

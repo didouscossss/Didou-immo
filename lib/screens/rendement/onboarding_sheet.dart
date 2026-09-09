@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../models/app_tab.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/pointing_arrow.dart';
+import 'app_tab_meta.dart';
 
 /// Un slide du tuto général (voir [_tutoSlides]) — explique une grande ligne
 /// de l'appli plutôt qu'une question à répondre, contrairement aux étapes
@@ -38,29 +41,57 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
   // Tuto général (grandes lignes de l'appli) suivi des deux questions
   // d'origine — un seul et même enchaînement d'étapes, plutôt que deux
   // popups qui se suivraient, pour que "Retour"/"Passer" restent cohérents
-  // sur l'ensemble.
-  static const List<_TutoSlide> _tutoSlides = [
+  // sur l'ensemble. Un slide par onglet (plutôt qu'un seul slide qui les
+  // énumère à la suite) pour laisser la place à une vraie explication de
+  // chacun — icônes reprises telles quelles de `kTabMeta` : ce sont
+  // exactement celles que l'utilisateur retrouve ensuite dans la barre du
+  // bas, pas des icônes inventées pour le tuto.
+  final List<_TutoSlide> _tutoSlides = [
     _TutoSlide(
       title: 'Bienvenue 👋',
       caption: "Je suis Didou, je t'accompagne",
       icon: Icons.waving_hand_outlined,
       body: "Cette appli t'aide à savoir si un bien est un bon investissement avant de te lancer : "
-          "rentabilité, financement et fiscalité, au même endroit. Un tour rapide avant de commencer.",
+          "rentabilité, financement et fiscalité, au même endroit. Un tour rapide de chaque onglet avant de "
+          "commencer.",
     ),
     _TutoSlide(
       title: 'Onglet "Bien" — le point de départ',
       caption: 'Comment remplir',
-      icon: Icons.home_work_outlined,
-      body: 'Renseigne la localisation, le prix, la surface, puis les revenus attendus — la rentabilité, '
-          'le cash-flow et le reste du calcul se mettent à jour automatiquement au fur et à mesure.',
+      icon: kTabMeta[AppTab.calc]!.icon,
+      body: 'Renseigne le nom, la localisation, le prix, la surface, puis les revenus attendus — la '
+          'rentabilité, le cash-flow et le reste du calcul se mettent à jour automatiquement au fur et à '
+          'mesure. C\'est le seul onglet indispensable pour obtenir un premier résultat.',
     ),
     _TutoSlide(
-      title: 'Les autres onglets',
-      caption: 'À quoi ils servent',
-      icon: Icons.dashboard_outlined,
-      body: '"Marché" affiche les repères de prix du secteur, "Fiscalité" les régimes et démarches, '
-          '"Projection" l\'évolution dans le temps. "Comparer" et "Patrimoine" servent à suivre les biens '
-          'déjà enregistrés.',
+      title: 'Onglet "Marché"',
+      caption: 'Repères de prix du secteur',
+      icon: kTabMeta[AppTab.marche]!.icon,
+      body: 'Une fois la commune renseignée dans "Bien", cet onglet affiche le prix et le loyer au m² du '
+          'secteur, l\'écart entre ton bien et ce repère, et un score d\'investissement qui résume la '
+          'comparaison.',
+    ),
+    _TutoSlide(
+      title: 'Onglet "Carte"',
+      caption: 'Les prix, visuellement',
+      icon: kTabMeta[AppTab.carte]!.icon,
+      body: 'Les mêmes repères de prix affichés directement sur une carte, commune par commune — pratique '
+          'pour comparer plusieurs secteurs d\'un coup d\'œil avant de choisir où investir.',
+    ),
+    _TutoSlide(
+      title: 'Onglet "Fiscalité"',
+      caption: 'Régimes, démarches, échéances',
+      icon: kTabMeta[AppTab.fisc]!.icon,
+      body: 'Compare les régimes fiscaux possibles pour ton bien (micro-foncier, LMNP...), retrouve les '
+          'documents et démarches à prévoir, et suis les échéances récurrentes (déclarations...) pour ne '
+          'rien rater.',
+    ),
+    _TutoSlide(
+      title: 'Onglet "Projection"',
+      caption: 'Ton patrimoine dans le temps',
+      icon: kTabMeta[AppTab.proj]!.icon,
+      body: 'Projette l\'évolution de ton investissement : tableau d\'amortissement du prêt, simulation de '
+          'revente à différentes échéances, et TRI (taux de rentabilité interne) en mode avancé.',
     ),
     _TutoSlide(
       title: 'Personnalise ton affichage',
@@ -73,9 +104,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
     _TutoSlide(
       title: 'Suis tes biens',
       caption: 'Une fois enregistrés',
-      icon: Icons.layers_outlined,
-      body: '"Enregistrer ce bien" l\'ajoute à "Comparer" et "Patrimoine" : modifie-le à tout moment, '
-          'compare plusieurs biens entre eux, et exporte tes données en PDF ou CSV.',
+      icon: kTabMeta[AppTab.biens]!.icon,
+      body: '"Enregistrer ce bien" l\'ajoute aux onglets "Comparer" et "Patrimoine" : modifie-le à tout '
+          'moment, compare plusieurs biens entre eux, et exporte tes données en PDF ou CSV.',
     ),
   ];
 
@@ -236,9 +267,9 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
     );
   }
 
-  // Petits points de progression — repère discret sur les étapes (5 du
-  // tuto, plus les 2 questions hors du mode [tutoOnly]), pas la peine de
-  // compter le nombre exact affiché en toutes lettres.
+  // Petits points de progression — repère discret sur les étapes
+  // (`_tutoSlides.length`, plus les 2 questions hors du mode [tutoOnly]),
+  // pas la peine de compter le nombre exact affiché en toutes lettres.
   Widget _buildStepDots() {
     return Row(
       children: List.generate(_totalSteps, (i) {
@@ -267,6 +298,16 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // La flèche vive pointe vers l'icône qui représente ce dont
+            // parle le slide (celle qu'on retrouve ensuite dans la vraie
+            // barre du bas) — un repère qui "montre" plutôt qu'une simple
+            // liste, sans dépendre de la position réelle de cette icône à
+            // l'écran (masquée par la feuille du tuto elle-même).
+            // Clé sur `_step` : sans elle, Flutter réutilise le même État
+            // (et donc la même animation déjà épuisée) d'un slide à
+            // l'autre au lieu de rejouer le rebond à chaque fois.
+            PointingArrow(key: ValueKey(_step)),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
