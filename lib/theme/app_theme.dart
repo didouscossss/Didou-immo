@@ -22,6 +22,7 @@ class AppColors {
   /// voie partout, pas seulement en arrière-plan.
   static bool _novice = false;
   static void setNovice(bool value) => _novice = value;
+  static bool get isNovice => _novice;
 
   static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
 
@@ -75,6 +76,18 @@ class AppColors {
     return _dark
         ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
         : const [Color(0xFFA78BFA), Color(0xFF5B21B6)];
+  }
+
+  /// Bande dégradée derrière le titre de chaque section (voir
+  /// `SectionTitle`) — terra cotta, un ton chaleureux volontairement
+  /// distinct de [accent] (le vert du mode novice), pour se démarquer
+  /// comme un repère visuel plutôt que se fondre dans le reste de
+  /// l'identité de couleur. Réservée au mode novice pour l'instant, à la
+  /// demande de l'utilisateur — pas encore de version mode avancé.
+  static List<Color> get sectionBandGradient {
+    return _dark
+        ? const [Color(0xFF8B4226), Color(0xFFC97B4E)]
+        : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
