@@ -7,27 +7,28 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = Text(text, style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.ink));
-    // Bande dégradée terra cotta derrière chaque titre de section, en mode
-    // novice uniquement pour l'instant (voir AppColors.sectionBandGradient
-    // — le mode avancé reste inchangé, à traiter séparément).
-    if (!AppColors.isNovice) {
-      return Padding(padding: const EdgeInsets.only(bottom: 12), child: title);
-    }
+    // Pastille (largeur ajustée au texte, pas pleine largeur) plutôt qu'une
+    // bande qui s'étire sur toute la largeur de la carte : c'est ce
+    // contraste de largeur avec le contenu en dessous (champs, boutons...
+    // eux bien plus larges) qui fait ressortir le titre — une bande pleine
+    // largeur donnait l'impression que tout avait la même largeur,
+    // "linéaire" du titre jusqu'au bas de la section.
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: AppColors.sectionBandGradient,
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: AppColors.sectionBandGradient,
+            ),
+            borderRadius: BorderRadius.circular(999),
           ),
-          borderRadius: BorderRadius.circular(10),
+          child: Text(text, style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.ink)),
         ),
-        child: title,
       ),
     );
   }
