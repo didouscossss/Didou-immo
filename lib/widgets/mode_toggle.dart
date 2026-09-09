@@ -15,6 +15,7 @@ class ModeToggle extends StatelessWidget {
       (mode: RentalMode.courte, label: 'Courte durée', icon: Icons.bed_outlined),
     ];
     return Container(
+      margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(10)),
       child: Row(
