@@ -79,15 +79,19 @@ class AppColors {
   }
 
   /// Bande dégradée derrière le titre de chaque section (voir
-  /// `SectionTitle`) — terra cotta, un ton chaleureux volontairement
-  /// distinct de [accent] (le vert du mode novice), pour se démarquer
-  /// comme un repère visuel plutôt que se fondre dans le reste de
-  /// l'identité de couleur. Réservée au mode novice pour l'instant, à la
-  /// demande de l'utilisateur — pas encore de version mode avancé.
+  /// `SectionTitle`) — terre cuite en mode novice, moutarde en mode
+  /// avancé, volontairement distinctes de [accent] pour se démarquer comme
+  /// un repère visuel à part plutôt que se fondre dans le reste de
+  /// l'identité de couleur.
   static List<Color> get sectionBandGradient {
+    if (_novice) {
+      return _dark
+          ? const [Color(0xFF8B4226), Color(0xFFC97B4E)]
+          : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
+    }
     return _dark
-        ? const [Color(0xFF8B4226), Color(0xFFC97B4E)]
-        : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
+        ? const [Color(0xFF7A5C12), Color(0xFFC9A227)]
+        : const [Color(0xFFE0B94D), Color(0xFFF6E3A1)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
