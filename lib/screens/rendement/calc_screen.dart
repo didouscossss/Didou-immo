@@ -461,6 +461,7 @@ class _CalcScreenState extends State<CalcScreen> {
       ] else
         _fraisAnnexesFields(form, set),
       ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -492,6 +493,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _card([
       const SectionTitle('Revenus & charges', icon: Icons.account_balance_wallet_outlined, color: Color(0xFF2FA39B)),
       if (form.mode == RentalMode.longue) ...[
         Row(children: [
@@ -530,7 +532,9 @@ class _CalcScreenState extends State<CalcScreen> {
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          // paperSecondary (pas surface) : niché dans la carte "Revenus &
+          // charges", elle-même en surface.
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -577,6 +581,7 @@ class _CalcScreenState extends State<CalcScreen> {
           onChanged: (v) => set((f) => f.copyWith(assurance: v)),
         )),
       ]),
+      ]),
       const SizedBox(height: 24),
     ]);
   }
@@ -587,6 +592,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _card([
       const SectionTitle('Financement', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
       NumberField(label: 'Apport personnel', value: form.apport, suffix: '€', onChanged: (v) => set((f) => f.copyWith(apport: v))),
       const SizedBox(height: 12),
@@ -598,7 +604,8 @@ class _CalcScreenState extends State<CalcScreen> {
       const SizedBox(height: 12),
       Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        // paperSecondary (pas surface) : niché dans la carte "Financement".
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(child: _statBlock('Montant emprunté', eur(core.montantEmprunte), AppColors.ink)),
@@ -626,6 +633,7 @@ class _CalcScreenState extends State<CalcScreen> {
         const SectionTitle('Comparer des offres de prêt', icon: Icons.compare_arrows, color: Color(0xFFD4A72C)),
         ..._buildOffres(state, core),
       ],
+      ]),
       const SizedBox(height: 24),
     ]);
   }
@@ -637,6 +645,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _card([
       const SectionTitle("Capacité d'emprunt", icon: Icons.speed_outlined, color: Color(0xFFE0705C)),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
@@ -647,8 +656,10 @@ class _CalcScreenState extends State<CalcScreen> {
       const SizedBox(height: 12),
       Container(
         padding: const EdgeInsets.all(16),
+        // paperSecondary (pas surface) : niché dans la carte "Capacité
+        // d'emprunt" ; la bordure reste le repère "hors capacité" (alert).
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AppColors.paperSecondary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: core.capaciteOk ? AppColors.border : AppColors.alert),
         ),
@@ -670,6 +681,7 @@ class _CalcScreenState extends State<CalcScreen> {
           ]),
         ]),
       ),
+      ]),
       const SizedBox(height: 24),
     ]);
   }
