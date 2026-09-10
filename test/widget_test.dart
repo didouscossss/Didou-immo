@@ -127,10 +127,16 @@ void main() {
     expect(tester.takeException(), isNull);
 
     // Mode avancé : les barres de comparatif (2 biens) doivent s'afficher.
+    // Le bloc "Comparatif" est plus bas que "Patrimoine acquis" et "Liste
+    // des biens" dans cet onglet — on scrolle jusqu'à ce qu'il soit
+    // construit avant de vérifier son contenu, puis on remonte pour
+    // retrouver "À l'étude" (dans la liste, plus haut) juste après.
     await tester.tap(find.text('Avancé'));
     await tester.pumpAndSettle();
+    await _scrollTabListToBottom(tester);
     expect(find.text('Rentabilité nette (%)'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await _scrollTabListToTop(tester);
 
     // Marque le premier bien "acquis" (date du jour) : fait apparaître une
     // carte dans l'onglet Patrimoine, jusque-là vide.
