@@ -164,7 +164,22 @@ class _AuthScreenState extends State<AuthScreen> {
       // à la saisie. Ici, `minHeight` suit la hauteur réellement dispo (donc
       // rétrécie par le clavier), donc le défilement automatique vers le
       // champ actif fonctionne normalement.
-      body: SafeArea(
+      body: Stack(
+        children: [
+          // Fond décoratif (taches + feuilles douces) — repris de la
+          // maquette fournie, recréé en formes plutôt qu'en image : léger à
+          // toutes les résolutions, et cohérent avec le reste du design
+          // system (tokens de couleur). Jour seulement — sur fond déjà
+          // sombre la nuit, des taches vert pâle perdraient leur discrétion.
+          if (!dark) Positioned.fill(child: IgnorePointer(child: ClipRect(child: _PageBackground(c: c)))),
+          _buildForm(context, c, dark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context, _NoviceColors c, bool dark) {
+    return SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
@@ -343,8 +358,7 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _themeToggle(_NoviceColors c, bool dark) {
@@ -379,6 +393,20 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  /// Forme "feuille" (rectangle avec deux coins opposés totalement
+  /// arrondis, tourné) — même trick réutilisé par [_PageBackground] pour le
+  /// fond de l'écran.
+  Widget _leaf({required double size, required Color color, double angle = 0}) {
+    return Transform.rotate(
+      angle: angle,
+      child: Container(
+        width: size,
+        height: size * 1.9,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.only(topLeft: Radius.circular(size), bottomRight: Radius.circular(size))),
+      ),
+    );
+  }
+
   Widget _fieldLabel(String text, _NoviceColors c) => Text(text, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: c.ink));
 
   Widget _welcomeCard(_NoviceColors c) {
@@ -396,7 +424,19 @@ class _AuthScreenState extends State<AuthScreen> {
             const SizedBox(height: 6),
             Text('Retrouve tes biens, tes analyses et ton patrimoine.', style: AppTextStyles.sans(fontSize: 13.5, color: c.textMuted)),
           ]);
-          final mascotte = Image.asset('assets/images/didou.png', height: narrow ? 64 : 84, fit: BoxFit.contain);
+          final mascotteHeight = narrow ? 64.0 : 84.0;
+          final mascotte = SizedBox(
+            height: mascotteHeight,
+            child: Stack(clipBehavior: Clip.none, alignment: Alignment.center, children: [
+              // Petites feuilles décoratives en second plan derrière la
+              // mascotte, comme sur la maquette — jour seulement.
+              if (!c.dark) ...[
+                Positioned(right: 2, top: -6, child: _leaf(size: 20, color: c.accentSoft, angle: 0.4)),
+                Positioned(left: 0, bottom: -6, child: _leaf(size: 16, color: c.accentSoft, angle: -0.3)),
+              ],
+              Image.asset('assets/images/didou.png', height: mascotteHeight, fit: BoxFit.contain),
+            ]),
+          );
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             narrow
                 ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [texte, const SizedBox(height: 8), Align(alignment: Alignment.centerRight, child: mascotte)])
@@ -442,6 +482,51 @@ class _AuthScreenState extends State<AuthScreen> {
         Expanded(
           child: Text('Tes données restent privées.', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: c.textMuted)),
         ),
+      ]),
+    );
+  }
+}
+
+/// Fond décoratif "taches + feuilles" de la page de connexion, repris de la
+/// maquette de référence fournie — recréé en formes plutôt qu'en image
+/// bitmap : net à toute résolution/densité d'écran, et les couleurs restent
+/// des tokens du design system plutôt qu'une image figée.
+class _PageBackground extends StatelessWidget {
+  final _NoviceColors c;
+  const _PageBackground({required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(children: [
+      Positioned(top: -70, right: -50, child: _blob(200, c.bgSecondary)),
+      Positioned(top: 170, right: -90, child: _blob(240, c.accentSoft.withValues(alpha: 0.5))),
+      Positioned(bottom: -60, left: -60, child: _blob(220, c.bgSecondary)),
+      Positioned(top: 40, left: 6, child: _leafCluster()),
+      Positioned(bottom: 40, left: 6, child: _leafCluster()),
+    ]);
+  }
+
+  Widget _blob(double size, Color color) => Container(width: size, height: size, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+
+  Widget _leaf({required double width, required double height, required Color color, double angle = 0}) {
+    return Transform.rotate(
+      angle: angle,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.only(topLeft: Radius.circular(width), bottomRight: Radius.circular(width))),
+      ),
+    );
+  }
+
+  Widget _leafCluster() {
+    return SizedBox(
+      width: 80,
+      height: 170,
+      child: Stack(children: [
+        Positioned(top: 0, left: 20, child: _leaf(width: 26, height: 52, color: c.accent.withValues(alpha: 0.22), angle: -0.6)),
+        Positioned(top: 40, left: 0, child: _leaf(width: 30, height: 60, color: c.accent.withValues(alpha: 0.3), angle: -0.5)),
+        Positioned(top: 95, left: 26, child: _leaf(width: 24, height: 48, color: c.accent.withValues(alpha: 0.26), angle: -0.65)),
       ]),
     );
   }
