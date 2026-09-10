@@ -103,8 +103,23 @@ class _RendementHomeState extends State<RendementHome> {
             children: [
               Column(
                 children: [
-                  Padding(
+                  // Fond opaque + ombre portée : sans ça, la bande se
+                  // confondait avec le dégradé de fond, même si elle reste
+                  // fixe pendant que le contenu scrolle en dessous — l'ombre
+                  // la détache visuellement, comme si elle flottait au
+                  // premier plan par-dessus le reste de l'écran.
+                  Container(
                     padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.paper,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: AppColors.isDark ? 0.35 : 0.10),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
