@@ -1,110 +1,130 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Jetons de design — portés depuis le prototype React (rendement-app.jsx).
-/// bg #F4F0E6 · ink #16211C · accent #2F5D50 · gold #B8935A · alert #B3452C
-/// Display: Fraunces · Body: Inter · Chiffres: Space Mono
+/// Jetons de design — refonte visuelle complète (voir la maquette/charte
+/// détaillée fournie par l'utilisateur : 4 variantes Novice/Avancé ×
+/// Jour/Nuit, avec codes hex précis pour chacune).
 ///
 /// Champs calculés (pas `const`) plutôt que fixes, pour pouvoir s'adapter au
-/// mode nuit (voir [setDark], piloté par `RendementState.darkMode`) sans
-/// avoir à passer le thème explicitement à chaque écran — tout le reste de
-/// l'app lit ces couleurs directement (`AppColors.ink`, etc.).
+/// mode nuit (voir [setDark], piloté par `RendementState.darkMode`) et au
+/// niveau (voir [setNovice], piloté par `RendementState.niveau`) sans avoir
+/// à passer le thème explicitement à chaque écran — tout le reste de l'app
+/// lit ces jetons directement (`AppColors.ink`, etc.), l'équivalent Dart des
+/// variables CSS `--color-*` d'un design system web.
 class AppColors {
   static bool _dark = false;
   static void setDark(bool value) => _dark = value;
   static bool get isDark => _dark;
 
-  /// Mode novice : identité nettement différente du mode avancé — vert
-  /// sauge doux et lumineux (fond ET accent), contre un bleu-nuit/violet
-  /// plus analytique et froid en avancé, y compris en mode nuit. Piloté par
-  /// [setNovice], reflète `RendementState.niveau`. Étendu à [surface]
-  /// (cartes) et [accent] pour que le contraste entre les deux modes se
-  /// voie partout, pas seulement en arrière-plan.
   static bool _novice = false;
   static void setNovice(bool value) => _novice = value;
   static bool get isNovice => _novice;
 
-  /// Novice : texte quasi noir en jour, crème en nuit (inchangé). Avancé :
-  /// aligné sur la charte fournie par l'utilisateur — foncé #1E1B4B en jour,
-  /// texte #F8FAFC en nuit (au lieu du crème partagé avec le novice avant,
-  /// qui ne collait plus à l'identité violette du mode avancé).
+  /// Texte principal.
   static Color get ink {
-    if (_novice) return _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
+    if (_novice) return _dark ? const Color(0xFFF1F9F5) : const Color(0xFF10251A);
     return _dark ? const Color(0xFFF8FAFC) : const Color(0xFF1E1B4B);
   }
 
-  /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
-  /// vert forêt en mode novice, violet en mode avancé ; plus clair en mode
-  /// nuit pour rester lisible sur un fond sombre. Charte fournie par
-  /// l'utilisateur pour l'avancé : violet principal #7C3AED en jour, #A78BFA
-  /// en nuit.
+  /// Texte secondaire (légendes, labels discrets) — jeton à part entière
+  /// plutôt qu'un simple alpha sur [ink] : la charte donne une teinte propre
+  /// pour ce rôle. Les écrans pas encore retouchés continuent d'utiliser
+  /// `ink.withValues(alpha: ...)`, remplacé progressivement page par page.
+  static Color get textMuted {
+    if (_novice) return _dark ? const Color(0xFF9EB7AB) : const Color(0xFF66756C);
+    return _dark ? const Color(0xFF94A3B8) : const Color(0xFF687280);
+  }
+
+  /// Couleur d'accent principale (CTA, éléments actifs, chiffres clés
+  /// positifs) — vert en mode novice, violet en mode avancé ; plus clair en
+  /// mode nuit pour rester lisible sur fond sombre.
   static Color get accent {
-    if (_novice) return _dark ? const Color(0xFF6FA97F) : const Color(0xFF1F6B4A);
+    if (_novice) return _dark ? const Color(0xFF34D399) : const Color(0xFF1F8A5B);
     return _dark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
   }
 
-  /// Couleur "attention" (accent secondaire/avertissement) — jaune ambre,
-  /// désormais pilotée par le mode nuit comme le reste de la charte
-  /// (auparavant fixe, elle ne s'éclaircissait pas sur fond sombre).
+  /// Accent secondaire — un cran plus doux que [accent], pour varier sans
+  /// sortir de la famille de teinte (ex. icônes secondaires, dégradés).
+  static Color get accentSecondary {
+    if (_novice) return _dark ? const Color(0xFF10B981) : const Color(0xFF49B97A);
+    return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF8B5CF6);
+  }
+
+  /// Fond teinté très doux (badges, chips, zones de conseil) — pas assez
+  /// contrasté pour du texte, seulement pour un aplat derrière une icône ou
+  /// un petit texte déjà coloré par ailleurs.
+  static Color get accentSoft {
+    if (_novice) return _dark ? const Color(0xFF8CF0C3) : const Color(0xFFDDF4E7);
+    return _dark ? const Color(0xFF7C3AED) : const Color(0xFFEDE9FE);
+  }
+
+  /// Couleur "attention" (avertissement) — commune aux deux modes, pilotée
+  /// par le mode nuit.
   static Color get gold => _dark ? const Color(0xFFFBBF24) : const Color(0xFFF59E0B);
 
-  /// Couleur "erreur" — charte fournie par l'utilisateur (#EF4444 jour,
-  /// #F87171 nuit), remplace les tons brique précédents.
-  static Color get alert => _dark ? const Color(0xFFF87171) : const Color(0xFFEF4444);
+  /// Couleur "erreur" — commune aux deux modes, pilotée par le mode nuit et
+  /// (légèrement) par le niveau, comme spécifié par la charte.
+  static Color get alert {
+    if (_dark) return _novice ? const Color(0xFFF87171) : const Color(0xFFFB7185);
+    return const Color(0xFFEF4444);
+  }
+
+  /// Vert "succès" — jeton à part entière, commun aux deux modes (distinct
+  /// de [accent] en novice : la charte traite les accents sémantiques
+  /// succès/attention/erreur comme une palette partagée, séparée de la
+  /// couleur de marque de chaque mode).
+  static Color get good {
+    if (_dark) return const Color(0xFF34D399);
+    return _novice ? const Color(0xFF109B81) : const Color(0xFF10B981);
+  }
 
   static Color get border {
-    if (_novice) return _dark ? const Color(0xFF2C3830) : const Color(0xFFE6E0D0);
-    // Avancé : bordures teintées lavande/violet plutôt que gris neutre, en
-    // cohérence avec la charte (surfaces/fond de la palette avancée).
-    return _dark ? const Color(0xFF3730A3) : const Color(0xFFDDD6FE);
+    if (_novice) return _dark ? const Color(0xFF2D5C49) : const Color(0xFFDCE8E0);
+    return _dark ? const Color(0xFF3F3A78) : const Color(0xFFE2E0F0);
   }
 
+  /// Fond principal de l'app (Scaffold).
   static Color get paper {
-    // Novice : crème doux plutôt que blanc verdâtre, plus proche du fond
-    // neutre de la maquette de référence (le vert reste porté par l'accent
-    // et les pastilles d'icône, pas par le fond).
-    if (_novice) return _dark ? const Color(0xFF0F241A) : const Color(0xFFF3F0E6);
-    // Avancé : lavande (#EDE9FE, charte utilisateur) en jour ; #0F172A déjà
-    // conforme à la charte en nuit ("Fond").
-    return _dark ? const Color(0xFF0F172A) : const Color(0xFFEDE9FE);
+    if (_novice) return _dark ? const Color(0xFF0B1F18) : const Color(0xFFF7FBF8);
+    return _dark ? const Color(0xFF0F172A) : const Color(0xFFF8F7FC);
   }
 
-  /// Fond des cartes/encadrés — légèrement plus clair que [paper] en
-  /// sombre ; teintée en cohérence avec [paper] plutôt que de flotter en
-  /// blanc/vert neutre dessus.
+  /// Fond secondaire — pour distinguer une section du fond principal sans
+  /// passer par une carte à part entière (ex. bandeau, zone groupée).
+  static Color get paperSecondary {
+    if (_novice) return _dark ? const Color(0xFF10271F) : const Color(0xFFEEF8F1);
+    return _dark ? const Color(0xFF15162E) : const Color(0xFFF1EEFB);
+  }
+
+  /// Fond des cartes/encadrés.
   static Color get surface {
-    if (_novice) return _dark ? const Color(0xFF193A28) : const Color(0xFFFFFFFF);
-    // Avancé : blanc (charte "Fond" jour) / #1E1B4B (charte "Surface" nuit).
+    if (_novice) return _dark ? const Color(0xFF143429) : const Color(0xFFFFFFFF);
     return _dark ? const Color(0xFF1E1B4B) : const Color(0xFFFFFFFF);
   }
 
-  /// Vert "succès" — désormais un jeton à part entière (charte utilisateur
-  /// #10B981 jour / #34D399 nuit), distinct de [accent] même en novice : la
-  /// maquette de référence traite les accents sémantiques (succès,
-  /// attention, erreur) comme une palette commune aux deux modes, séparée
-  /// de la couleur de marque de chaque mode.
-  static Color get good => _dark ? const Color(0xFF34D399) : const Color(0xFF10B981);
+  /// Fond de carte "surélevée" — un cran plus clair que [surface] en
+  /// sombre, pour empiler des niveaux de profondeur (carte dans une carte,
+  /// zone mise en avant) sans jamais toucher au noir pur.
+  static Color get surfaceElevated {
+    if (_novice) return _dark ? const Color(0xFF1B4033) : const Color(0xFFEEF9F3);
+    return _dark ? const Color(0xFF26205A) : const Color(0xFFF5F1FF);
+  }
 
   /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
   /// doux en novice (identique jour/nuit), violet clair→principal en avancé
-  /// de jour (mauve #A768FA → violet principal #7C3AED, charte
-  /// utilisateur), violet profond→principal en avancé de nuit — remplace
-  /// l'ardoise→cyan→émeraude précédent, qui ne collait plus à l'identité
-  /// violette. Toujours volontairement resserré sur une seule famille de
-  /// teinte (pas de rose/orange mêlés) pour que les courbes tracées
-  /// par-dessus (ex. cash-flow du portefeuille) restent lisibles.
+  /// de jour, violet profond→principal en avancé de nuit. Volontairement
+  /// resserré sur une seule famille de teinte (pas de rose/orange mêlés)
+  /// pour que les courbes tracées par-dessus (ex. cash-flow du portefeuille)
+  /// restent lisibles.
   static List<Color> get heroGradient {
     if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
     return _dark
         ? const [Color(0xFF312E81), Color(0xFF7C3AED), Color(0xFFA78BFA)]
-        : const [Color(0xFFA768FA), Color(0xFF7C3AED)];
+        : const [Color(0xFFA78BFA), Color(0xFF7C3AED)];
   }
 
   /// Bande dégradée derrière le titre de chaque section (voir
-  /// `SectionTitle`) — terre cuite en mode novice (inchangée), violet en
-  /// mode avancé (mauve→lavande en jour, violet profond→principal en nuit,
-  /// charte utilisateur) : le cyan/turquoise précédent jurait avec la
-  /// nouvelle identité violette de l'avancé.
+  /// `SectionTitle`) — terre cuite en mode novice, violet en mode avancé.
   static List<Color> get sectionBandGradient {
     if (_novice) {
       return _dark
@@ -113,23 +133,44 @@ class AppColors {
     }
     return _dark
         ? const [Color(0xFF312E81), Color(0xFF7C3AED)]
-        : const [Color(0xFFA768FA), Color(0xFFEDE9FE)];
+        : const [Color(0xFFA78BFA), Color(0xFFEDE9FE)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
-  /// haut→bas, dans la même famille de teinte que [paper] plutôt qu'un
-  /// simple aplat ; distinct par mode/nuit comme le reste de l'identité
-  /// visuelle. Avancé recalé sur la lavande/le fond de la charte utilisateur.
+  /// haut→bas, dans la même famille de teinte que [paper].
   static List<Color> get backgroundGradient {
     if (_novice) {
       return _dark
           ? const [Color(0xFF123B27), Color(0xFF07160F)]
-          : const [Color(0xFFF3F8ED), Color(0xFFE0EBD2)];
+          : const [Color(0xFFF7FBF8), Color(0xFFEEF8F1)];
     }
     return _dark
         ? const [Color(0xFF0F172A), Color(0xFF1E1B4B)]
-        : const [Color(0xFFF8F6FF), Color(0xFFEDE9FE)];
+        : const [Color(0xFFF8F7FC), Color(0xFFEDE9FE)];
   }
+}
+
+/// Rayons d'arrondi communs — cartes plus arrondies que les boutons, pour
+/// une hiérarchie visuelle cohérente sur tout l'écran plutôt que des valeurs
+/// choisies au cas par cas dans chaque widget.
+class AppRadius {
+  static const double sm = 12;
+  static const double md = 16;
+  static const double lg = 22;
+  static const double button = 14;
+  static const double card = 20;
+}
+
+/// Ombres légères — jamais appuyées, juste de quoi détacher une carte ou une
+/// barre fixe du fond derrière elle. Plus marquées en mode nuit (un fond
+/// sombre a besoin de plus de contraste d'ombre pour rester perceptible).
+class AppShadows {
+  static List<BoxShadow> get sm => [
+        BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark ? 0.28 : 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+      ];
+  static List<BoxShadow> get md => [
+        BoxShadow(color: Colors.black.withValues(alpha: AppColors.isDark ? 0.38 : 0.07), blurRadius: 18, offset: const Offset(0, 6)),
+      ];
 }
 
 /// Convertit un hex `#RRGGBB` (tel que renvoyé par `calculations.dart`,
@@ -139,6 +180,12 @@ Color colorFromHex(String hex) {
   return Color(int.parse('FF$clean', radix: 16));
 }
 
+/// Échelle typographique — Fraunces (serif) pour les titres, Inter (sans)
+/// pour le texte courant, Space Mono pour les chiffres. Les méthodes `h1`
+/// à `label` donnent l'échelle standard (voir la charte : H1 30/700, H2
+/// 24/700, H3 20/600, texte 16, texte secondaire 14, label 15/600) ; les
+/// méthodes `serif`/`sans`/`mono` restent disponibles pour les cas où une
+/// taille hors échelle est nécessaire.
 class AppTextStyles {
   static TextStyle serif({double? fontSize, FontWeight? fontWeight, Color? color, double? letterSpacing, TextDecoration? decoration}) =>
       GoogleFonts.fraunces(fontSize: fontSize, fontWeight: fontWeight, color: color, letterSpacing: letterSpacing, decoration: decoration);
@@ -146,6 +193,13 @@ class AppTextStyles {
       GoogleFonts.inter(fontSize: fontSize, fontWeight: fontWeight, color: color, letterSpacing: letterSpacing, decoration: decoration);
   static TextStyle mono({double? fontSize, FontWeight? fontWeight, Color? color, double? letterSpacing, TextDecoration? decoration}) =>
       GoogleFonts.spaceMono(fontSize: fontSize, fontWeight: fontWeight, color: color, letterSpacing: letterSpacing, decoration: decoration);
+
+  static TextStyle h1({Color? color}) => serif(fontSize: 30, fontWeight: FontWeight.w700, color: color ?? AppColors.ink);
+  static TextStyle h2({Color? color}) => serif(fontSize: 24, fontWeight: FontWeight.w700, color: color ?? AppColors.ink);
+  static TextStyle h3({Color? color}) => serif(fontSize: 20, fontWeight: FontWeight.w600, color: color ?? AppColors.ink);
+  static TextStyle body({Color? color}) => sans(fontSize: 16, color: color ?? AppColors.ink);
+  static TextStyle bodySecondary({Color? color}) => sans(fontSize: 14, color: color ?? AppColors.textMuted);
+  static TextStyle label({Color? color}) => sans(fontSize: 15, fontWeight: FontWeight.w600, color: color ?? AppColors.ink);
 }
 
 /// [dark] doit refléter `RendementState.darkMode`, [novice]
