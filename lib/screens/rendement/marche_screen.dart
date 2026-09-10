@@ -9,6 +9,7 @@ import '../../state/rendement_state.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/tip.dart';
 
@@ -88,6 +89,7 @@ class MarcheScreen extends StatelessWidget {
                 ' Estimations ANIL, d\'après des données du groupe SeLoger et de leboncoin (édition 2025).';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
       const SectionTitle('Localisation & marché', icon: Icons.location_on_outlined, color: Color(0xFF7C6FE0)),
       Text('Repères de prix pour la commune du bien',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -96,7 +98,7 @@ class MarcheScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Aucune commune renseignée', style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
             const SizedBox(height: 4),
@@ -181,7 +183,7 @@ class MarcheScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(top: 12, bottom: 8),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Évolution du prix au m² — ${commune.nom}',
                   style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -200,7 +202,7 @@ class MarcheScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Ton bien vs le repère', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
             const SizedBox(height: 10),
@@ -217,7 +219,7 @@ class MarcheScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 Expanded(child: Text('Repère par typologie — ${typology.label}', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink))),
@@ -271,6 +273,7 @@ class MarcheScreen extends StatelessWidget {
             ]),
           ),
       ],
+      ]),
       const SizedBox(height: 24),
     ]);
   }
@@ -393,7 +396,8 @@ class MarcheScreen extends StatelessWidget {
   Widget _statCard(String label, String value) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      // paperSecondary (pas surface) : niché dans la SectionCard "Localisation & marché".
+      decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.65))),
         const SizedBox(height: 4),

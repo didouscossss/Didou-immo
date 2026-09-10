@@ -10,6 +10,7 @@ import '../../utils/formatters.dart';
 import '../../widgets/digit_readout.dart';
 import '../../widgets/number_field.dart';
 import '../../widgets/arrival_bounce.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/tip.dart';
 
@@ -52,6 +53,7 @@ class FiscaliteScreen extends StatelessWidget {
     final top = sorted.firstWhere((r) => r.eligible, orElse: () => sorted.first);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
       const SectionTitle('Régimes fiscaux', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
       Text('Comparatif selon ta tranche d\'imposition',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -71,7 +73,7 @@ class FiscaliteScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 24),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.accent)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.accent)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               Container(
@@ -108,7 +110,7 @@ class FiscaliteScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(alpha: r.eligible ? 1 : 0.45),
+                  color: AppColors.paperSecondary.withValues(alpha: r.eligible ? 1 : 0.45),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -147,7 +149,8 @@ class FiscaliteScreen extends StatelessWidget {
             }).toList(),
           ),
         ),
-      const SizedBox(height: 8),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -156,16 +159,12 @@ class FiscaliteScreen extends StatelessWidget {
     final checklist = form.mode == RentalMode.longue ? checklistLongue : checklistCourte;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        Icon(Icons.fact_check_outlined, size: 17, color: AppColors.accent),
-        const SizedBox(width: 8),
-        Text('Documents & démarches', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
-      ]),
-      const SizedBox(height: 12),
+      SectionCard(children: [
+      const SectionTitle('Documents & démarches', icon: Icons.fact_check_outlined, color: Color(0xFF2FA39B)),
       Container(
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Column(
           children: checklist
               .map((item) => Padding(
@@ -184,7 +183,8 @@ class FiscaliteScreen extends StatelessWidget {
               .toList(),
         ),
       ),
-      const SizedBox(height: 8),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -201,16 +201,12 @@ class FiscaliteScreen extends StatelessWidget {
     ];
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        Icon(Icons.calendar_today_outlined, size: 17, color: AppColors.accent),
-        const SizedBox(width: 8),
-        Text('Échéances récurrentes', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
-      ]),
-      const SizedBox(height: 12),
+      SectionCard(children: [
+      const SectionTitle('Échéances récurrentes', icon: Icons.calendar_today_outlined, color: Color(0xFFD4A72C)),
       ...deadlines.map((d) => Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
             child: Row(children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -235,7 +231,8 @@ class FiscaliteScreen extends StatelessWidget {
         "ou à ta commune) — dates indicatives qui se répètent chaque année dans ton agenda, à vérifier au cas par cas.",
         style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
       ),
-      const SizedBox(height: 8),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -253,17 +250,13 @@ class FiscaliteScreen extends StatelessWidget {
     final isNovice = state.niveau == NiveauMode.novice;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        Icon(Icons.account_balance_outlined, size: 17, color: AppColors.accent),
-        const SizedBox(width: 8),
-        Text('Structure de détention', style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.ink)),
-      ]),
-      const SizedBox(height: 12),
+      SectionCard(children: [
+      const SectionTitle('Structure de détention', icon: Icons.business_outlined, color: Color(0xFFE0705C)),
       if (isNovice)
         Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Text(
             "Pour un premier investissement, l'achat en nom propre est en général le plus simple à démarrer. Des structures comme la SCI deviennent surtout utiles pour acheter à plusieurs ou préparer une transmission. Passe en mode avancé pour comparer les options en détail.",
             style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.75)),
@@ -273,7 +266,7 @@ class FiscaliteScreen extends StatelessWidget {
         ...structures.map((s) => Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(s.label, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
                 Text(s.subtitle, style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -302,7 +295,8 @@ class FiscaliteScreen extends StatelessWidget {
           ),
         ),
       ]),
-      const SizedBox(height: 16),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 }

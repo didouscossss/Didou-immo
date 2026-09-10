@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/number_field.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/tip.dart';
 
@@ -64,6 +65,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final plusValueEquity = last.equity - first.equity;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
       const SectionTitle('Projection patrimoniale', icon: Icons.trending_up, color: Color(0xFF4A9B6E)),
       Text("Évolution de la valeur et du capital restant dû",
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
@@ -80,7 +82,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 9),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: active ? AppColors.accent : AppColors.surface,
+                    color: active ? AppColors.accent : AppColors.paperSecondary,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.border),
                   ),
@@ -135,8 +137,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       ),
       Container(
         padding: const EdgeInsets.fromLTRB(8, 12, 16, 8),
-        margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Column(children: [
           SizedBox(height: 200, child: _buildChart(projection, anneesDetention)),
           const SizedBox(height: 4),
@@ -147,6 +148,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           ]),
         ]),
       ),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -156,23 +159,25 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
         (form.achete && form.dateAchat != null) ? DateTime.now().difference(form.dateAchat!).inDays / 365.25 : null;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
+      const SectionTitle("Tableau d'amortissement", icon: Icons.table_chart_outlined, color: Color(0xFF5B6FD8)),
       InkWell(
         onTap: () => setState(() => _showAmortissement = !_showAmortissement),
         child: Container(
           padding: const EdgeInsets.all(16),
-          margin: EdgeInsets.only(bottom: _showAmortissement ? 0 : 24),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(children: [
-              Icon(Icons.table_chart_outlined, size: 15, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text("Tableau d'amortissement du prêt", style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-            ]),
+            Text('Détail année par année', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
             Icon(_showAmortissement ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
           ]),
         ),
       ),
-      if (_showAmortissement) _buildAmortissementTable(state.amortissement, anneesDetention),
+      if (_showAmortissement) ...[
+        const SizedBox(height: 12),
+        _buildAmortissementTable(state.amortissement, anneesDetention),
+      ],
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -183,6 +188,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
       const SectionTitle('Simulation de revente', icon: Icons.sell_outlined, color: Color(0xFFE0705C)),
       if (isNovice)
         Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
@@ -197,7 +203,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Column(children: [
           if (!isNovice) ...[
             _reventeRow('Prix de vente net (frais agence déduits)', eur(revente.prixVenteNet), AppColors.ink),
@@ -222,7 +228,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           ),
         ),
       ]),
-      const SizedBox(height: 12),
+      ]),
+      const SizedBox(height: 24),
     ]);
   }
 
@@ -230,18 +237,10 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final form = state.form;
     final tri = state.tri;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(Icons.insights_outlined, size: 15, color: AppColors.accent),
-          const SizedBox(width: 8),
-          Text('TRI sur ${form.dureeProjection} ans', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-        ]),
-        const SizedBox(height: 10),
-        if (tri.tauxPct == null)
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
+      SectionTitle('TRI sur ${form.dureeProjection} ans', icon: Icons.insights_outlined, color: const Color(0xFF2FA39B)),
+      if (tri.tauxPct == null)
           Text(
             form.apport <= 0
                 ? 'Renseigne un apport (onglet Bien) pour calculer le taux de rendement interne.'
@@ -258,7 +257,8 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           ),
         ],
       ]),
-    );
+      const SizedBox(height: 24),
+    ]);
   }
 
   Widget _buildChart(List<ProjectionPoint> projection, double? anneesDetention) {
@@ -342,8 +342,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     if (rows.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(bottom: 24),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Text("Renseigne un montant emprunté et un taux pour voir le détail année par année.",
             style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
       );
@@ -363,8 +362,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
           ),
         );
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(12),
