@@ -12,6 +12,7 @@ import '../../utils/calculations.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/compare_bar.dart';
 import '../../widgets/score_badge.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 
 /// Point sélectionnable sur la carte — unifie les 96 préfectures
@@ -204,6 +205,7 @@ class _CarteScreenState extends State<CarteScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
+        SectionCard(children: [
         const SectionTitle('Carte des prix', icon: Icons.map_outlined, color: Color(0xFF3B82C4)),
         Text(
           _catalogLoading
@@ -334,7 +336,7 @@ class _CarteScreenState extends State<CarteScreen> {
           if (selectedCities.any((c) => _effectivePrixM2(c) != null))
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+              decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 CompareBar(
                   label: 'Prix au m² (€)',
@@ -376,6 +378,7 @@ class _CarteScreenState extends State<CarteScreen> {
             ),
           ),
         ]),
+        ]),
       ],
     );
   }
@@ -388,7 +391,7 @@ class _CarteScreenState extends State<CarteScreen> {
       return Container(
         padding: const EdgeInsets.all(14),
         margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
         child: Row(children: [
           Text(c.nom, style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
           const SizedBox(width: 8),
@@ -407,7 +410,7 @@ class _CarteScreenState extends State<CarteScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           ScoreBadge(score: invest.score, label: invest.label, color: colorFromHex(invest.colorHex), size: BadgeSize.sm),
