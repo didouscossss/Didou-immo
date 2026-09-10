@@ -88,7 +88,7 @@ class MarcheScreen extends StatelessWidget {
                 ' Estimations ANIL, d\'après des données du groupe SeLoger et de leboncoin (édition 2025).';
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Localisation & marché'),
+      const SectionTitle('Localisation & marché', icon: Icons.location_on_outlined, color: Color(0xFF7C6FE0)),
       Text('Repères de prix pour la commune du bien',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 12),

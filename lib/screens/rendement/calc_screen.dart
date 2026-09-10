@@ -146,12 +146,12 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Le bien'),
-      // Chaque bloc démarre par un petit intitulé en gras/couleur accent
-      // (voir _blockLabel) et un espacement régulier les sépare tous —
-      // uniquement de la typographie et du rythme, sans carte ni bordure
-      // ni icône, pour rester net et épuré tout en rendant chaque bloc
-      // immédiatement reconnaissable d'un coup d'œil.
+      // "Le bien" n'est plus un unique bloc continu mais 3 groupes, chacun
+      // avec sa pastille d'icône colorée — repris d'une maquette de
+      // référence envoyée par l'utilisateur (Informations générales /
+      // Caractéristiques du bien / Prix et travaux), à la place du bandeau
+      // de titre unique + intitulés typographiques seuls essayés avant.
+      const SectionTitle('Informations générales', icon: Icons.badge_outlined, color: Color(0xFF7C6FE0)),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
       SyncedTextField(
@@ -168,10 +168,10 @@ class _CalcScreenState extends State<CalcScreen> {
         style: AppTextStyles.sans(fontSize: 15, color: AppColors.ink),
       ),
       const SizedBox(height: 26),
-      // Localisation — juste après le nom, avant les caractéristiques
-      // chiffrées : c'est elle qui détermine les repères de prix/marché
-      // affichés dans l'onglet "Marché" (regroupée ici avec "Le bien"
-      // plutôt qu'en bloc séparé, à la demande de l'utilisateur).
+      // Localisation — juste après le nom : c'est elle qui détermine les
+      // repères de prix/marché affichés dans l'onglet "Marché" (regroupée
+      // ici avec "Le bien" plutôt qu'en bloc séparé, à la demande de
+      // l'utilisateur).
       _blockLabel('Localisation'),
       const SizedBox(height: 4),
       Text("Recherche n'importe quelle commune de France",
@@ -257,37 +257,9 @@ class _CalcScreenState extends State<CalcScreen> {
             }),
           ),
         ),
-      const SizedBox(height: 26),
+      const SizedBox(height: 32),
+      const SectionTitle('Caractéristiques du bien', icon: Icons.home_work_outlined, color: Color(0xFF4A9B6E)),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
-      const SizedBox(height: 26),
-      AbsorbPointer(
-        absorbing: state.identityLocked,
-        child: Opacity(
-          opacity: state.identityLocked ? 0.55 : 1,
-          child: Row(children: [
-            Expanded(
-              child: NumberField(
-                label: "Prix d'achat",
-                value: form.prix,
-                suffix: '€',
-                // Tant que les frais de notaire n'ont pas été ajustés à la
-                // main, ils suivent automatiquement le prix (voir
-                // `notaireAuto`).
-                onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: NumberField(
-                label: 'Surface',
-                value: form.surface,
-                suffix: 'm²',
-                onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
-              ),
-            ),
-          ]),
-        ),
-      ),
       const SizedBox(height: 26),
       _blockLabel('Typologie'),
       const SizedBox(height: 8),
@@ -367,33 +339,6 @@ class _CalcScreenState extends State<CalcScreen> {
       const SizedBox(height: 26),
       NumberField(label: "Capacité d'accueil", value: form.capacite, suffix: 'pers.', hint: 'utile surtout en courte durée', onChanged: (v) => set((f) => f.copyWith(capacite: v))),
       const SizedBox(height: 26),
-      if (isNovice) ...[
-        // En novice, ces deux champs restent inclus dans le calcul avec
-        // une estimation raisonnable par défaut — repliés pour ne pas
-        // surcharger l'écran, dépliables si besoin d'un chiffre précis.
-        InkWell(
-          onTap: () => setState(() => _showFraisAnnexes = !_showFraisAnnexes),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Expanded(
-                child: Text(
-                  'Frais de notaire et travaux — ${eur(form.notaire + form.travaux)} inclus par défaut',
-                  style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.8)),
-                ),
-              ),
-              Icon(_showFraisAnnexes ? Icons.expand_less : Icons.expand_more, size: 18, color: AppColors.ink.withValues(alpha: 0.5)),
-            ]),
-          ),
-        ),
-        if (_showFraisAnnexes) ...[
-          const SizedBox(height: 8),
-          _fraisAnnexesFields(form, set),
-          const Tip('Une estimation raisonnable est déjà incluse dans le calcul (8 % de frais de notaire dans l\'ancien, 300 €/m² de travaux pour un rafraîchissement) — ajuste seulement si tu as un chiffre plus précis.'),
-        ],
-      ] else
-        _fraisAnnexesFields(form, set),
-      const SizedBox(height: 26),
       _blockLabel('Diagnostic de performance énergétique (DPE)'),
       const SizedBox(height: 8),
       Row(
@@ -437,6 +382,63 @@ class _CalcScreenState extends State<CalcScreen> {
             ),
           ]),
         ),
+      const SizedBox(height: 32),
+      const SectionTitle('Prix et travaux', icon: Icons.payments_outlined, color: Color(0xFF3B82C4)),
+      AbsorbPointer(
+        absorbing: state.identityLocked,
+        child: Opacity(
+          opacity: state.identityLocked ? 0.55 : 1,
+          child: Row(children: [
+            Expanded(
+              child: NumberField(
+                label: "Prix d'achat",
+                value: form.prix,
+                suffix: '€',
+                // Tant que les frais de notaire n'ont pas été ajustés à la
+                // main, ils suivent automatiquement le prix (voir
+                // `notaireAuto`).
+                onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: NumberField(
+                label: 'Surface',
+                value: form.surface,
+                suffix: 'm²',
+                onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
+              ),
+            ),
+          ]),
+        ),
+      ),
+      const SizedBox(height: 26),
+      if (isNovice) ...[
+        // En novice, ces deux champs restent inclus dans le calcul avec
+        // une estimation raisonnable par défaut — repliés pour ne pas
+        // surcharger l'écran, dépliables si besoin d'un chiffre précis.
+        InkWell(
+          onTap: () => setState(() => _showFraisAnnexes = !_showFraisAnnexes),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Expanded(
+                child: Text(
+                  'Frais de notaire et travaux — ${eur(form.notaire + form.travaux)} inclus par défaut',
+                  style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink.withValues(alpha: 0.8)),
+                ),
+              ),
+              Icon(_showFraisAnnexes ? Icons.expand_less : Icons.expand_more, size: 18, color: AppColors.ink.withValues(alpha: 0.5)),
+            ]),
+          ),
+        ),
+        if (_showFraisAnnexes) ...[
+          const SizedBox(height: 8),
+          _fraisAnnexesFields(form, set),
+          const Tip('Une estimation raisonnable est déjà incluse dans le calcul (8 % de frais de notaire dans l\'ancien, 300 €/m² de travaux pour un rafraîchissement) — ajuste seulement si tu as un chiffre plus précis.'),
+        ],
+      ] else
+        _fraisAnnexesFields(form, set),
       const SizedBox(height: 24),
     ]);
   }
@@ -458,7 +460,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Revenus & charges'),
+      const SectionTitle('Revenus & charges', icon: Icons.account_balance_wallet_outlined, color: Color(0xFF2FA39B)),
       if (form.mode == RentalMode.longue) ...[
         Row(children: [
           Expanded(child: NumberField(label: 'Loyer mensuel', value: form.loyer, suffix: '€', onChanged: (v) => set((f) => f.copyWith(loyer: v)))),
@@ -553,7 +555,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Financement'),
+      const SectionTitle('Financement', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
       NumberField(label: 'Apport personnel', value: form.apport, suffix: '€', onChanged: (v) => set((f) => f.copyWith(apport: v))),
       const SizedBox(height: 12),
       Row(children: [
@@ -589,7 +591,7 @@ class _CalcScreenState extends State<CalcScreen> {
       ),
       const SizedBox(height: 12),
       if (state.niveau == NiveauMode.avance) ...[
-        const SectionTitle('Comparer des offres de prêt'),
+        const SectionTitle('Comparer des offres de prêt', icon: Icons.compare_arrows, color: Color(0xFFD4A72C)),
         ..._buildOffres(state, core),
       ],
       const SizedBox(height: 24),
@@ -603,7 +605,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle("Capacité d'emprunt"),
+      const SectionTitle("Capacité d'emprunt", icon: Icons.speed_outlined, color: Color(0xFFE0705C)),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
         Expanded(child: NumberField(label: 'Revenus mensuels nets', value: form.revenuMensuelNet, suffix: '€', onChanged: (v) => set((f) => f.copyWith(revenuMensuelNet: v)))),

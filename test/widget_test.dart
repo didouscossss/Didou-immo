@@ -55,7 +55,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Rendement'), findsOneWidget);
-    expect(find.text('Le bien'), findsOneWidget);
+    // "Le bien" n'est plus un titre unique affiché à l'écran : la section
+    // est désormais scindée en 3 groupes (voir calc_screen.dart), dont
+    // "Informations générales" est le premier visible au chargement.
+    expect(find.text('Informations générales'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     const tabs = ['Marché', 'Fiscalité', 'Projection', 'Comparer', 'Patrimoine', 'Bien'];

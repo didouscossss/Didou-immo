@@ -52,7 +52,7 @@ class FiscaliteScreen extends StatelessWidget {
     final top = sorted.firstWhere((r) => r.eligible, orElse: () => sorted.first);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Régimes fiscaux'),
+      const SectionTitle('Régimes fiscaux', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
       Text('Comparatif selon ta tranche d\'imposition',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 12),

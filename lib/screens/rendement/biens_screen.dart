@@ -100,7 +100,7 @@ class _BiensScreenState extends State<BiensScreen> {
     final gainsRealises = vendus.fold<double>(0, (s, b) => s + _plusValueReelle(b.form, b.core).plusValueNette);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Comparatif'),
+      const SectionTitle('Comparatif', icon: Icons.bar_chart_outlined, color: Color(0xFFD4A72C)),
       Text('Classé par score d\'investissement', style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 16),
       Container(

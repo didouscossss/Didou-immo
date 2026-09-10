@@ -64,7 +64,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final plusValueEquity = last.equity - first.equity;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Projection patrimoniale'),
+      const SectionTitle('Projection patrimoniale', icon: Icons.trending_up, color: Color(0xFF4A9B6E)),
       Text("Évolution de la valeur et du capital restant dû",
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 12),
@@ -183,7 +183,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
     final revente = computePlusValue(form, core, last.valeurBien, form.dureeProjection);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Simulation de revente'),
+      const SectionTitle('Simulation de revente', icon: Icons.sell_outlined, color: Color(0xFFE0705C)),
       if (isNovice)
         Tip('Si tu revends après ${form.dureeProjection} ans, une partie de la plus-value réalisée est taxée — mais l\'impôt diminue plus tu gardes le bien longtemps, jusqu\'à disparaître après 22 à 30 ans.'),
       NumberField(
