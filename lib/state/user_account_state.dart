@@ -104,6 +104,20 @@ class UserAccountState extends ChangeNotifier {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// Envoie l'email de réinitialisation de mot de passe (fonctionnalité déjà
+  /// implémentée côté `AuthService`/Firebase, simplement jamais branchée à
+  /// un écran) — ne touche à rien d'autre du flux d'authentification.
+  Future<String?> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordReset(email);
+      return null;
+    } on fb.FirebaseAuthException catch (e) {
+      return e.message ?? 'Une erreur est survenue.';
+    } catch (_) {
+      return 'Une erreur est survenue.';
+    }
+  }
+
   /// Fournisseur du compte connecté, pour que l'UI sache quel flux de
   /// réauthentification proposer avant suppression ('password' -> demander
   /// le mot de passe, sinon -> redemander le consentement Google).

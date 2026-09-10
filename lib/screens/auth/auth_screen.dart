@@ -2,10 +2,43 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../state/rendement_state.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/arrival_bounce.dart';
 import '../legal/legal_screens.dart';
+
+/// Jetons de couleur figés sur la DA "Novice" (jour/nuit) — cette page doit
+/// toujours rendre le vert Novice, quel que soit le réglage Novice/Avancé
+/// courant de l'utilisateur (ex. il était en Avancé juste avant de se
+/// déconnecter). `AppColors` est un singleton global mutable piloté par ce
+/// même réglage (voir `theme/app_theme.dart`) : le forcer temporairement
+/// pendant `build()` ne suffirait pas, les widgets descendants se
+/// construisent après le retour de cette méthode, avec la valeur globale
+/// déjà repartie sur son état réel. Valeurs identiques à celles déjà codées
+/// dans `AppColors` (branche novice), pas une palette inventée — seul le
+/// jour/nuit reste dynamique (branché sur `RendementState.darkMode`, un
+/// vrai réglage global, lui).
+class _NoviceColors {
+  final bool dark;
+  const _NoviceColors(this.dark);
+
+  Color get ink => dark ? const Color(0xFFF1F9F5) : const Color(0xFF10251A);
+  Color get textMuted => dark ? const Color(0xFF9EB7AB) : const Color(0xFF66756C);
+  Color get accent => dark ? const Color(0xFF34D399) : const Color(0xFF1F8A5B);
+  Color get accentSoft => dark ? const Color(0xFF8CF0C3) : const Color(0xFFDDF4E7);
+  Color get border => dark ? const Color(0xFF2D5C49) : const Color(0xFFDCE8E0);
+  Color get bg => dark ? const Color(0xFF0B1F18) : const Color(0xFFF7FBF8);
+  Color get bgSecondary => dark ? const Color(0xFF10271F) : const Color(0xFFEEF8F1);
+  Color get surface => dark ? const Color(0xFF143429) : const Color(0xFFFFFFFF);
+  Color get alert => dark ? const Color(0xFFF87171) : const Color(0xFFEF4444);
+  Color get alertSoft => dark ? const Color(0xFF3A1616) : const Color(0xFFFEF2F2);
+  /// Texte/icône lisible par-dessus [accentSoft] (clair sur fond clair en
+  /// jour, foncé sur fond clair-mint en nuit — [accentSoft] reste clair
+  /// dans les deux modes).
+  Color get onAccentSoft => dark ? bg : accent;
+  List<BoxShadow> get shadowSm => [BoxShadow(color: Colors.black.withValues(alpha: dark ? 0.28 : 0.04), blurRadius: 8, offset: const Offset(0, 2))];
+}
 
 /// Écran de connexion / inscription — équivalent d'un `AuthGate` classique.
 /// Un seul écran, bascule entre les deux modes.
@@ -19,8 +52,11 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   bool _isSignUp = false;
   bool _acceptedTerms = false;
+  bool _obscurePassword = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
   bool _loading = false;
   String? _error;
 
@@ -33,6 +69,8 @@ class _AuthScreenState extends State<AuthScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     _cguRecognizer.dispose();
     _confidentialiteRecognizer.dispose();
     super.dispose();
@@ -79,10 +117,46 @@ class _AuthScreenState extends State<AuthScreen> {
     });
   }
 
+  Future<void> _forgotPassword() async {
+    final controller = TextEditingController(text: _emailController.text.trim());
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mot de passe oublié'),
+        content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('On t\'envoie un lien de réinitialisation par email.'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(labelText: 'Adresse e-mail'),
+          ),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
+    if (email == null || email.isEmpty || !mounted) return;
+    final error = await context.read<UserAccountState>().resetPassword(email);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error ?? 'Email envoyé — vérifie ta boîte de réception.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final dark = context.watch<RendementState>().darkMode;
+    final c = _NoviceColors(dark);
+
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: c.bg,
       // `LayoutBuilder` + `ConstrainedBox(minHeight: ...)` plutôt qu'un
       // `Center` autour du `SingleChildScrollView` : ce dernier empêchait le
       // clavier de faire défiler jusqu'au champ actif (l'écran restait
@@ -93,127 +167,179 @@ class _AuthScreenState extends State<AuthScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                Center(
-                  // Fond transparent (recadré autour du contenu, la source
-                  // carrée laissait une grande marge vide au-dessus et en
-                  // dessous) — plus besoin d'arrondir les coins comme avec
-                  // l'ancien logo sur fond plein.
-                  child: Image.asset('assets/images/didou_logo.png', width: 220, fit: BoxFit.contain),
-                ),
-                const SizedBox(height: 16),
-                Center(
-                  child: Image.asset('assets/images/didou.png', height: 130, fit: BoxFit.contain),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _isSignUp ? 'Créer un compte' : 'Content de te revoir',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Ton compte garde tes biens enregistrés, où que tu te connectes.",
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
-                ),
-                const SizedBox(height: 28),
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _decoration('Email'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: _decoration('Mot de passe'),
-                ),
-                if (_isSignUp) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 460),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Checkbox(
-                        value: _acceptedTerms,
-                        onChanged: _loading ? null : (v) => setState(() => _acceptedTerms = v ?? false),
+                      Align(alignment: Alignment.topRight, child: _themeToggle(c, dark)),
+                      Center(
+                        child: Image.asset('assets/images/didou_logo.png', width: 150, fit: BoxFit.contain),
                       ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 14),
+                      const SizedBox(height: 2),
+                      Center(
+                        child: Text('BIEN INVESTIR',
+                            style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: c.textMuted, letterSpacing: 2)),
+                      ),
+                      const SizedBox(height: 20),
+                      _welcomeCard(c),
+                      const SizedBox(height: 24),
+                      _fieldLabel('Adresse e-mail', c),
+                      const SizedBox(height: 6),
+                      _AuthField(
+                        controller: _emailController,
+                        focusNode: _emailFocus,
+                        colors: c,
+                        hint: 'ex. nom@email.fr',
+                        prefixIcon: Icons.mail_outline,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        textInputAction: TextInputAction.next,
+                        onSubmitted: (_) => _passwordFocus.requestFocus(),
+                      ),
+                      const SizedBox(height: 16),
+                      _fieldLabel('Mot de passe', c),
+                      const SizedBox(height: 6),
+                      _AuthField(
+                        controller: _passwordController,
+                        focusNode: _passwordFocus,
+                        colors: c,
+                        hint: 'Votre mot de passe',
+                        prefixIcon: Icons.lock_outline,
+                        obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _loading ? null : _submit(),
+                        suffixIcon: IconButton(
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 20, color: c.textMuted),
+                        ),
+                      ),
+                      if (!_isSignUp) ...[
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
+                            onTap: _loading ? null : _forgotPassword,
+                            child: Text('Mot de passe oublié ?', style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: c.accent)),
+                          ),
+                        ),
+                      ],
+                      if (_isSignUp) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                              value: _acceptedTerms,
+                              activeColor: c.accent,
+                              onChanged: _loading ? null : (v) => setState(() => _acceptedTerms = v ?? false),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 14),
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: AppTextStyles.sans(fontSize: 12.5, color: c.textMuted),
+                                    children: [
+                                      const TextSpan(text: "J'accepte les "),
+                                      TextSpan(text: 'CGU', style: TextStyle(color: c.accent, decoration: TextDecoration.underline), recognizer: _cguRecognizer),
+                                      const TextSpan(text: ' et la '),
+                                      TextSpan(
+                                        text: 'politique de confidentialité',
+                                        style: TextStyle(color: c.accent, decoration: TextDecoration.underline),
+                                        recognizer: _confidentialiteRecognizer,
+                                      ),
+                                      const TextSpan(text: '.'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (_error != null) ...[
+                        const SizedBox(height: 14),
+                        _errorCard(_error!, c),
+                      ],
+                      const SizedBox(height: 20),
+                      ArrivalBounce(
+                        active: !_loading,
+                        child: SizedBox(
+                          height: 58,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: c.accent,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: c.accent.withValues(alpha: 0.6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                            ),
+                            child: _loading
+                                ? Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+                                    const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                                    const SizedBox(width: 10),
+                                    Text(_isSignUp ? 'Création...' : 'Connexion...', style: AppTextStyles.sans(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                                  ])
+                                : Row(mainAxisAlignment: MainAxisAlignment.center, mainAxisSize: MainAxisSize.min, children: [
+                                    Text(_isSignUp ? 'Créer mon compte' : 'Se connecter', style: AppTextStyles.sans(fontSize: 15.5, fontWeight: FontWeight.w600, color: Colors.white)),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+                                  ]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(children: [
+                        Expanded(child: Divider(color: c.border)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text('ou continuer avec', style: AppTextStyles.sans(fontSize: 11.5, color: c.textMuted)),
+                        ),
+                        Expanded(child: Divider(color: c.border)),
+                      ]),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 54,
+                        child: OutlinedButton.icon(
+                          onPressed: _loading ? null : _submitGoogle,
+                          icon: const Icon(Icons.login, size: 18),
+                          label: const Text('Continuer avec Google'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: c.ink,
+                            side: BorderSide(color: c.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: TextButton(
+                          onPressed: _loading ? null : () => setState(() => _isSignUp = !_isSignUp),
                           child: RichText(
                             text: TextSpan(
-                              style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7)),
+                              style: AppTextStyles.sans(fontSize: 13, color: c.textMuted),
                               children: [
-                                const TextSpan(text: "J'accepte les "),
+                                TextSpan(text: _isSignUp ? 'Déjà un compte ? ' : 'Pas encore de compte ? '),
                                 TextSpan(
-                                  text: 'CGU',
-                                  style: TextStyle(color: AppColors.accent, decoration: TextDecoration.underline),
-                                  recognizer: _cguRecognizer,
+                                  text: _isSignUp ? 'Se connecter →' : 'Créer un compte →',
+                                  style: TextStyle(color: c.accent, fontWeight: FontWeight.w600),
                                 ),
-                                const TextSpan(text: ' et la '),
-                                TextSpan(
-                                  text: 'politique de confidentialité',
-                                  style: TextStyle(color: AppColors.accent, decoration: TextDecoration.underline),
-                                  recognizer: _confidentialiteRecognizer,
-                                ),
-                                const TextSpan(text: '.'),
                               ],
                             ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      _securityCard(c),
                     ],
                   ),
-                ],
-                if (_error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(_error!, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.alert)),
-                ],
-                const SizedBox(height: 18),
-                ArrivalBounce(
-                  active: !_loading,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: _loading
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text(_isSignUp ? 'Créer mon compte' : 'Se connecter'),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: _loading ? null : _submitGoogle,
-                  icon: const Icon(Icons.login, size: 18),
-                  label: const Text('Continuer avec Google'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.ink,
-                    side: BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: _loading ? null : () => setState(() => _isSignUp = !_isSignUp),
-                  child: Text(
-                    _isSignUp ? 'Déjà un compte ? Se connecter' : 'Pas encore de compte ? En créer un',
-                    style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.accent),
-                  ),
-                ),
-                  ],
                 ),
               ),
             ),
@@ -223,10 +349,167 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  InputDecoration _decoration(String label) => InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: AppColors.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.border)),
-      );
+  Widget _themeToggle(_NoviceColors c, bool dark) {
+    return InkWell(
+      onTap: context.read<RendementState>().toggleDarkMode,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle, border: Border.all(color: c.border), boxShadow: c.shadowSm),
+        child: Icon(dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: c.accent),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String text, _NoviceColors c) => Text(text, style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: c.ink));
+
+  Widget _welcomeCard(_NoviceColors c) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: c.surface, borderRadius: BorderRadius.circular(AppRadius.card), border: Border.all(color: c.border), boxShadow: c.shadowSm),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Sous ~340px de large, le personnage à côté du texte laisserait
+          // trop peu de place aux deux lignes de titre — il passe alors
+          // au-dessus, en petit, plutôt que de comprimer le texte.
+          final narrow = constraints.maxWidth < 340;
+          final texte = Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+            Text('Bon retour parmi nous !', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: c.ink)),
+            const SizedBox(height: 6),
+            Text('Retrouve tes biens, tes analyses et ton patrimoine.', style: AppTextStyles.sans(fontSize: 13.5, color: c.textMuted)),
+          ]);
+          final mascotte = Image.asset('assets/images/didou.png', height: narrow ? 64 : 84, fit: BoxFit.contain);
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            narrow
+                ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [texte, const SizedBox(height: 8), Align(alignment: Alignment.centerRight, child: mascotte)])
+                : Row(crossAxisAlignment: CrossAxisAlignment.center, children: [Expanded(child: texte), const SizedBox(width: 12), mascotte]),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(color: c.accentSoft, borderRadius: BorderRadius.circular(AppRadius.sm)),
+              child: Row(children: [
+                Icon(Icons.eco_outlined, size: 16, color: c.onAccentSoft),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Un meilleur avenir se construit aujourd\'hui.',
+                      style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: c.onAccentSoft)),
+                ),
+              ]),
+            ),
+          ]);
+        },
+      ),
+    );
+  }
+
+  Widget _errorCard(String message, _NoviceColors c) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(color: c.alertSoft, borderRadius: BorderRadius.circular(AppRadius.sm)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.error_outline, size: 16, color: c.alert),
+        const SizedBox(width: 8),
+        Expanded(child: Text(message, style: AppTextStyles.sans(fontSize: 12.5, color: c.alert))),
+      ]),
+    );
+  }
+
+  Widget _securityCard(_NoviceColors c) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(color: c.bgSecondary, borderRadius: BorderRadius.circular(AppRadius.sm)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Icon(Icons.verified_user_outlined, size: 16, color: c.textMuted),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text('Tes données restent privées.', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: c.textMuted)),
+        ),
+      ]),
+    );
+  }
+}
+
+/// Champ email/mot de passe stylé (label au-dessus fourni par l'appelant,
+/// pas de `labelText` flottant) — bordure/ombre discrète qui passe en vert
+/// accent au focus. Privé à cet écran : pas d'équivalent générique ailleurs
+/// dans le projet (`NumberField` est spécifique aux champs numériques).
+class _AuthField extends StatefulWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final _NoviceColors colors;
+  final String hint;
+  final IconData prefixIcon;
+  final Widget? suffixIcon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final List<String>? autofillHints;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onSubmitted;
+
+  const _AuthField({
+    required this.controller,
+    required this.focusNode,
+    required this.colors,
+    required this.hint,
+    required this.prefixIcon,
+    this.suffixIcon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.autofillHints,
+    this.textInputAction,
+    this.onSubmitted,
+  });
+
+  @override
+  State<_AuthField> createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<_AuthField> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    super.dispose();
+  }
+
+  void _onFocusChange() => setState(() {});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.colors;
+    final focused = widget.focusNode.hasFocus;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: focused ? c.accent : c.border, width: focused ? 1.5 : 1),
+        boxShadow: focused ? [BoxShadow(color: c.accent.withValues(alpha: 0.15), blurRadius: 10, offset: const Offset(0, 0))] : c.shadowSm,
+      ),
+      child: TextField(
+        controller: widget.controller,
+        focusNode: widget.focusNode,
+        obscureText: widget.obscureText,
+        keyboardType: widget.keyboardType,
+        autofillHints: widget.autofillHints,
+        textInputAction: widget.textInputAction,
+        onSubmitted: widget.onSubmitted,
+        style: AppTextStyles.sans(fontSize: 16, color: c.ink),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: AppTextStyles.sans(fontSize: 15, color: c.textMuted.withValues(alpha: 0.7)),
+          prefixIcon: Icon(widget.prefixIcon, size: 20, color: c.textMuted),
+          suffixIcon: widget.suffixIcon,
+          filled: false,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
+    );
+  }
 }
