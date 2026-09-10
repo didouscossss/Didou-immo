@@ -109,17 +109,8 @@ class _RendementHomeState extends State<RendementHome> {
                   // la détache visuellement, comme si elle flottait au
                   // premier plan par-dessus le reste de l'écran.
                   Container(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.paper,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: AppColors.isDark ? 0.35 : 0.10),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
+                    decoration: BoxDecoration(color: AppColors.paper, boxShadow: AppShadows.md),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -129,8 +120,8 @@ class _RendementHomeState extends State<RendementHome> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                              Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.45))),
+                              Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                              Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
                             ],
                           ),
                         ),
@@ -145,45 +136,19 @@ class _RendementHomeState extends State<RendementHome> {
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerRight,
                             child: Row(children: [
-                              InkWell(
+                              _headerIconButton(
+                                icon: Icons.dashboard_customize_outlined,
                                 onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
-                                borderRadius: BorderRadius.circular(999),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                  child: Icon(Icons.dashboard_customize_outlined, size: 19, color: AppColors.ink),
-                                ),
                               ),
                               const SizedBox(width: 8),
-                              InkWell(
+                              _headerIconButton(
+                                icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
                                 onTap: state.toggleDarkMode,
-                                borderRadius: BorderRadius.circular(999),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                  child: Icon(state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 19, color: AppColors.ink),
-                                ),
                               ),
                               const SizedBox(width: 8),
-                              InkWell(
-                                onTap: _openAccount,
-                                borderRadius: BorderRadius.circular(999),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                  child: Icon(Icons.person_outline, size: 19, color: AppColors.ink),
-                                ),
-                              ),
+                              _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
                               const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () => setState(() => _showMethodo = true),
-                                borderRadius: BorderRadius.circular(999),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle, border: Border.all(color: AppColors.border)),
-                                  child: Icon(Icons.help_outline, size: 19, color: AppColors.ink),
-                                ),
-                              ),
+                              _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
                               const SizedBox(width: 8),
                               NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
                             ]),
@@ -318,25 +283,57 @@ class _RendementHomeState extends State<RendementHome> {
     }
   }
 
+  /// Bouton circulaire de la bande du haut (personnaliser, mode nuit,
+  /// compte, aide) — factorisé pour que les 4 partagent exactement le même
+  /// style, plutôt que 4 copies du même `Container`/`InkWell`.
+  Widget _headerIconButton({required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.border),
+          boxShadow: AppShadows.sm,
+        ),
+        child: Icon(icon, size: 19, color: AppColors.ink),
+      ),
+    );
+  }
+
+  /// Navigation basse — l'onglet actif se détache par une pastille de fond
+  /// teintée (plutôt que la seule couleur de l'icône) : plus visible d'un
+  /// coup d'œil, surtout en mode avancé où le violet peut se fondre dans un
+  /// fond déjà teinté. `AnimatedContainer` anime la transition entre
+  /// onglets (durée courte, cohérente avec le reste des micro-interactions
+  /// de l'app) plutôt qu'un changement instantané.
   Widget _buildTabBar(RendementState state, List<AppTab> visibleTabs, AppTab active) {
     return Container(
       decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
-      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: visibleTabs.map((t) {
           final meta = kTabMeta[t]!;
           final isActive = active == t;
-          final color = isActive ? AppColors.accent : AppColors.ink.withValues(alpha: 0.62);
+          final color = isActive ? AppColors.accent : AppColors.textMuted;
           return InkWell(
             onTap: () => _setActive(t),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.accent.withValues(alpha: AppColors.isDark ? 0.22 : 0.12) : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(meta.icon, size: 18, color: color),
+                Icon(meta.icon, size: isActive ? 20 : 18, color: color),
                 const SizedBox(height: 3),
-                Text(meta.label, style: AppTextStyles.sans(fontSize: 9, fontWeight: FontWeight.w500, color: color)),
+                Text(meta.label, style: AppTextStyles.sans(fontSize: 9, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: color)),
               ]),
             ),
           );
