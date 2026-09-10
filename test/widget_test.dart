@@ -396,6 +396,12 @@ void main() {
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
     expect(find.text('Calcul non enregistré'), findsNothing);
+    // Remonte en haut de la liste avant de vérifier : le scroll vers "Bien
+    // sans nom" juste au-dessus a pu faire sortir "Comparatif" (en haut de
+    // la liste) de la zone montée (viewport + cacheExtent, voir la doc de
+    // `_scrollToAndTap`) — sans quoi l'assertion dépendrait de marges de
+    // mise en page qui ne sont pas garanties par ce test.
+    await _scrollTabListToTop(tester);
     expect(find.text('Comparatif'), findsOneWidget);
 
     // "Continuer sans enregistrer" recharge le bien : retour sur "Bien"
