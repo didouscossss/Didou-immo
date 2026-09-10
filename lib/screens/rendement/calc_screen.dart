@@ -273,16 +273,19 @@ class _CalcScreenState extends State<CalcScreen> {
               padding: const EdgeInsets.only(right: 6),
               child: GestureDetector(
                 onTap: state.identityLocked ? null : () => set((f) => f.copyWith(typeBien: t.id, capacite: t.capaciteDefaut.toDouble())),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: active ? AppColors.accent : AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(color: active ? AppColors.accent : AppColors.border),
+                    boxShadow: active ? AppShadows.sm : null,
                   ),
                   child: Text(t.label,
-                      style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: active ? Colors.white : AppColors.ink)),
+                      style: AppTextStyles.sans(fontSize: 12, fontWeight: active ? FontWeight.w600 : FontWeight.w500, color: active ? Colors.white : AppColors.textMuted)),
                 ),
               ),
             ),
@@ -298,30 +301,38 @@ class _CalcScreenState extends State<CalcScreen> {
           Expanded(
             child: GestureDetector(
               onTap: () => set((f) => f.copyWith(meuble: false)),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 9),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: !form.meuble ? AppColors.accent : AppColors.surface,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                  borderRadius: BorderRadius.horizontal(left: Radius.circular(AppRadius.sm)),
                   border: Border.all(color: !form.meuble ? AppColors.accent : AppColors.border),
+                  boxShadow: !form.meuble ? AppShadows.sm : null,
                 ),
-                child: Text('Nu', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: !form.meuble ? Colors.white : AppColors.ink)),
+                child: Text('Nu',
+                    style: AppTextStyles.sans(fontSize: 12, fontWeight: !form.meuble ? FontWeight.w600 : FontWeight.w500, color: !form.meuble ? Colors.white : AppColors.textMuted)),
               ),
             ),
           ),
           Expanded(
             child: GestureDetector(
               onTap: () => set((f) => f.copyWith(meuble: true)),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 9),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: form.meuble ? AppColors.accent : AppColors.surface,
-                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                  borderRadius: BorderRadius.horizontal(right: Radius.circular(AppRadius.sm)),
                   border: Border.all(color: form.meuble ? AppColors.accent : AppColors.border),
+                  boxShadow: form.meuble ? AppShadows.sm : null,
                 ),
-                child: Text('Meublé', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w500, color: form.meuble ? Colors.white : AppColors.ink)),
+                child: Text('Meublé',
+                    style: AppTextStyles.sans(fontSize: 12, fontWeight: form.meuble ? FontWeight.w600 : FontWeight.w500, color: form.meuble ? Colors.white : AppColors.textMuted)),
               ),
             ),
           ),
