@@ -54,7 +54,7 @@ void main() {
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
-    expect(find.text('Rendement'), findsOneWidget);
+    expect(find.text('Didou-Immo'), findsOneWidget);
     // "Le bien" n'est plus un titre unique affiché à l'écran : la section
     // est désormais scindée en 3 groupes (voir calc_screen.dart), dont
     // "Informations générales" est le premier visible au chargement.
