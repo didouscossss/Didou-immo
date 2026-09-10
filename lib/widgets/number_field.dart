@@ -38,10 +38,15 @@ class _NumberFieldState extends State<NumberField> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: _format(widget.value));
+    // `setState` à chaque changement de focus (pas seulement à la perte du
+    // focus) — nécessaire pour faire réagir la bordure du champ (couleur
+    // accent quand actif), en plus du reformatage existant à la perte du
+    // focus.
     _focusNode.addListener(() {
       if (!_focusNode.hasFocus) {
-        setState(() => _controller.text = _format(widget.value));
+        _controller.text = _format(widget.value);
       }
+      setState(() {});
     });
   }
 
@@ -72,26 +77,28 @@ class _NumberFieldState extends State<NumberField> {
                 widget.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
+                style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
               ),
             ),
             if (widget.glossaryDefinition != null)
               GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
             if (widget.hint != null) ...[
               const SizedBox(width: 6),
-              Text(widget.hint!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.6))),
+              Text(widget.hint!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodySecondary().copyWith(fontSize: 11)),
             ],
           ],
         ),
         const SizedBox(height: 6),
-        Container(
+        // Bordure accent + ombre légère quand actif : seul repère de focus
+        // avant (aucun), maintenant cohérent avec le reste de la refonte
+        // (couleur du mode = accent en novice, violet en avancé).
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: _focusNode.hasFocus ? AppColors.accent : AppColors.border, width: _focusNode.hasFocus ? 1.5 : 1),
+            boxShadow: _focusNode.hasFocus ? AppShadows.sm : null,
           ),
           child: Row(
             children: [
@@ -101,10 +108,10 @@ class _NumberFieldState extends State<NumberField> {
                   focusNode: _focusNode,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
                   inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
-                  style: AppTextStyles.mono(fontSize: 15, color: const Color(0xFF16211C)),
+                  style: AppTextStyles.mono(fontSize: 16, color: AppColors.ink),
                   decoration: const InputDecoration(
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                     border: InputBorder.none,
                   ),
                   onChanged: (text) {
@@ -120,11 +127,12 @@ class _NumberFieldState extends State<NumberField> {
                   // un suffixe de plusieurs lettres ("ans") pouvait laisser
                   // trop peu de place au nombre et rogner son dernier
                   // chiffre.
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(border: Border(left: BorderSide(color: AppColors.border))),
-                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  margin: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(AppRadius.sm - 4)),
+                  height: 40,
                   alignment: Alignment.center,
-                  child: Text(widget.suffix!, style: AppTextStyles.sans(fontSize: 13, color: const Color(0xFF16211C).withValues(alpha: 0.55))),
+                  child: Text(widget.suffix!, style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textMuted)),
                 ),
             ],
           ),
