@@ -314,27 +314,41 @@ class _RendementHomeState extends State<RendementHome> {
       decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        // `Expanded` sur chaque onglet (plutôt que `spaceAround` sur des
+        // tailles intrinsèques) : avec le padding élargi de cette phase 2 et
+        // jusqu'à 7 onglets visibles, la barre débordait sur les écrans
+        // étroits et le dernier onglet ("Patrimoine") se retrouvait poussé
+        // hors champ, invisible/inatteignable — chaque onglet occupe
+        // maintenant une part égale et fixe de la largeur, quel que soit le
+        // nombre d'onglets affichés.
         children: visibleTabs.map((t) {
           final meta = kTabMeta[t]!;
           final isActive = active == t;
           final color = isActive ? AppColors.accent : AppColors.textMuted;
-          return InkWell(
-            onTap: () => _setActive(t),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.accent.withValues(alpha: AppColors.isDark ? 0.22 : 0.12) : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+          return Expanded(
+            child: InkWell(
+              onTap: () => _setActive(t),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.accent.withValues(alpha: AppColors.isDark ? 0.22 : 0.12) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                ),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(meta.icon, size: isActive ? 20 : 18, color: color),
+                  const SizedBox(height: 3),
+                  Text(
+                    meta.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.sans(fontSize: 9, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: color),
+                  ),
+                ]),
               ),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Icon(meta.icon, size: isActive ? 20 : 18, color: color),
-                const SizedBox(height: 3),
-                Text(meta.label, style: AppTextStyles.sans(fontSize: 9, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: color)),
-              ]),
             ),
           );
         }).toList(),
