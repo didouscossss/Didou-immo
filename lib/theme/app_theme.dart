@@ -79,12 +79,12 @@ class AppColors {
   }
 
   /// Bande dégradée derrière le titre de chaque section (voir
-  /// `SectionTitle`) — terre cuite en mode novice, moutarde en mode
+  /// `SectionTitle`) — terre cuite en mode novice, cyan/turquoise en mode
   /// avancé, volontairement distinctes de [accent] pour se démarquer comme
   /// un repère visuel à part plutôt que se fondre dans le reste de
-  /// l'identité de couleur. Moutarde délibérément désaturée/mate (pas de
-  /// jaune vif) — une première teinte plus vive avait un rendu trop
-  /// "or"/brillant au goût de l'utilisateur.
+  /// l'identité de couleur. La moutarde essayée avant (trop "or", puis
+  /// trop mate au goût de l'utilisateur) est remplacée par un dégradé
+  /// turquoise → cyan.
   static List<Color> get sectionBandGradient {
     if (_novice) {
       return _dark
@@ -92,8 +92,8 @@ class AppColors {
           : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
     }
     return _dark
-        ? const [Color(0xFF544418), Color(0xFF8C7238)]
-        : const [Color(0xFFC2A468), Color(0xFFE6D9B0)];
+        ? const [Color(0xFF0C4A6E), Color(0xFF0E7490)]
+        : const [Color(0xFF2DD4BF), Color(0xFFA5F3FC)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
