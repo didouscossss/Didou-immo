@@ -12,6 +12,7 @@ import '../../widgets/digit_readout.dart';
 import '../../widgets/mode_toggle.dart';
 import '../../widgets/number_field.dart';
 import '../../widgets/arrival_bounce.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/synced_text_field.dart';
 import '../../widgets/tip.dart';
@@ -153,7 +154,7 @@ class _CalcScreenState extends State<CalcScreen> {
     // marquées (bordure visible) n'avait pas plu à l'utilisateur ; celle-ci
     // reste volontairement sobre (voir `_card`).
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _card([
+      SectionCard(children: [
       const SectionTitle('Informations générales', icon: Icons.badge_outlined, color: Color(0xFF7C6FE0)),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
@@ -265,7 +266,7 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
       ]),
       const SizedBox(height: 20),
-      _card([
+      SectionCard(children: [
       const SectionTitle('Caractéristiques du bien', icon: Icons.home_work_outlined, color: Color(0xFF4A9B6E)),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
       const SizedBox(height: 26),
@@ -403,7 +404,7 @@ class _CalcScreenState extends State<CalcScreen> {
         ),
       ]),
       const SizedBox(height: 20),
-      _card([
+      SectionCard(children: [
       const SectionTitle('Prix et travaux', icon: Icons.payments_outlined, color: Color(0xFF3B82C4)),
       AbsorbPointer(
         absorbing: state.identityLocked,
@@ -465,17 +466,6 @@ class _CalcScreenState extends State<CalcScreen> {
     ]);
   }
 
-  /// Carte thématique légère — fond surface, ombre très discrète, pas de
-  /// bordure : sépare visuellement les groupes de champs sans reproduire
-  /// l'effet "boîte" plus marqué essayé (et écarté) précédemment.
-  Widget _card(List<Widget> children) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.sm),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
-    );
-  }
-
   /// Intitulé de bloc pour l'onglet "Bien" — police serif (celle des
   /// titres de section) et taille légèrement plus grande que le texte
   /// courant, couleur ink comme le reste (pas d'accent) : la couleur
@@ -493,7 +483,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _card([
+      SectionCard(children: [
       const SectionTitle('Revenus & charges', icon: Icons.account_balance_wallet_outlined, color: Color(0xFF2FA39B)),
       if (form.mode == RentalMode.longue) ...[
         Row(children: [
@@ -592,7 +582,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _card([
+      SectionCard(children: [
       const SectionTitle('Financement', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
       NumberField(label: 'Apport personnel', value: form.apport, suffix: '€', onChanged: (v) => set((f) => f.copyWith(apport: v))),
       const SizedBox(height: 12),
@@ -645,7 +635,7 @@ class _CalcScreenState extends State<CalcScreen> {
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _card([
+      SectionCard(children: [
       const SectionTitle("Capacité d'emprunt", icon: Icons.speed_outlined, color: Color(0xFFE0705C)),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
