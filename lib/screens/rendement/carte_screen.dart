@@ -204,7 +204,7 @@ class _CarteScreenState extends State<CarteScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
-        const SectionTitle('Carte des prix'),
+        const SectionTitle('Carte des prix', icon: Icons.map_outlined, color: Color(0xFF3B82C4)),
         Text(
           _catalogLoading
               ? 'Chargement des communes de France (une fois, mis en cache ensuite)...'

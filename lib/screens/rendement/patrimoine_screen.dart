@@ -100,7 +100,7 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
     final portefeuilleSpots = _buildPortefeuilleSpots(investissements);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SectionTitle('Patrimoine'),
+      const SectionTitle('Patrimoine', icon: Icons.insights_outlined, color: Color(0xFF2FA39B)),
       Text('Suivi réel des biens acquis, par opposition aux hypothèses de départ',
           style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.45))),
       const SizedBox(height: 16),
