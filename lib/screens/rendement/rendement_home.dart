@@ -109,50 +109,42 @@ class _RendementHomeState extends State<RendementHome> {
                   // la détache visuellement, comme si elle flottait au
                   // premier plan par-dessus le reste de l'écran.
                   Container(
-                    padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
                     decoration: BoxDecoration(color: AppColors.paper, boxShadow: AppShadows.md),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                              Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // FittedBox : sur téléphone, les 3 icônes + le sélecteur
-                        // Novice/Avancé ne tenaient plus sur la largeur depuis
-                        // l'ajout du bouton mode nuit — "Avancé" se retrouvait
-                        // coupé hors écran. On rétrécit l'ensemble plutôt que
-                        // de le laisser déborder.
-                        Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: Row(children: [
-                              _headerIconButton(
-                                icon: Icons.dashboard_customize_outlined,
-                                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
-                              ),
-                              const SizedBox(width: 8),
-                              _headerIconButton(
-                                icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                                onTap: state.toggleDarkMode,
-                              ),
-                              const SizedBox(width: 8),
-                              _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
-                              const SizedBox(width: 8),
-                              _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
-                              const SizedBox(width: 8),
-                              NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
-                            ]),
-                          ),
+                        Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                        Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
+                        const SizedBox(height: 12),
+                        // Icônes et sélecteur sur leur propre ligne, plutôt que
+                        // partagée avec le titre : ça laisse toute la largeur de
+                        // l'écran disponible pour des icônes nettement plus
+                        // grosses (demandé), au lieu de se disputer l'espace avec
+                        // "Didou-Immo". Le FittedBox reste un filet de sécurité
+                        // pour les tout petits écrans, mais ne rentre presque
+                        // plus en jeu maintenant qu'il a toute la largeur.
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Row(children: [
+                            _headerIconButton(
+                              icon: Icons.dashboard_customize_outlined,
+                              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+                            ),
+                            const SizedBox(width: 10),
+                            _headerIconButton(
+                              icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                              onTap: state.toggleDarkMode,
+                            ),
+                            const SizedBox(width: 10),
+                            _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
+                            const SizedBox(width: 10),
+                            _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+                            const SizedBox(width: 10),
+                            NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
+                          ]),
                         ),
                       ],
                     ),
@@ -291,14 +283,14 @@ class _RendementHomeState extends State<RendementHome> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
           color: AppColors.surface,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.border),
           boxShadow: AppShadows.sm,
         ),
-        child: Icon(icon, size: 19, color: AppColors.ink),
+        child: Icon(icon, size: 26, color: AppColors.ink),
       ),
     );
   }
