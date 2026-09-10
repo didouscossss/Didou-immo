@@ -365,9 +365,13 @@ class _CarteScreenState extends State<CarteScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
+              // Les deux mentions de source (DVF/Etalab, OpenStreetMap) sont
+              // requises par leurs licences respectives — seul le reste du
+              // texte (conseils/contexte) a été raccourci pour alléger le
+              // visuel, à la demande de l'utilisateur.
               anyLiveData
-                  ? 'Prix marqués ✓ : données réelles DVF — Licence Ouverte (Etalab). Loyers : estimation indicative (DVF ne couvre que les ventes, pas les locations). Vérifie les données locales réelles avant de décider. Fond de carte © OpenStreetMap contributors.'
-                  : 'Aucun prix affiché par défaut — tape une ville pour charger son vrai prix (DVF, données réelles des ventes notariées). Fond de carte © OpenStreetMap contributors.',
+                  ? 'Prix marqués ✓ : DVF, Licence Ouverte (Etalab). Fond de carte © OpenStreetMap contributors.'
+                  : 'Tape une ville pour charger son prix réel. Fond de carte © OpenStreetMap contributors.',
               style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
             ),
           ),

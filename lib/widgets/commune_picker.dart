@@ -144,13 +144,7 @@ class _CommunePickerState extends State<CommunePicker> {
             ),
         ],
       ),
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text(
-          'Recherche officielle IGN/INSEE (geo.api.gouv.fr) — gratuite, sans clé, aucune ville n\'est codée en dur.',
-          style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.4)),
-        ),
-      ),
+      if (commune != null) const SizedBox(height: 8),
       if (commune != null)
         Wrap(crossAxisAlignment: WrapCrossAlignment.center, spacing: 6, runSpacing: 4, children: [
           Icon(Icons.location_on_outlined, size: 14, color: AppColors.accent),
