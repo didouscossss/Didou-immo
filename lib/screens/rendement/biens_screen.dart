@@ -172,7 +172,7 @@ class _BiensScreenState extends State<BiensScreen> {
             child: Container(
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.sm),
             child: Row(children: [
               Expanded(
                 child: Row(children: [

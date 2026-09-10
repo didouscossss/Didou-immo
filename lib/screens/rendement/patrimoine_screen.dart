@@ -280,10 +280,10 @@ class _PatrimoineScreenState extends State<PatrimoineScreen> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.sm),
       child: Column(children: [
         InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           onTap: () => setState(() => expanded ? _expanded.remove(b.id) : _expanded.add(b.id)),
           child: Padding(
             padding: const EdgeInsets.all(16),
