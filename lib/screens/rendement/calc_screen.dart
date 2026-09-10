@@ -441,12 +441,14 @@ class _CalcScreenState extends State<CalcScreen> {
     ]);
   }
 
-  /// Intitulé de bloc pour l'onglet "Bien" — gras + couleur accent plutôt
-  /// qu'une carte, une icône ou un liseré : uniquement de la typographie,
-  /// pour distinguer chaque bloc d'un coup d'œil sans ajouter d'élément
-  /// graphique (à la demande explicite de l'utilisateur).
+  /// Intitulé de bloc pour l'onglet "Bien" — police serif (celle des
+  /// titres de section) et taille légèrement plus grande que le texte
+  /// courant, couleur ink comme le reste (pas d'accent) : la couleur
+  /// accent testée précédemment ne convenait pas à l'utilisateur, qui a
+  /// préféré miser sur la typographie plutôt que la couleur pour
+  /// distinguer chaque bloc d'un coup d'œil.
   Widget _blockLabel(String text) {
-    return Text(text, style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent, letterSpacing: 0.2));
+    return Text(text, style: AppTextStyles.serif(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.ink));
   }
 
   Widget _sectionRevenus(RendementState state) {

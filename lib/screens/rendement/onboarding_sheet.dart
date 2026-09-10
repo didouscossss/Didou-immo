@@ -9,13 +9,15 @@ import 'app_tab_meta.dart';
 
 /// Un slide du tuto général (voir [_tutoSlides]) — explique une grande ligne
 /// de l'appli plutôt qu'une question à répondre, contrairement aux étapes
-/// mode/budget qui suivent.
+/// mode/budget qui suivent. [points] : quelques puces courtes plutôt qu'un
+/// paragraphe continu — un bloc de texte "monolithique" donnait moins
+/// envie de lire que des points séparés, plus faciles à parcourir.
 class _TutoSlide {
   final String title;
   final String caption;
-  final String body;
+  final List<String> points;
   final IconData icon;
-  const _TutoSlide({required this.title, required this.caption, required this.body, required this.icon});
+  const _TutoSlide({required this.title, required this.caption, required this.points, required this.icon});
 }
 
 /// Bandeau d'accueil pour la toute première connexion — équivalent de
@@ -51,62 +53,80 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
       title: 'Bienvenue 👋',
       caption: "Je suis Didou, je t'accompagne",
       icon: Icons.waving_hand_outlined,
-      body: "Cette appli t'aide à savoir si un bien est un bon investissement avant de te lancer : "
-          "rentabilité, financement et fiscalité, au même endroit. Un tour rapide de chaque onglet avant de "
-          "commencer.",
+      points: const [
+        "T'aide à savoir si un bien est un bon investissement avant de te lancer",
+        'Rentabilité, financement et fiscalité au même endroit',
+        'Un tour rapide de chaque onglet avant de commencer',
+      ],
     ),
     _TutoSlide(
       title: 'Onglet "Bien" — le point de départ',
       caption: 'Comment remplir',
       icon: kTabMeta[AppTab.calc]!.icon,
-      body: 'Renseigne le nom, la localisation, le prix, la surface, puis les revenus attendus — la '
-          'rentabilité, le cash-flow et le reste du calcul se mettent à jour automatiquement au fur et à '
-          'mesure. C\'est le seul onglet indispensable pour obtenir un premier résultat.',
+      points: const [
+        'Renseigne le nom, la localisation, le prix et la surface',
+        'Ajoute les revenus attendus',
+        'La rentabilité se calcule automatiquement, au fur et à mesure',
+      ],
     ),
     _TutoSlide(
       title: 'Onglet "Marché"',
       caption: 'Repères de prix du secteur',
       icon: kTabMeta[AppTab.marche]!.icon,
-      body: 'Une fois la commune renseignée dans "Bien", cet onglet affiche le prix et le loyer au m² du '
-          'secteur, l\'écart entre ton bien et ce repère, et un score d\'investissement qui résume la '
-          'comparaison.',
+      points: const [
+        'Prix et loyer au m² du secteur, une fois la commune renseignée',
+        "L'écart entre ton bien et ce repère",
+        "Un score d'investissement qui résume la comparaison",
+      ],
     ),
     _TutoSlide(
       title: 'Onglet "Carte"',
       caption: 'Les prix, visuellement',
       icon: kTabMeta[AppTab.carte]!.icon,
-      body: 'Les mêmes repères de prix affichés directement sur une carte, commune par commune — pratique '
-          'pour comparer plusieurs secteurs d\'un coup d\'œil avant de choisir où investir.',
+      points: const [
+        'Les mêmes repères de prix, visualisés sur une carte',
+        "Compare plusieurs secteurs d'un coup d'œil",
+      ],
     ),
     _TutoSlide(
       title: 'Onglet "Fiscalité"',
       caption: 'Régimes, démarches, échéances',
       icon: kTabMeta[AppTab.fisc]!.icon,
-      body: 'Compare les régimes fiscaux possibles pour ton bien (micro-foncier, LMNP...), retrouve les '
-          'documents et démarches à prévoir, et suis les échéances récurrentes (déclarations...) pour ne '
-          'rien rater.',
+      points: const [
+        'Compare les régimes fiscaux possibles (micro-foncier, LMNP...)',
+        'Documents et démarches à prévoir',
+        'Échéances récurrentes à ne pas rater',
+      ],
     ),
     _TutoSlide(
       title: 'Onglet "Projection"',
       caption: 'Ton patrimoine dans le temps',
       icon: kTabMeta[AppTab.proj]!.icon,
-      body: 'Projette l\'évolution de ton investissement : tableau d\'amortissement du prêt, simulation de '
-          'revente à différentes échéances, et TRI (taux de rentabilité interne) en mode avancé.',
+      points: const [
+        "Tableau d'amortissement du prêt",
+        'Simulation de revente à différentes échéances',
+        'TRI en mode avancé',
+      ],
     ),
     _TutoSlide(
       title: 'Personnalise ton affichage',
       caption: 'Onglets et blocs',
       icon: Icons.dashboard_customize_outlined,
-      body: 'L\'icône en haut de l\'écran ouvre "Personnaliser mon affichage" : réordonne ou masque les '
-          'onglets, et à l\'intérieur de chacun les blocs qui te servent le moins — tout reste modifiable '
-          'ensuite.',
+      points: const [
+        'Réordonne ou masque les onglets',
+        "Personnalise aussi les blocs à l'intérieur de chaque onglet",
+        'Tout reste modifiable ensuite',
+      ],
     ),
     _TutoSlide(
       title: 'Suis tes biens',
       caption: 'Une fois enregistrés',
       icon: kTabMeta[AppTab.biens]!.icon,
-      body: '"Enregistrer ce bien" l\'ajoute aux onglets "Comparer" et "Patrimoine" : modifie-le à tout '
-          'moment, compare plusieurs biens entre eux, et exporte tes données en PDF ou CSV.',
+      points: const [
+        '"Enregistrer ce bien" l\'ajoute à "Comparer" et "Patrimoine"',
+        'Modifie-le à tout moment, compare plusieurs biens entre eux',
+        'Exporte tes données en PDF ou CSV',
+      ],
     ),
   ];
 
@@ -295,28 +315,49 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
         padding: const EdgeInsets.all(16),
         margin: const EdgeInsets.only(top: 4, bottom: 4),
         decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.border)),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // La flèche vive pointe vers l'icône qui représente ce dont
-            // parle le slide (celle qu'on retrouve ensuite dans la vraie
-            // barre du bas) — un repère qui "montre" plutôt qu'une simple
-            // liste, sans dépendre de la position réelle de cette icône à
-            // l'écran (masquée par la feuille du tuto elle-même).
-            // Clé sur `_step` : sans elle, Flutter réutilise le même État
-            // (et donc la même animation déjà épuisée) d'un slide à
-            // l'autre au lieu de rejouer le rebond à chaque fois.
-            PointingArrow(key: ValueKey(_step)),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-              child: Icon(slide.icon, size: 18, color: AppColors.accent),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(slide.body, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.8))),
-            ),
+            Row(children: [
+              // La flèche vive pointe vers l'icône qui représente ce dont
+              // parle le slide (celle qu'on retrouve ensuite dans la vraie
+              // barre du bas) — un repère qui "montre" plutôt qu'une
+              // simple liste, sans dépendre de la position réelle de
+              // cette icône à l'écran (masquée par la feuille du tuto
+              // elle-même). Clé sur `_step` : sans elle, Flutter réutilise
+              // le même État (et donc la même animation déjà épuisée)
+              // d'un slide à l'autre au lieu de rejouer le rebond à
+              // chaque fois.
+              PointingArrow(key: ValueKey(_step)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
+                child: Icon(slide.icon, size: 18, color: AppColors.accent),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            // Quelques puces courtes plutôt qu'un paragraphe continu — un
+            // bloc de texte "monolithique" se parcourt moins bien et donne
+            // moins envie de lire que des points séparés.
+            for (final point in slide.points)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      margin: const EdgeInsets.only(top: 7, right: 10),
+                      decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                    ),
+                    Expanded(
+                      child: Text(point, style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.85))),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
