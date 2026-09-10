@@ -28,7 +28,7 @@ class NiveauToggle extends StatelessWidget {
           return GestureDetector(
             onTap: () => onChanged(o.mode),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
               decoration: BoxDecoration(
                 color: active ? AppColors.accent : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),
@@ -36,12 +36,12 @@ class NiveauToggle extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(o.icon, size: 12, color: active ? Colors.white : AppColors.ink.withValues(alpha: 0.5)),
-                  const SizedBox(width: 4),
+                  Icon(o.icon, size: 14, color: active ? Colors.white : AppColors.ink.withValues(alpha: 0.5)),
+                  const SizedBox(width: 5),
                   Text(
                     o.label,
                     style: AppTextStyles.sans(
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: active ? Colors.white : AppColors.ink.withValues(alpha: 0.5),
                     ),

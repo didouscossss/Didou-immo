@@ -24,67 +24,87 @@ class AppColors {
   static void setNovice(bool value) => _novice = value;
   static bool get isNovice => _novice;
 
-  static Color get ink => _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
-
-  /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
-  /// vert doux (le même que [good], pas un vert flashy) en mode novice,
-  /// violet profond mais pas trop sombre en mode avancé ; plus clair en
-  /// mode nuit pour rester lisible sur un fond sombre.
-  static Color get accent {
-    if (_novice) return _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
-    return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF6D28D9);
+  /// Novice : texte quasi noir en jour, crème en nuit (inchangé). Avancé :
+  /// aligné sur la charte fournie par l'utilisateur — foncé #1E1B4B en jour,
+  /// texte #F8FAFC en nuit (au lieu du crème partagé avec le novice avant,
+  /// qui ne collait plus à l'identité violette du mode avancé).
+  static Color get ink {
+    if (_novice) return _dark ? const Color(0xFFEDE6D2) : const Color(0xFF16211C);
+    return _dark ? const Color(0xFFF8FAFC) : const Color(0xFF1E1B4B);
   }
 
-  static Color get gold => const Color(0xFFB8935A);
-  static Color get alert => _dark ? const Color(0xFFE29385) : const Color(0xFFB3452C);
-  static Color get border => _dark ? const Color(0xFF2C3830) : const Color(0xFFE4DDC9);
+  /// Couleur d'accent principale (boutons, montants positifs, graphiques) —
+  /// vert forêt en mode novice, violet en mode avancé ; plus clair en mode
+  /// nuit pour rester lisible sur un fond sombre. Charte fournie par
+  /// l'utilisateur pour l'avancé : violet principal #7C3AED en jour, #A78BFA
+  /// en nuit.
+  static Color get accent {
+    if (_novice) return _dark ? const Color(0xFF6FA97F) : const Color(0xFF1F6B4A);
+    return _dark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
+  }
+
+  /// Couleur "attention" (accent secondaire/avertissement) — jaune ambre,
+  /// désormais pilotée par le mode nuit comme le reste de la charte
+  /// (auparavant fixe, elle ne s'éclaircissait pas sur fond sombre).
+  static Color get gold => _dark ? const Color(0xFFFBBF24) : const Color(0xFFF59E0B);
+
+  /// Couleur "erreur" — charte fournie par l'utilisateur (#EF4444 jour,
+  /// #F87171 nuit), remplace les tons brique précédents.
+  static Color get alert => _dark ? const Color(0xFFF87171) : const Color(0xFFEF4444);
+
+  static Color get border {
+    if (_novice) return _dark ? const Color(0xFF2C3830) : const Color(0xFFE6E0D0);
+    // Avancé : bordures teintées lavande/violet plutôt que gris neutre, en
+    // cohérence avec la charte (surfaces/fond de la palette avancée).
+    return _dark ? const Color(0xFF3730A3) : const Color(0xFFDDD6FE);
+  }
+
   static Color get paper {
-    // Novice sombre : vert forêt/émeraude profond (plus de bleu que de
-    // jaune dans la teinte) — un premier réglage (0xFF1C2617) virait trop
-    // vers le kaki/olive terne au goût de l'utilisateur, corrigé ici vers
-    // une teinte plus franche et moins brune.
-    if (_novice) return _dark ? const Color(0xFF0F241A) : const Color(0xFFE6EFDA);
-    // Avancé : bleu-nuit/ardoise (plutôt que le vert neutre précédent) pour
-    // appuyer l'identité "analytique" du mode, y compris de jour (nuance
-    // froide très légère plutôt que le beige chaud du novice).
-    return _dark ? const Color(0xFF0F172A) : const Color(0xFFF3F2F9);
+    // Novice : crème doux plutôt que blanc verdâtre, plus proche du fond
+    // neutre de la maquette de référence (le vert reste porté par l'accent
+    // et les pastilles d'icône, pas par le fond).
+    if (_novice) return _dark ? const Color(0xFF0F241A) : const Color(0xFFF3F0E6);
+    // Avancé : lavande (#EDE9FE, charte utilisateur) en jour ; #0F172A déjà
+    // conforme à la charte en nuit ("Fond").
+    return _dark ? const Color(0xFF0F172A) : const Color(0xFFEDE9FE);
   }
 
   /// Fond des cartes/encadrés — légèrement plus clair que [paper] en
   /// sombre ; teintée en cohérence avec [paper] plutôt que de flotter en
   /// blanc/vert neutre dessus.
   static Color get surface {
-    if (_novice) return _dark ? const Color(0xFF193A28) : const Color(0xFFF6FAF0);
-    return _dark ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF);
+    if (_novice) return _dark ? const Color(0xFF193A28) : const Color(0xFFFFFFFF);
+    // Avancé : blanc (charte "Fond" jour) / #1E1B4B (charte "Surface" nuit).
+    return _dark ? const Color(0xFF1E1B4B) : const Color(0xFFFFFFFF);
   }
 
-  static Color get good => _dark ? const Color(0xFF6FA97F) : const Color(0xFF4A7C59);
+  /// Vert "succès" — désormais un jeton à part entière (charte utilisateur
+  /// #10B981 jour / #34D399 nuit), distinct de [accent] même en novice : la
+  /// maquette de référence traite les accents sémantiques (succès,
+  /// attention, erreur) comme une palette commune aux deux modes, séparée
+  /// de la couleur de marque de chaque mode.
+  static Color get good => _dark ? const Color(0xFF34D399) : const Color(0xFF10B981);
 
   /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
-  /// doux en novice (identique jour/nuit), violet (un seul ton, dégradé
-  /// clair→foncé) en avancé de jour, ardoise→cyan→émeraude en avancé de
-  /// nuit. Volontairement monochrome en avancé de jour (pas de rose/orange
-  /// mêlés) : un dégradé multi-teintes devenait criard et rendait les
-  /// courbes tracées par-dessus (ex. cash-flow du portefeuille) difficiles
-  /// à lire.
+  /// doux en novice (identique jour/nuit), violet clair→principal en avancé
+  /// de jour (mauve #A768FA → violet principal #7C3AED, charte
+  /// utilisateur), violet profond→principal en avancé de nuit — remplace
+  /// l'ardoise→cyan→émeraude précédent, qui ne collait plus à l'identité
+  /// violette. Toujours volontairement resserré sur une seule famille de
+  /// teinte (pas de rose/orange mêlés) pour que les courbes tracées
+  /// par-dessus (ex. cash-flow du portefeuille) restent lisibles.
   static List<Color> get heroGradient {
     if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
-    // Avancé de jour : écart clair→foncé élargi (0xA78BFA→0x5B21B6, au lieu
-    // de 0x8B5CF6→0x6D28D9) — les deux tons précédents étaient trop proches
-    // en clarté pour qu'un dégradé diagonal se voie clairement à l'écran, ce
-    // qui donnait l'impression d'un aplat uni plutôt que d'un dégradé.
     return _dark
-        ? const [Color(0xFF1E293B), Color(0xFF06B6D4), Color(0xFF10B981)]
-        : const [Color(0xFFA78BFA), Color(0xFF5B21B6)];
+        ? const [Color(0xFF312E81), Color(0xFF7C3AED), Color(0xFFA78BFA)]
+        : const [Color(0xFFA768FA), Color(0xFF7C3AED)];
   }
 
   /// Bande dégradée derrière le titre de chaque section (voir
-  /// `SectionTitle`) — terre cuite en mode novice, cyan/turquoise en mode
-  /// avancé, volontairement distinctes de [accent] pour se démarquer comme
-  /// un repère visuel à part plutôt que se fondre dans le reste de
-  /// l'identité de couleur. La moutarde essayée avant (trop "or", puis
-  /// trop mate au goût de l'utilisateur) est remplacée par un dégradé
-  /// turquoise → cyan.
+  /// `SectionTitle`) — terre cuite en mode novice (inchangée), violet en
+  /// mode avancé (mauve→lavande en jour, violet profond→principal en nuit,
+  /// charte utilisateur) : le cyan/turquoise précédent jurait avec la
+  /// nouvelle identité violette de l'avancé.
   static List<Color> get sectionBandGradient {
     if (_novice) {
       return _dark
@@ -92,14 +112,14 @@ class AppColors {
           : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
     }
     return _dark
-        ? const [Color(0xFF0C4A6E), Color(0xFF0E7490)]
-        : const [Color(0xFF2DD4BF), Color(0xFFA5F3FC)];
+        ? const [Color(0xFF312E81), Color(0xFF7C3AED)]
+        : const [Color(0xFFA768FA), Color(0xFFEDE9FE)];
   }
 
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
   /// haut→bas, dans la même famille de teinte que [paper] plutôt qu'un
   /// simple aplat ; distinct par mode/nuit comme le reste de l'identité
-  /// visuelle.
+  /// visuelle. Avancé recalé sur la lavande/le fond de la charte utilisateur.
   static List<Color> get backgroundGradient {
     if (_novice) {
       return _dark
@@ -107,8 +127,8 @@ class AppColors {
           : const [Color(0xFFF3F8ED), Color(0xFFE0EBD2)];
     }
     return _dark
-        ? const [Color(0xFF0F172A), Color(0xFF1A1233)]
-        : const [Color(0xFFF6F4FB), Color(0xFFE8E3F3)];
+        ? const [Color(0xFF0F172A), Color(0xFF1E1B4B)]
+        : const [Color(0xFFF8F6FF), Color(0xFFEDE9FE)];
   }
 }
 
