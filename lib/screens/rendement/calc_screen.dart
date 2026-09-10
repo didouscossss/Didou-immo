@@ -145,12 +145,15 @@ class _CalcScreenState extends State<CalcScreen> {
     final isNovice = state.niveau == NiveauMode.novice;
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
+    // "Le bien" reste 3 groupes distincts (Informations générales /
+    // Caractéristiques du bien / Prix et travaux), chacun désormais posé
+    // sur une carte légère (fond surface, ombre très discrète, pas de
+    // bordure) plutôt que simplement séparé par de l'espace — repris de la
+    // nouvelle maquette de référence. Un essai précédent de "cartes" plus
+    // marquées (bordure visible) n'avait pas plu à l'utilisateur ; celle-ci
+    // reste volontairement sobre (voir `_card`).
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // "Le bien" n'est plus un unique bloc continu mais 3 groupes, chacun
-      // avec sa pastille d'icône colorée — repris d'une maquette de
-      // référence envoyée par l'utilisateur (Informations générales /
-      // Caractéristiques du bien / Prix et travaux), à la place du bandeau
-      // de titre unique + intitulés typographiques seuls essayés avant.
+      _card([
       const SectionTitle('Informations générales', icon: Icons.badge_outlined, color: Color(0xFF7C6FE0)),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
@@ -190,8 +193,11 @@ class _CalcScreenState extends State<CalcScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 12),
+          // paperSecondary (pas surface) : ce bloc est désormais niché dans
+          // la carte "Informations générales", elle-même en surface — sans
+          // ça, il s'y fondait complètement, seule sa bordure le distinguait.
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.paperSecondary,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
@@ -214,7 +220,7 @@ class _CalcScreenState extends State<CalcScreen> {
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.only(bottom: 24),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AppColors.paperSecondary,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.border),
           ),
@@ -257,7 +263,9 @@ class _CalcScreenState extends State<CalcScreen> {
             }),
           ),
         ),
-      const SizedBox(height: 32),
+      ]),
+      const SizedBox(height: 20),
+      _card([
       const SectionTitle('Caractéristiques du bien', icon: Icons.home_work_outlined, color: Color(0xFF4A9B6E)),
       ModeToggle(mode: form.mode, onChanged: (m) => set((f) => f.copyWith(mode: m))),
       const SizedBox(height: 26),
@@ -393,7 +401,9 @@ class _CalcScreenState extends State<CalcScreen> {
             ),
           ]),
         ),
-      const SizedBox(height: 32),
+      ]),
+      const SizedBox(height: 20),
+      _card([
       const SectionTitle('Prix et travaux', icon: Icons.payments_outlined, color: Color(0xFF3B82C4)),
       AbsorbPointer(
         absorbing: state.identityLocked,
@@ -450,8 +460,19 @@ class _CalcScreenState extends State<CalcScreen> {
         ],
       ] else
         _fraisAnnexesFields(form, set),
-      const SizedBox(height: 24),
+      ]),
     ]);
+  }
+
+  /// Carte thématique légère — fond surface, ombre très discrète, pas de
+  /// bordure : sépare visuellement les groupes de champs sans reproduire
+  /// l'effet "boîte" plus marqué essayé (et écarté) précédemment.
+  Widget _card(List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.sm),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+    );
   }
 
   /// Intitulé de bloc pour l'onglet "Bien" — police serif (celle des
