@@ -57,7 +57,7 @@ class DidouImmoApp extends StatelessWidget {
       // `AppColors.xxx` à chaque rebuild.
       child: Consumer<RendementState>(
         builder: (context, state, _) => MaterialApp(
-          title: 'Rendement',
+          title: 'Didou-Immo',
           debugShowCheckedModeBanner: false,
           theme: buildAppTheme(dark: state.darkMode, novice: state.niveau == NiveauMode.novice),
           // Sans ça, les sélecteurs de date natifs (ex. date d'achat d'un

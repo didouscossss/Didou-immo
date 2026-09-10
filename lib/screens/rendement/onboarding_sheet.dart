@@ -53,9 +53,12 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
       title: 'Bienvenue 👋',
       caption: "Je suis Didou, je t'accompagne",
       icon: Icons.waving_hand_outlined,
+      // Résumé de l'appli en 3 lignes plutôt qu'un slide par onglet comme
+      // les suivants — rien de précis à montrer avec la flèche à ce stade
+      // (voir _buildTutoSlide, qui la masque pour ce tout premier slide).
       points: const [
-        "T'aide à savoir si un bien est un bon investissement avant de te lancer",
-        'Rentabilité, financement et fiscalité au même endroit',
+        "Didou-Immo t'aide à savoir si un bien est un bon investissement avant de te lancer",
+        'Rentabilité, financement, fiscalité et projection dans le temps, au même endroit',
         'Un tour rapide de chaque onglet avant de commencer',
       ],
     ),
@@ -328,8 +331,14 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
               // le même État (et donc la même animation déjà épuisée)
               // d'un slide à l'autre au lieu de rejouer le rebond à
               // chaque fois.
-              PointingArrow(key: ValueKey(_step)),
-              const SizedBox(width: 8),
+              //
+              // Absente du tout premier slide : c'est un résumé général de
+              // l'appli, pas la présentation d'un onglet précis — il n'y a
+              // rien qu'elle pointerait de façon pertinente.
+              if (_step != 0) ...[
+                PointingArrow(key: ValueKey(_step)),
+                const SizedBox(width: 8),
+              ],
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
