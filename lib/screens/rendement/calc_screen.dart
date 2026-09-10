@@ -654,8 +654,11 @@ class _CalcScreenState extends State<CalcScreen> {
           border: Border.all(color: core.capaciteOk ? AppColors.border : AppColors.alert),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Text('Mensualité max (35 % d\'endettement)', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(
+              child: Text('Mensualité max (35 % d\'endettement)', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
+            ),
+            const SizedBox(width: 8),
             Text(eur(core.mensualiteMax), style: AppTextStyles.mono(fontSize: 15, color: AppColors.ink)),
           ]),
           const SizedBox(height: 8),

@@ -11,6 +11,7 @@ import '../../utils/formatters.dart';
 import '../../widgets/compare_bar.dart';
 import '../../widgets/arrival_bounce.dart';
 import '../../widgets/score_badge.dart';
+import '../../widgets/section_card.dart';
 import '../../widgets/section_title.dart';
 
 /// Onglet "Comparer" — équivalent de `BiensScreen` du prototype.
@@ -222,11 +223,9 @@ class _BiensScreenState extends State<BiensScreen> {
   Widget _sectionComparatif(RendementState state) {
     final sorted = [...state.biens]..sort((a, b) => b.score.score.compareTo(a.score.score));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-      child: Column(children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      SectionCard(children: [
+        const SectionTitle('Comparatif graphique', icon: Icons.insert_chart_outlined, color: Color(0xFF5B6FD8)),
         CompareBar(
           label: 'Rentabilité nette (%)',
           values: sorted.map((b) => CompareBarValue(b.form.nom.isEmpty ? 'Sans nom' : b.form.nom, b.core.net)).toList(),
@@ -246,71 +245,65 @@ class _BiensScreenState extends State<BiensScreen> {
           color: AppColors.good,
         ),
       ]),
-    );
+      const SizedBox(height: 20),
+    ]);
   }
 
   Widget _sectionHistorique(List<SavedProperty> vendus) {
     final sortedVendus = [...vendus]..sort((a, b) => (b.form.dateVente ?? DateTime(0)).compareTo(a.form.dateVente ?? DateTime(0)));
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      InkWell(
-        onTap: () => setState(() => _showHistorique = !_showHistorique),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          margin: EdgeInsets.only(bottom: _showHistorique ? 0 : 4),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Row(children: [
-              Icon(Icons.history, size: 15, color: AppColors.gold),
-              const SizedBox(width: 8),
-              Text('Historique des ventes (${sortedVendus.length})', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+      SectionCard(children: [
+        SectionTitle('Historique des ventes (${sortedVendus.length})', icon: Icons.history, color: const Color(0xFFD4A72C)),
+        InkWell(
+          onTap: () => setState(() => _showHistorique = !_showHistorique),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('Voir le détail', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+              Icon(_showHistorique ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
             ]),
-            Icon(_showHistorique ? Icons.expand_less : Icons.expand_more, color: AppColors.ink.withValues(alpha: 0.4)),
-          ]),
+          ),
         ),
-      ),
-      if (_showHistorique) ..._buildHistorique(sortedVendus),
-      const SizedBox(height: 4),
+        if (_showHistorique) ...[
+          const SizedBox(height: 12),
+          ..._buildHistorique(sortedVendus),
+        ],
+      ]),
+      const SizedBox(height: 20),
     ]);
   }
 
   Widget _sectionExport(RendementState state) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Container(
-        padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(Icons.table_view_outlined, size: 15, color: AppColors.accent),
-            const SizedBox(width: 8),
-            Text('Exporter en CSV', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
-          ]),
-          const SizedBox(height: 6),
-          Text(
-            "Génère un fichier avec tous tes biens enregistrés, un par ligne — à ouvrir dans un tableur pour croiser ou retravailler les chiffres toi-même.",
-            style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
+      SectionCard(children: [
+        const SectionTitle('Exporter en CSV', icon: Icons.table_view_outlined, color: Color(0xFF2FA39B)),
+        Text(
+          "Génère un fichier avec tous tes biens enregistrés, un par ligne — à ouvrir dans un tableur pour croiser ou retravailler les chiffres toi-même.",
+          style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.55)),
+        ),
+        const SizedBox(height: 12),
+        ArrivalBounce(
+          child: OutlinedButton.icon(
+            onPressed: () => _exportCsv(context, state.biens),
+            icon: const Icon(Icons.ios_share, size: 15),
+            label: const Text('Générer le CSV'),
           ),
-          const SizedBox(height: 12),
-          ArrivalBounce(
-            child: OutlinedButton.icon(
-              onPressed: () => _exportCsv(context, state.biens),
-              icon: const Icon(Icons.ios_share, size: 15),
-              label: const Text('Générer le CSV'),
+        ),
+        const SizedBox(height: 12),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Le score combine rendement, cash-flow, écart au marché local et taux d'occupation — un repère de comparaison, pas un conseil financier.",
+              style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
             ),
           ),
         ]),
-      ),
-      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            "Le score combine rendement, cash-flow, écart au marché local et taux d'occupation — un repère de comparaison, pas un conseil financier.",
-            style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
-          ),
-        ),
       ]),
+      const SizedBox(height: 20),
     ]);
   }
 
@@ -446,7 +439,7 @@ class _BiensScreenState extends State<BiensScreen> {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+          decoration: BoxDecoration(color: AppColors.paperSecondary, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom,
                 style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.ink)),
