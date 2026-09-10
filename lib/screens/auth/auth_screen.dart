@@ -178,9 +178,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Align(alignment: Alignment.topRight, child: _themeToggle(c, dark)),
-                      Center(
-                        child: Image.asset('assets/images/didou_logo.png', width: 150, fit: BoxFit.contain),
-                      ),
+                      Center(child: _logo(c, dark)),
                       const SizedBox(height: 2),
                       Center(
                         child: Text('BIEN INVESTIR',
@@ -358,6 +356,26 @@ class _AuthScreenState extends State<AuthScreen> {
         decoration: BoxDecoration(color: c.surface, shape: BoxShape.circle, border: Border.all(color: c.border), boxShadow: c.shadowSm),
         child: Icon(dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined, size: 18, color: c.accent),
       ),
+    );
+  }
+
+  /// Le logo a une partie du texte ("Didou-") et du dessin en blanc — pas de
+  /// contraste en mode jour, sur le fond très clair. Un fondu radial discret
+  /// juste derrière (visible seulement de jour, le mode nuit n'a pas ce
+  /// problème sur son fond déjà sombre) suffit à le rendre lisible sans
+  /// ajouter un vrai encadré.
+  Widget _logo(_NoviceColors c, bool dark) {
+    return Container(
+      width: 210,
+      height: 130,
+      alignment: Alignment.center,
+      decoration: dark
+          ? null
+          : BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: RadialGradient(radius: 0.75, colors: [c.ink.withValues(alpha: 0.14), c.ink.withValues(alpha: 0)]),
+            ),
+      child: Image.asset('assets/images/didou_logo.png', width: 150, fit: BoxFit.contain),
     );
   }
 
