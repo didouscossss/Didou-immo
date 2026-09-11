@@ -49,7 +49,10 @@ android {
             create("release") {
                 keyAlias = keystoreProperties["keyAlias"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
+                // rootProject.file (pas file) : résout par rapport à
+                // android/ (où vit key.properties), pas android/app/ — le
+                // "file()" nu ici aurait cherché le .jks dans android/app/.
+                storeFile = rootProject.file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
             }
         }
