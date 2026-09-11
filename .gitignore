@@ -44,6 +44,11 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Clé de signature de release — jamais dans le dépôt (voir key.properties.example)
+/android/key.properties
+*.jks
+*.keystore
+
 # Cloud Functions (Node.js)
 /functions/node_modules/
 /functions/lib/
