@@ -96,9 +96,14 @@ class UserAccountState extends ChangeNotifier {
       await action();
       return null;
     } on fb.FirebaseAuthException catch (e) {
-      return e.message ?? 'Une erreur est survenue.';
-    } catch (_) {
-      return 'Une erreur est survenue.';
+      return '${e.message ?? "Erreur"} (${e.code})';
+    } catch (e) {
+      // Message générique temporairement enrichi du détail technique — la
+      // connexion Google échoue en prod avec seulement "Une erreur est
+      // survenue.", sans indice sur la cause réelle (pas une
+      // FirebaseAuthException, donc pas de code d'erreur standard). Affiché
+      // le temps de diagnostiquer, à ré-simplifier une fois la cause connue.
+      return 'Une erreur est survenue : $e';
     }
   }
 
