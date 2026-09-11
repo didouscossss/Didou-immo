@@ -1143,7 +1143,8 @@ class _CalcScreenState extends State<CalcScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          // paperSecondary (pas surface) : nichée dans la carte "Financement".
+          color: AppColors.paperSecondary,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: isBest ? AppColors.accent : AppColors.border),
         ),
@@ -1173,16 +1174,18 @@ class _CalcScreenState extends State<CalcScreen> {
             ),
           ]),
           const SizedBox(height: 10),
+          // 2 champs par ligne (pas 3) : avec le badge de suffixe ("%",
+          // "ans"), 3 champs sur une ligne ne laissaient presque plus de
+          // place pour le chiffre lui-même sur un écran de téléphone — il
+          // défilait hors de vue derrière le badge pendant la saisie,
+          // illisible (signalé par l'utilisateur, capture à l'appui).
           Row(children: [
-            Expanded(flex: 5, child: NumberField(label: 'Taux', value: offre.tauxPct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(tauxPct: v)))),
+            Expanded(child: NumberField(label: 'Taux', value: offre.tauxPct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(tauxPct: v)))),
             const SizedBox(width: 8),
-            // Flex un peu plus large : le suffixe "ans" (3 lettres) prend
-            // plus de place que "%", et rognait le chiffre des années sur
-            // 3 champs par ligne.
-            Expanded(flex: 6, child: NumberField(label: 'Durée', value: offre.dureePretAns.toDouble(), suffix: 'ans', onChanged: (v) => updateOffre((o) => o.copyWith(dureePretAns: v.round())))),
-            const SizedBox(width: 8),
-            Expanded(flex: 5, child: NumberField(label: 'Assurance', value: offre.assurancePct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(assurancePct: v)))),
+            Expanded(child: NumberField(label: 'Durée', value: offre.dureePretAns.toDouble(), suffix: 'ans', onChanged: (v) => updateOffre((o) => o.copyWith(dureePretAns: v.round())))),
           ]),
+          const SizedBox(height: 10),
+          NumberField(label: 'Assurance', value: offre.assurancePct, suffix: '%', onChanged: (v) => updateOffre((o) => o.copyWith(assurancePct: v))),
           const SizedBox(height: 10),
           Container(height: 1, color: AppColors.border),
           const SizedBox(height: 8),
