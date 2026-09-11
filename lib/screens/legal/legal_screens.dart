@@ -217,7 +217,7 @@ class CgvScreen extends StatelessWidget {
         _Section(
           "Description de l'offre",
           "Version gratuite : jusqu'à 3 biens enregistrés.\n"
-              "Abonnement « Illimité » : 4,99 €/mois ou 50 €/an, sans limite de biens enregistrés. Paiement géré par "
+              "Abonnement « Illimité » : 4,99 €/mois ou 35 €/an, sans limite de biens enregistrés. Paiement géré par "
               "Google Play Billing (application Android), avec renouvellement automatique à chaque échéance sauf "
               "résiliation.",
         ),

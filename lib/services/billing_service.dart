@@ -5,7 +5,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 ///
 /// ÉTAPES CÔTÉ PLAY CONSOLE (à faire avant que ce code fonctionne) :
 /// 1. Créer un produit d'abonnement dans Play Console > Monétisation > Produits > Abonnements
-/// 2. Créer deux offres de base sur ce produit : mensuelle (4,99€) et annuelle (50€)
+/// 2. Créer deux offres de base sur ce produit : mensuelle (4,99€) et annuelle (35€)
 /// 3. Utiliser les IDs exacts définis ci-dessous (subscriptionProductId) — ils doivent
 ///    correspondre EXACTEMENT à ceux configurés dans Play Console
 /// 4. L'app doit être publiée au moins en test interne pour que les achats fonctionnent
