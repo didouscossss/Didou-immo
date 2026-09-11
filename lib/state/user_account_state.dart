@@ -65,13 +65,24 @@ class UserAccountState extends ChangeNotifier {
     if (u != null) {
       loading = true;
       notifyListeners();
-      await _firestore.ensureUserDoc(u.uid);
-      var status = await _firestore.getUserStatus(u.uid);
-      if (status != null && status['referralCode'] == null) {
-        await _referral.assignReferralCode(u.uid);
-        status = await _firestore.getUserStatus(u.uid);
+      // Timeout de secours : après une connexion Google sur web (redirection
+      // pleine page vers accounts.google.com puis retour), Firestore peut
+      // mettre un moment à répondre au tout premier appel du rechargement —
+      // sans filet, l'écran restait bloqué indéfiniment sur le spinner
+      // (signalé par l'utilisateur). On continue avec le compte connecté
+      // (`userDoc` reste `null`, `refresh()` le retentera plus tard) plutôt
+      // que de rester coincé sans recours.
+      try {
+        await _firestore.ensureUserDoc(u.uid).timeout(const Duration(seconds: 12));
+        var status = await _firestore.getUserStatus(u.uid).timeout(const Duration(seconds: 12));
+        if (status != null && status['referralCode'] == null) {
+          await _referral.assignReferralCode(u.uid).timeout(const Duration(seconds: 12));
+          status = await _firestore.getUserStatus(u.uid).timeout(const Duration(seconds: 12));
+        }
+        userDoc = status;
+      } on TimeoutException {
+        userDoc = null;
       }
-      userDoc = status;
       loading = false;
     }
     notifyListeners();
@@ -96,14 +107,9 @@ class UserAccountState extends ChangeNotifier {
       await action();
       return null;
     } on fb.FirebaseAuthException catch (e) {
-      return '${e.message ?? "Erreur"} (${e.code})';
-    } catch (e) {
-      // Message générique temporairement enrichi du détail technique — la
-      // connexion Google échoue en prod avec seulement "Une erreur est
-      // survenue.", sans indice sur la cause réelle (pas une
-      // FirebaseAuthException, donc pas de code d'erreur standard). Affiché
-      // le temps de diagnostiquer, à ré-simplifier une fois la cause connue.
-      return 'Une erreur est survenue : $e';
+      return e.message ?? 'Une erreur est survenue.';
+    } catch (_) {
+      return 'Une erreur est survenue.';
     }
   }
 
