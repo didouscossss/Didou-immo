@@ -1,0 +1,50 @@
+name: Build Android (App Bundle signé)
+
+# Déclenchement manuel uniquement — depuis l'onglet "Actions" du dépôt sur
+# github.com ou l'appli GitHub mobile (bouton "Run workflow"). Produit un
+# .aab signé avec la vraie clé de release, prêt à uploader dans Play
+# Console. Ne tourne jamais automatiquement (pas de `push:`) : ni coût ni
+# risque inutile à chaque commit, seulement quand une nouvelle version doit
+# vraiment être publiée.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Reconstruit android/key.properties + le fichier .jks à partir des
+      # secrets du dépôt (jamais commités) — voir android/key.properties.example
+      # pour le format, et le message envoyé à l'utilisateur pour la
+      # procédure d'ajout des secrets.
+      - name: Prépare la clé de signature
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+
+      - run: flutter build appbundle --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: didou-immo-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
