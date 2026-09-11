@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Requis pour Firebase (Auth, Firestore, Storage) et les appels
+         réseau (tuiles de carte, DVF...) — jusque-là seulement déclaré
+         dans le manifeste debug (nécessaire au hot reload), donc absent
+         d'un vrai build release. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Didou Immo"
         android:name="${applicationName}"

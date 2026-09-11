@@ -1,0 +1,10 @@
+# Copier ce fichier en "key.properties" (même dossier), rempli avec les
+# vraies valeurs — "key.properties" est ignoré par git (.gitignore), il ne
+# doit JAMAIS être commité.
+#
+# storeFile : chemin vers le fichier .jks de la clé de release, relatif à ce
+# dossier (android/) ou absolu.
+storePassword=CHANGEME
+keyPassword=CHANGEME
+keyAlias=upload
+storeFile=upload-keystore.jks
