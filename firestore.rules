@@ -61,6 +61,11 @@ service cloud.firestore {
           ]) ||
         isRedeemingValidAccessCode()
       );
+      // Sans cette règle, `UserAccountState.deleteAccount` (qui supprime ce
+      // document avant le compte Auth lui-même, voir ce fichier plus haut)
+      // échoue silencieusement : le batch entier est rejeté par défaut faute
+      // d'autorisation explicite de suppression.
+      allow delete: if isOwner(uid);
 
       match /properties/{propertyId} {
         allow read, write: if isOwner(uid);
