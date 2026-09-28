@@ -1,7 +1,7 @@
 name: didou_immo
 description: Didou Immo — calculateur de rentabilité immobilière, aide à l'achat.
 publish_to: 'none'
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: ^3.9.0
@@ -24,6 +24,10 @@ dependencies:
 
   # Abonnement via Google Play Billing
   in_app_purchase: ^3.2.0
+  # Accès direct aux types Android (GooglePlayProductDetails) — nécessaire
+  # pour lire la période de facturation (mensuel/annuel) d'une offre,
+  # absente de l'API générique ProductDetails commune aux plateformes.
+  in_app_purchase_android: ^0.5.3
 
   # Recherche de communes (geo.api.gouv.fr)
   http: ^1.2.2
