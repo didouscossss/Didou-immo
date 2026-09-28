@@ -107,9 +107,9 @@ class UserAccountState extends ChangeNotifier {
       await action();
       return null;
     } on fb.FirebaseAuthException catch (e) {
-      return e.message ?? 'Une erreur est survenue.';
-    } catch (_) {
-      return 'Une erreur est survenue.';
+      return '${e.message ?? "Erreur"} (${e.code})';
+    } catch (e) {
+      return 'Une erreur est survenue : $e';
     }
   }
 
