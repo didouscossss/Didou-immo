@@ -332,12 +332,21 @@ class _RendementHomeState extends State<RendementHome> {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(meta.icon, size: isActive ? 20 : 18, color: color),
                   const SizedBox(height: 3),
-                  Text(
-                    meta.label,
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.sans(fontSize: 9, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: color),
+                  // FittedBox plutôt que maxLines+ellipsis : avec jusqu'à 7
+                  // onglets à largeur égale, les libellés longs ("Comparateur",
+                  // "Patrimoine", "Projection") étaient coupés ("Compa...") et
+                  // illisibles. Réduire la taille de police au lieu de
+                  // tronquer garde le mot entier visible, quelle que soit la
+                  // largeur d'écran, sans désaligner la hauteur des onglets
+                  // entre eux (contrairement à un passage à 2 lignes).
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      meta.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: AppTextStyles.sans(fontSize: 9, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, color: color),
+                    ),
                   ),
                 ]),
               ),

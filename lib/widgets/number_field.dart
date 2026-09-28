@@ -71,11 +71,19 @@ class _NumberFieldState extends State<NumberField> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Flexible(
+              // maxLines à 2 (et non 1) : sur les mises en page à 2-3 champs
+              // par ligne, l'espace horizontal disponible est trop étroit
+              // pour beaucoup de libellés ("Frais d'acquisition", "Vacance
+              // locative"...), qui se retrouvaient coupés en "Frais d..."
+              // sans que la suite soit visible nulle part. Le retour à la
+              // ligne règle ça sans rien tronquer dans l'immense majorité
+              // des cas.
               child: Text(
                 widget.label,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
               ),
