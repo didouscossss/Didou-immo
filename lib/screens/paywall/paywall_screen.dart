@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/billing_service.dart';
@@ -71,6 +72,27 @@ class _PaywallScreenState extends State<PaywallScreen> {
     super.dispose();
   }
 
+  /// Extrait la période de facturation ("/mois", "/an"...) depuis les
+  /// données Google Play Billing — sans ça, les deux offres affichent le
+  /// même nom ("Abonnement Illimité") et seul le prix diffère, impossible
+  /// de savoir laquelle est mensuelle ou annuelle sans taper dessus.
+  String? _billingPeriodSuffix(ProductDetails p) {
+    if (p is! GooglePlayProductDetails) return null;
+    final offers = p.productDetails.subscriptionOfferDetails;
+    final index = p.subscriptionIndex;
+    if (offers == null || index == null || index >= offers.length) return null;
+    final phases = offers[index].pricingPhases;
+    if (phases.isEmpty) return null;
+    // Dernière phase : celle du prix récurrent normal (après un éventuel
+    // essai gratuit ou tarif de lancement, si un jour configuré).
+    final match = RegExp(r'^P(\d+)([MY])$').firstMatch(phases.last.billingPeriod);
+    if (match == null) return null;
+    final count = int.parse(match.group(1)!);
+    final isYear = match.group(2) == 'Y';
+    if (count == 1) return isYear ? '/an' : '/mois';
+    return isYear ? '/$count ans' : '/$count mois';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,20 +119,29 @@ class _PaywallScreenState extends State<PaywallScreen> {
               if (!_loading && _products.isEmpty)
                 const Text("Aucune offre disponible pour le moment.", style: TextStyle(fontSize: 13, color: Colors.black54)),
               if (!_loading)
-                ..._products.map(
-                  (p) => Card(
+                ..._products.map((p) {
+                  final period = _billingPeriodSuffix(p);
+                  return Card(
                     child: ListTile(
                       title: Text(p.title),
                       subtitle: Text(p.description),
-                      trailing: Text(p.price, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      trailing: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(p.price, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          if (period != null)
+                            Text(period, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                        ],
+                      ),
                       enabled: !_purchasing,
                       onTap: () {
                         setState(() => _purchasing = true);
                         _billing.buySubscription(p);
                       },
                     ),
-                  ),
-                ),
+                  );
+                }),
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () => _billing.restorePurchases(),
