@@ -6,6 +6,9 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Traite google-services.json à la compilation (voir settings.gradle.kts) —
+    // requis pour que Firebase Auth / Google Sign-In natif fonctionnent sur Android.
+    id("com.google.gms.google-services")
 }
 
 // Clé de signature de release — lue depuis android/key.properties, jamais
