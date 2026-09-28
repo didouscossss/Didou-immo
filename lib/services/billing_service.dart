@@ -41,6 +41,16 @@ class BillingService {
             if (p.pendingCompletePurchase) {
               _iap.completePurchase(p);
             }
+          } else if (p.status == PurchaseStatus.canceled ||
+              p.status == PurchaseStatus.error) {
+            // Un achat annulé (ex. retour en arrière sur l'écran de paiement
+            // Google pour choisir l'autre offre) ou en erreur ne déclenchait
+            // jusqu'ici ni onPurchase ni onError : l'écran restait bloqué en
+            // "achat en cours" (boutons grisés) jusqu'à sa fermeture/réouverture.
+            onError(p.error ?? Exception('Achat annulé'));
+            if (p.pendingCompletePurchase) {
+              _iap.completePurchase(p);
+            }
           }
         }
       },
