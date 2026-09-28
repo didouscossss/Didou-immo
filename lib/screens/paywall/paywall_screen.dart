@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../services/billing_service.dart';
 import '../../services/firestore_service.dart';
 import '../../state/user_account_state.dart';
+import '../../theme/app_theme.dart';
 import '../legal/legal_screens.dart';
 
 /// Affiché quand l'utilisateur a épuisé ses biens gratuits et n'est pas
@@ -109,15 +110,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
             const SizedBox(height: 24),
             if (kIsWeb)
-              const Text(
+              Text(
                 "L'abonnement se souscrit depuis l'application Android (Google Play Billing) — "
                 "pas disponible sur cette version web.",
-                style: TextStyle(fontSize: 13, color: Colors.black54),
+                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
               )
             else ...[
               if (_loading) const Center(child: CircularProgressIndicator()),
               if (!_loading && _products.isEmpty)
-                const Text("Aucune offre disponible pour le moment.", style: TextStyle(fontSize: 13, color: Colors.black54)),
+                Text("Aucune offre disponible pour le moment.", style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
               if (!_loading)
                 ..._products.map((p) {
                   final period = _billingPeriodSuffix(p);
@@ -131,7 +132,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         children: [
                           Text(p.price, style: const TextStyle(fontWeight: FontWeight.bold)),
                           if (period != null)
-                            Text(period, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                            // AppColors.textMuted (et non Colors.black54, fixe) :
+                            // en thème sombre, un gris "noir 54%" est quasiment
+                            // invisible sur fond sombre — signalé par
+                            // l'utilisateur, le "/mois"/"/an" ajouté juste avant
+                            // était bien affiché mais illisible.
+                            Text(period, style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                         ],
                       ),
                       enabled: !_purchasing,
