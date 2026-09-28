@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "561302404630-oo5kgep5asnrgpbrb5r7a4gogm53a7d0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.didouimmo.didou_immo",
+            "certificate_hash": "9f6ae148f6203c5e48f00cb9a0e9b5bfdec2abfc"
+          }
+        },
+        {
           "client_id": "561302404630-9i8fbs4ntncssru4r8mrue3rvd7cjrvc.apps.googleusercontent.com",
           "client_type": 3
         }
