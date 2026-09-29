@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "561302404630-31nehml3vuj65ha8qu3u042ep2scbf4i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.didouimmo.didou_immo",
+            "certificate_hash": "963cbb096f655a1020587bde023af99154251355"
+          }
+        },
+        {
           "client_id": "561302404630-hflat7jq5r0rlt0a09rlh492k78daoan.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
