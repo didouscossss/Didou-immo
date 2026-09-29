@@ -986,7 +986,7 @@ class _CalcScreenState extends State<CalcScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: NumberField(
-            label: 'Travaux / rénovation',
+            label: 'Travaux',
             value: form.travaux,
             suffix: '€',
             hint: form.travauxAuto ? '${travauxDefaultParM2.round()} €/m² auto' : null,
