@@ -70,38 +70,48 @@ class _NumberFieldState extends State<NumberField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Hauteur fixe (2 lignes de libellé) plutôt que la hauteur naturelle
-        // du contenu : sans ça, un champ dont le libellé tient sur 1 ligne
-        // et son voisin sur 2 (ou dont un seul a une icône glossaire)
-        // n'avaient pas la même hauteur d'en-tête — les champs de saisie
-        // juste en dessous se retrouvaient décalés verticalement l'un par
-        // rapport à l'autre sur une même ligne.
+        // Hauteur fixe (libellé sur 2 lignes + indice) plutôt que la hauteur
+        // naturelle du contenu — réservée que l'indice soit présent ou non :
+        // sans ça, un champ dont le libellé tient sur 1 ligne (ou sans
+        // indice/icône) n'avait pas la même hauteur d'en-tête que son
+        // voisin, et les champs de saisie juste en dessous se retrouvaient
+        // décalés verticalement l'un par rapport à l'autre sur une même
+        // ligne.
         SizedBox(
-          height: 36,
-          child: Row(
+          height: 50,
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                // maxLines à 2 (et non 1) : sur les mises en page à 2-3 champs
-                // par ligne, l'espace horizontal disponible est trop étroit
-                // pour beaucoup de libellés ("Frais d'acquisition", "Vacance
-                // locative"...), qui se retrouvaient coupés en "Frais d..."
-                // sans que la suite soit visible nulle part. Le retour à la
-                // ligne règle ça sans rien tronquer dans l'immense majorité
-                // des cas.
-                child: Text(
-                  widget.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    // maxLines à 2 (et non 1) : sur les mises en page à 2-3
+                    // champs par ligne, l'espace horizontal disponible est
+                    // trop étroit pour beaucoup de libellés ("Frais
+                    // d'acquisition", "Vacance locative"...), qui se
+                    // retrouvaient coupés en "Frais d..." sans que la suite
+                    // soit visible nulle part. Le retour à la ligne règle ça
+                    // sans rien tronquer dans l'immense majorité des cas.
+                    child: Text(
+                      widget.label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+                    ),
+                  ),
+                  if (widget.glossaryDefinition != null)
+                    GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
+                ],
               ),
-              if (widget.glossaryDefinition != null)
-                GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
-              if (widget.hint != null) ...[
-                const SizedBox(width: 6),
+              // L'indice ("8 % auto"...) est sur sa propre ligne, sous le
+              // libellé, plutôt qu'à côté sur la même ligne : partagé dans un
+              // même Row, il grignotait la largeur disponible pour le
+              // libellé au point qu'un simple mot comme "Travaux" pouvait se
+              // retrouver coupé en plein milieu ("Travau"/"x") faute de
+              // place, même sur 2 lignes.
+              if (widget.hint != null)
                 Text(widget.hint!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodySecondary().copyWith(fontSize: 11)),
-              ],
             ],
           ),
         ),
