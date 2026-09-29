@@ -70,31 +70,40 @@ class _NumberFieldState extends State<NumberField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Flexible(
-              // maxLines à 2 (et non 1) : sur les mises en page à 2-3 champs
-              // par ligne, l'espace horizontal disponible est trop étroit
-              // pour beaucoup de libellés ("Frais d'acquisition", "Vacance
-              // locative"...), qui se retrouvaient coupés en "Frais d..."
-              // sans que la suite soit visible nulle part. Le retour à la
-              // ligne règle ça sans rien tronquer dans l'immense majorité
-              // des cas.
-              child: Text(
-                widget.label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+        // Hauteur fixe (2 lignes de libellé) plutôt que la hauteur naturelle
+        // du contenu : sans ça, un champ dont le libellé tient sur 1 ligne
+        // et son voisin sur 2 (ou dont un seul a une icône glossaire)
+        // n'avaient pas la même hauteur d'en-tête — les champs de saisie
+        // juste en dessous se retrouvaient décalés verticalement l'un par
+        // rapport à l'autre sur une même ligne.
+        SizedBox(
+          height: 36,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                // maxLines à 2 (et non 1) : sur les mises en page à 2-3 champs
+                // par ligne, l'espace horizontal disponible est trop étroit
+                // pour beaucoup de libellés ("Frais d'acquisition", "Vacance
+                // locative"...), qui se retrouvaient coupés en "Frais d..."
+                // sans que la suite soit visible nulle part. Le retour à la
+                // ligne règle ça sans rien tronquer dans l'immense majorité
+                // des cas.
+                child: Text(
+                  widget.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+                ),
               ),
-            ),
-            if (widget.glossaryDefinition != null)
-              GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
-            if (widget.hint != null) ...[
-              const SizedBox(width: 6),
-              Text(widget.hint!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodySecondary().copyWith(fontSize: 11)),
+              if (widget.glossaryDefinition != null)
+                GlossaryIcon(term: widget.label, definition: widget.glossaryDefinition!),
+              if (widget.hint != null) ...[
+                const SizedBox(width: 6),
+                Text(widget.hint!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.bodySecondary().copyWith(fontSize: 11)),
+              ],
             ],
-          ],
+          ),
         ),
         const SizedBox(height: 6),
         // Bordure accent + ombre légère quand actif : seul repère de focus
