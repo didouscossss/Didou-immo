@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/billing_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/web_nav/navigate_to.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../legal/legal_screens.dart';
@@ -13,8 +15,11 @@ import '../legal/legal_screens.dart';
 /// Affiché quand l'utilisateur a épuisé ses biens gratuits et n'est pas
 /// encore abonné. Propose les deux offres (mensuelle / annuelle).
 ///
-/// Google Play Billing n'a pas d'implémentation web : sur le web, cet
-/// écran l'indique clairement plutôt que d'appeler une API absente.
+/// Deux circuits de paiement selon la plateforme, vers le même champ
+/// `isSubscribed` Firestore (voir `UserAccountState`) : Google Play Billing
+/// sur Android (`BillingService`), Stripe Checkout sur le web (`_buyWeb`,
+/// pas de Play Billing hors Android) — un compte abonné via l'un des deux
+/// est donc reconnu comme abonné sur l'autre, sans double paiement.
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -27,6 +32,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   List<ProductDetails> _products = [];
   bool _loading = true;
   bool _purchasing = false;
+  String? _webError;
 
   @override
   void initState() {
@@ -73,6 +79,41 @@ class _PaywallScreenState extends State<PaywallScreen> {
     super.dispose();
   }
 
+  /// Abonnement côté web — pas de Google Play Billing sur navigateur, donc
+  /// un paiement Stripe Checkout (voir `createStripeCheckoutSession` dans
+  /// `functions/index.js`) à la place : la fonction renvoie l'URL de la
+  /// page de paiement hébergée par Stripe, vers laquelle on redirige
+  /// simplement le navigateur. `successUrl`/`cancelUrl` pointent toutes les
+  /// deux vers la page courante (`Uri.base`) pour rester valables quel que
+  /// soit le domaine de déploiement.
+  ///
+  /// Le webhook Stripe (pas ce client) confirme le paiement et active
+  /// l'abonnement côté serveur — après la redirection de retour, un délai
+  /// de quelques secondes avant que `isSubscribed` soit à jour est normal.
+  Future<void> _buyWeb(String plan) async {
+    setState(() {
+      _purchasing = true;
+      _webError = null;
+    });
+    try {
+      final returnUrl = Uri.base.toString();
+      final result = await FirebaseFunctions.instance.httpsCallable('createStripeCheckoutSession').call({
+        'plan': plan,
+        'successUrl': returnUrl,
+        'cancelUrl': returnUrl,
+      });
+      final url = result.data['url'] as String?;
+      if (url == null) throw Exception('URL de paiement manquante.');
+      navigateTo(url);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _purchasing = false;
+        _webError = "Impossible de lancer le paiement pour le moment. Réessaie dans un instant.";
+      });
+    }
+  }
+
   /// Extrait la période de facturation ("/mois", "/an"...) depuis les
   /// données Google Play Billing — sans ça, les deux offres affichent le
   /// même nom ("Abonnement Illimité") et seul le prix diffère, impossible
@@ -109,13 +150,56 @@ class _PaywallScreenState extends State<PaywallScreen> {
               style: const TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 24),
-            if (kIsWeb)
-              Text(
-                "L'abonnement se souscrit depuis l'application Android (Google Play Billing) — "
-                "pas disponible sur cette version web.",
-                style: TextStyle(fontSize: 13, color: AppColors.textMuted),
-              )
-            else ...[
+            if (kIsWeb) ...[
+              // Pas de Google Play Billing sur navigateur : les deux mêmes
+              // offres (mêmes tarifs que l'app) passent par Stripe Checkout
+              // à la place — voir `_buyWeb`. Prix affichés en dur (pas de
+              // catalogue dynamique comme `ProductDetails` côté Play
+              // Billing) : à garder synchronisés avec les prix Stripe
+              // configurés côté Cloud Functions.
+              if (_webError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(_webError!, style: TextStyle(fontSize: 13, color: AppColors.alert)),
+                ),
+              Card(
+                child: ListTile(
+                  title: const Text('Abonnement Illimité (Didou-immo)'),
+                  subtitle: const Text('Sans engagement, résiliable à tout moment'),
+                  trailing: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('5,99 €', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('/mois', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    ],
+                  ),
+                  enabled: !_purchasing,
+                  onTap: () => _buyWeb('monthly'),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: const Text('Abonnement Illimité (Didou-immo)'),
+                  subtitle: const Text('Sans engagement, résiliable à tout moment'),
+                  trailing: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text('41,99 €', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text('/an', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    ],
+                  ),
+                  enabled: !_purchasing,
+                  onTap: () => _buyWeb('yearly'),
+                ),
+              ),
+              if (_purchasing)
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            ] else ...[
               if (_loading) const Center(child: CircularProgressIndicator()),
               if (!_loading && _products.isEmpty)
                 Text("Aucune offre disponible pour le moment.", style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
