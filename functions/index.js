@@ -137,13 +137,10 @@ exports.activateSubscription = onCall(async (request) => {
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 
-// TODO : remplacer par les vrais identifiants de prix une fois les deux
-// offres ("Abonnement Illimité", 5,99 €/mois et 41,99 €/an — mêmes tarifs
-// que Google Play) créées dans le tableau de bord Stripe (Produits > Créer
-// un produit > Ajouter un prix récurrent). Chaque prix a un identifiant du
-// type "price_1AbCdEfGhIjKlMnOp".
-const STRIPE_PRICE_ID_MONTHLY = "price_REPLACE_ME_MONTHLY";
-const STRIPE_PRICE_ID_YEARLY = "price_REPLACE_ME_YEARLY";
+// Identifiants des deux prix créés dans le tableau de bord Stripe (mêmes
+// tarifs que Google Play : 5,99 €/mois et 41,99 €/an).
+const STRIPE_PRICE_ID_MONTHLY = "price_1ULSScELP6rQOLeqainwLO0x";
+const STRIPE_PRICE_ID_YEARLY = "price_1ULSUIELP6rQOLeq9iA2hQsl";
 
 /**
  * Crée une session Stripe Checkout (page de paiement hébergée par Stripe)
