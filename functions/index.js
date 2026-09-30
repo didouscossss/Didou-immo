@@ -1,4 +1,4 @@
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
@@ -8,6 +8,7 @@ const {getStorage} = require("firebase-admin/storage");
 const {Readable} = require("node:stream");
 const readline = require("node:readline");
 const nodemailer = require("nodemailer");
+const Stripe = require("stripe");
 
 initializeApp();
 const db = getFirestore();
@@ -119,6 +120,136 @@ exports.activateSubscription = onCall(async (request) => {
   });
   return {success: true};
 });
+
+// --- Abonnement web (Stripe) ---------------------------------------------
+//
+// Équivalent de Play Billing pour la version web/PC (pas de Google Play sur
+// navigateur) — même compte Firebase, même document `users/{uid}`, même
+// champ `isSubscribed` que `activateSubscription` ci-dessus : un compte
+// abonné via l'un des deux canaux est donc automatiquement reconnu comme
+// abonné sur l'autre, sans double paiement (voir la discussion avec
+// l'utilisateur).
+//
+// Secrets à configurer une fois le compte Stripe créé (jamais en clair dans
+// le dépôt) :
+//   firebase functions:secrets:set STRIPE_SECRET_KEY
+//   firebase functions:secrets:set STRIPE_WEBHOOK_SECRET
+const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
+const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
+
+// TODO : remplacer par les vrais identifiants de prix une fois les deux
+// offres ("Abonnement Illimité", 5,99 €/mois et 41,99 €/an — mêmes tarifs
+// que Google Play) créées dans le tableau de bord Stripe (Produits > Créer
+// un produit > Ajouter un prix récurrent). Chaque prix a un identifiant du
+// type "price_1AbCdEfGhIjKlMnOp".
+const STRIPE_PRICE_ID_MONTHLY = "price_REPLACE_ME_MONTHLY";
+const STRIPE_PRICE_ID_YEARLY = "price_REPLACE_ME_YEARLY";
+
+/**
+ * Crée une session Stripe Checkout (page de paiement hébergée par Stripe)
+ * pour l'offre mensuelle ou annuelle, et renvoie son URL — le client web
+ * redirige ensuite simplement le navigateur vers cette URL (voir
+ * `paywall_screen.dart`).
+ *
+ * `client_reference_id` porte l'uid Firebase pour que `stripeWebhook`
+ * puisse retrouver le bon compte une fois le paiement confirmé, sans jamais
+ * faire confiance au client sur le résultat du paiement lui-même (voir ce
+ * webhook plus bas).
+ *
+ * data: { plan: 'monthly' | 'yearly', successUrl: string, cancelUrl: string }
+ * — les deux URL viennent du client (`Uri.base` côté web) pour rester
+ * valables quel que soit le domaine de déploiement (GitHub Pages
+ * aujourd'hui, un nom de domaine personnalisé demain) ; on vérifie
+ * seulement qu'elles sont bien en https, jamais une redirection arbitraire
+ * vers un tiers (Stripe ne redirige que le navigateur de l'appelant
+ * lui-même, aucune autre victime possible).
+ */
+exports.createStripeCheckoutSession = onCall(
+    {secrets: [stripeSecretKey]},
+    async (request) => {
+      const uid = request.auth && request.auth.uid;
+      if (!uid) {
+        throw new HttpsError("unauthenticated", "Connecte-toi pour t'abonner.");
+      }
+      const plan = request.data && request.data.plan;
+      const priceId = plan === "monthly" ? STRIPE_PRICE_ID_MONTHLY :
+        plan === "yearly" ? STRIPE_PRICE_ID_YEARLY : null;
+      if (!priceId) {
+        throw new HttpsError("invalid-argument", "Offre inconnue (attendu : 'monthly' ou 'yearly').");
+      }
+      const successUrl = String(request.data && request.data.successUrl || "");
+      const cancelUrl = String(request.data && request.data.cancelUrl || "");
+      if (!successUrl.startsWith("https://") || !cancelUrl.startsWith("https://")) {
+        throw new HttpsError("invalid-argument", "URL de retour invalide.");
+      }
+
+      const stripe = new Stripe(stripeSecretKey.value());
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{price: priceId, quantity: 1}],
+        client_reference_id: uid,
+        customer_email: request.auth.token.email || undefined,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      });
+      return {url: session.url};
+    },
+);
+
+/**
+ * Webhook Stripe — appelé par Stripe lui-même (pas par l'app) une fois le
+ * paiement confirmé. À configurer dans le tableau de bord Stripe
+ * (Développeurs > Webhooks > Ajouter un point de terminaison) avec l'URL de
+ * cette fonction une fois déployée, en écoutant l'évènement
+ * `checkout.session.completed`.
+ *
+ * Vérifie la signature Stripe (`stripeWebhookSecret`) avant toute écriture —
+ * indispensable : sans ça, n'importe qui connaissant l'URL pourrait se
+ * déclarer abonné sans avoir payé. Ne gère volontairement PAS l'annulation
+ * (`customer.subscription.deleted`) pour l'instant : `isSubscribed` n'est
+ * remis à `false` par aucun des deux canaux de paiement à ce stade (même
+ * limite assumée que Play Billing, voir `activateSubscription` /
+ * `checkReferralMilestones` ci-dessus) — éviter la dissymétrie plutôt que
+ * risquer de désabonner à tort quelqu'un resté payant sur l'autre canal.
+ */
+exports.stripeWebhook = onRequest(
+    {secrets: [stripeSecretKey, stripeWebhookSecret]},
+    async (req, res) => {
+      const stripe = new Stripe(stripeSecretKey.value());
+      let event;
+      try {
+        event = stripe.webhooks.constructEvent(
+            req.rawBody, req.headers["stripe-signature"], stripeWebhookSecret.value(),
+        );
+      } catch (err) {
+        console.error("Signature Stripe invalide :", err.message);
+        res.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+      }
+
+      if (event.type === "checkout.session.completed") {
+        const session = event.data.object;
+        const uid = session.client_reference_id;
+        if (uid) {
+          const userRef = db.collection("users").doc(uid);
+          await db.runTransaction(async (tx) => {
+            const snap = await tx.get(userRef);
+            const data = snap.exists ? snap.data() : {};
+            const update = {
+              isSubscribed: true,
+              stripeCustomerId: session.customer,
+            };
+            if (!data.subscriptionStartedAt) {
+              update.subscriptionStartedAt = FieldValue.serverTimestamp();
+            }
+            tx.set(userRef, update, {merge: true});
+          });
+        }
+      }
+
+      res.status(200).send();
+    },
+);
 
 // Mot de passe d'application Gmail (PAS le mot de passe du compte) — stocké
 // comme secret Firebase, jamais en clair dans le dépôt. Voir README.md
