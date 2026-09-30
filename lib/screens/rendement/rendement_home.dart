@@ -36,6 +36,12 @@ class RendementHome extends StatefulWidget {
 }
 
 class _RendementHomeState extends State<RendementHome> {
+  // Seuil au-delà duquel on bascule sur la mise en page "PC" (menu latéral,
+  // contenu recentré) — choisi pour couvrir les PC/tablettes en mode
+  // paysage tout en laissant les téléphones, même grands, sur la mise en
+  // page mobile habituelle (barre du bas).
+  static const double kDesktopBreakpoint = 900;
+
   AppTab _active = AppTab.calc;
   bool _showMethodo = false;
   bool _showTutoReplay = false;
@@ -101,70 +107,18 @@ class _RendementHomeState extends State<RendementHome> {
         child: SafeArea(
           child: Stack(
             children: [
-              Column(
-                children: [
-                  // Fond opaque + ombre portée : sans ça, la bande se
-                  // confondait avec le dégradé de fond, même si elle reste
-                  // fixe pendant que le contenu scrolle en dessous — l'ombre
-                  // la détache visuellement, comme si elle flottait au
-                  // premier plan par-dessus le reste de l'écran.
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                    decoration: BoxDecoration(color: AppColors.paper, boxShadow: AppShadows.md),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
-                        Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
-                        const SizedBox(height: 12),
-                        // Icônes et sélecteur sur leur propre ligne, plutôt que
-                        // partagée avec le titre : ça laisse toute la largeur de
-                        // l'écran disponible pour des icônes nettement plus
-                        // grosses (demandé), au lieu de se disputer l'espace avec
-                        // "Didou-Immo". Le FittedBox reste un filet de sécurité
-                        // pour les tout petits écrans, mais ne rentre presque
-                        // plus en jeu maintenant qu'il a toute la largeur.
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Row(children: [
-                            _headerIconButton(
-                              icon: Icons.dashboard_customize_outlined,
-                              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
-                            ),
-                            const SizedBox(width: 10),
-                            _headerIconButton(
-                              icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                              onTap: state.toggleDarkMode,
-                            ),
-                            const SizedBox(width: 10),
-                            _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
-                            const SizedBox(width: 10),
-                            _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
-                            const SizedBox(width: 10),
-                            NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
-                          ]),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: visibleTabs.length,
-                      // Bloque le swipe sur l'onglet Carte : FlutterMap capte déjà
-                      // le glissement horizontal pour déplacer la carte, un swipe
-                      // de page par-dessus ferait les deux à la fois. Les autres
-                      // onglets restent swipables normalement ; un tap sur la
-                      // barre du bas continue de fonctionner partout.
-                      physics: active == AppTab.carte ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
-                      onPageChanged: (i) => setState(() => _active = visibleTabs[i]),
-                      itemBuilder: (context, i) => _buildActiveScreen(state, visibleTabs[i]),
-                    ),
-                  ),
-                  _buildTabBar(state, visibleTabs, active),
-                ],
+              // Écran large (PC/tablette posée) : menu latéral fixe façon
+              // appli de bureau, au lieu de la barre du bas — pensée pour
+              // le pouce, elle a peu de sens à la souris sur un grand écran,
+              // et laisse le contenu s'étirer sur toute la largeur sans
+              // repère de navigation visible en permanence. En dessous du
+              // seuil, comportement mobile inchangé au pixel près.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return constraints.maxWidth >= kDesktopBreakpoint
+                      ? _buildWideLayout(state, visibleTabs, active)
+                      : _buildNarrowLayout(state, visibleTabs, active);
+                },
               ),
               if (!state.loaded) const SizedBox.shrink(),
               if (state.loaded && state.showOnboarding)
@@ -192,6 +146,174 @@ class _RendementHomeState extends State<RendementHome> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Mise en page mobile — inchangée par rapport à avant l'ajout du PC :
+  /// bande du haut avec titre, contenu, barre d'onglets en bas.
+  Widget _buildNarrowLayout(RendementState state, List<AppTab> visibleTabs, AppTab active) {
+    return Column(
+      children: [
+        _buildHeader(state, showTitle: true),
+        Expanded(child: _buildPageView(state, visibleTabs, active)),
+        _buildTabBar(state, visibleTabs, active),
+      ],
+    );
+  }
+
+  /// Mise en page PC — menu latéral fixe (titre + navigation) à gauche,
+  /// contenu recentré avec une largeur maximale à droite (sans quoi les
+  /// formulaires s'étirent sur toute la largeur d'un écran large, illisible
+  /// et peu naturel au-delà d'une certaine largeur de colonne).
+  Widget _buildWideLayout(RendementState state, List<AppTab> visibleTabs, AppTab active) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildSidebar(state, visibleTabs, active),
+        VerticalDivider(width: 1, thickness: 1, color: AppColors.border),
+        Expanded(
+          child: Column(
+            children: [
+              _buildHeader(state, showTitle: false),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: _buildPageView(state, visibleTabs, active),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Menu latéral de la mise en page PC — `NavigationRail` (widget Material
+  /// standard pour ce rôle) en mode étendu (icône + libellé), plutôt qu'une
+  /// barre du bas qui n'a pas de sens à la souris sur un grand écran.
+  Widget _buildSidebar(RendementState state, List<AppTab> visibleTabs, AppTab active) {
+    return Container(
+      width: 232,
+      color: AppColors.surface,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 12, color: AppColors.textMuted)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: NavigationRail(
+              extended: true,
+              minExtendedWidth: 232,
+              backgroundColor: Colors.transparent,
+              selectedIndex: visibleTabs.indexOf(active),
+              onDestinationSelected: (i) => _setActive(visibleTabs[i]),
+              destinations: visibleTabs.map((t) {
+                final meta = kTabMeta[t]!;
+                return NavigationRailDestination(
+                  icon: Icon(meta.icon, color: AppColors.textMuted),
+                  selectedIcon: Icon(meta.icon, color: AppColors.accent),
+                  label: Text(meta.label),
+                );
+              }).toList(),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              _headerIconButton(
+                icon: Icons.dashboard_customize_outlined,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+              ),
+              _headerIconButton(
+                icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                onTap: state.toggleDarkMode,
+              ),
+              _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
+              _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+            ]),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  /// Bande du haut — [showTitle] à `false` sur la mise en page PC, où le
+  /// titre vit déjà dans le menu latéral (voir [_buildSidebar]) ; les
+  /// icônes y vivent aussi, donc la bande ne garde alors que le sélecteur
+  /// Novice/Avancé, aligné à droite.
+  Widget _buildHeader(RendementState state, {required bool showTitle}) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
+      decoration: BoxDecoration(color: AppColors.paper, boxShadow: AppShadows.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showTitle) ...[
+            Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
+            const SizedBox(height: 12),
+          ],
+          if (showTitle)
+            // Icônes et sélecteur sur leur propre ligne, plutôt que
+            // partagée avec le titre : ça laisse toute la largeur de
+            // l'écran disponible pour des icônes nettement plus
+            // grosses (demandé), au lieu de se disputer l'espace avec
+            // "Didou-Immo". Le FittedBox reste un filet de sécurité
+            // pour les tout petits écrans, mais ne rentre presque
+            // plus en jeu maintenant qu'il a toute la largeur.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(children: [
+                _headerIconButton(
+                  icon: Icons.dashboard_customize_outlined,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+                ),
+                const SizedBox(width: 10),
+                _headerIconButton(
+                  icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  onTap: state.toggleDarkMode,
+                ),
+                const SizedBox(width: 10),
+                _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
+                const SizedBox(width: 10),
+                _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+                const SizedBox(width: 10),
+                NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
+              ]),
+            )
+          else
+            Align(alignment: Alignment.centerRight, child: NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau)),
+        ],
+      ),
+    );
+  }
+
+  /// Contenu défilant (un écran par onglet) — partagé entre les deux mises
+  /// en page (mobile et PC), seul son habillage autour diffère.
+  Widget _buildPageView(RendementState state, List<AppTab> visibleTabs, AppTab active) {
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: visibleTabs.length,
+      // Bloque le swipe sur l'onglet Carte : FlutterMap capte déjà
+      // le glissement horizontal pour déplacer la carte, un swipe
+      // de page par-dessus ferait les deux à la fois. Les autres
+      // onglets restent swipables normalement ; un tap sur la
+      // barre du bas continue de fonctionner partout.
+      physics: active == AppTab.carte ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+      onPageChanged: (i) => setState(() => _active = visibleTabs[i]),
+      itemBuilder: (context, i) => _buildActiveScreen(state, visibleTabs[i]),
     );
   }
 
