@@ -31,7 +31,11 @@ jobs:
 
       - run: flutter test
 
-      - run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+      # base-href "/" (racine) depuis le passage au nom de domaine personnalisé
+      # didou-immo.fr (voir web/CNAME) — auparavant "/${{ github.event.repository.name }}/"
+      # pour l'ancienne adresse GitHub Pages (didouscossss.github.io/Didou-immo/),
+      # qui servait le site depuis un sous-dossier.
+      - run: flutter build web --release --base-href "/"
 
       - uses: actions/upload-pages-artifact@v3
         with:
