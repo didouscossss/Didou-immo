@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
-import 'guide_complet_screen.dart';
 
 /// Panneau "Méthodologie" — équivalent de `MethodologieModal` du prototype.
 class MethodologieSheet extends StatelessWidget {
@@ -89,39 +88,11 @@ class MethodologieSheet extends StatelessWidget {
                           ]),
                         ),
                       ),
-                      // Version longue, encart par encart, du tuto rapide
-                      // ci-dessus — un écran à part (voir GuideCompletScreen)
-                      // plutôt qu'allonger cette feuille, le contenu étant
-                      // trop long pour une sheet qu'on peut fermer d'un tap
-                      // en dehors.
-                      InkWell(
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GuideCompletScreen())),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          margin: const EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(children: [
-                            Container(
-                              width: 32,
-                              height: 32,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(color: AppColors.accent.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
-                              child: Icon(Icons.menu_book_outlined, size: 16, color: AppColors.accent),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text('Guide complet — du projet au résultat',
-                                  style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
-                            ),
-                            Icon(Icons.chevron_right, size: 18, color: AppColors.ink.withValues(alpha: 0.4)),
-                          ]),
-                        ),
-                      ),
+                      // Le guide complet ("du projet au résultat") a été
+                      // promu en onglet principal à part entière (voir
+                      // AppTab.guide) — il n'a donc plus besoin d'un point
+                      // d'entrée ici, cette feuille garde juste le tuto
+                      // rapide et la méthodologie de calcul.
                       ..._items.map((it) => Padding(
                             padding: const EdgeInsets.only(bottom: 16),
                             child: Column(
