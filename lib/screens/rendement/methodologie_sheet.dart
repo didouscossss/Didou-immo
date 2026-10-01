@@ -115,7 +115,7 @@ class MethodologieSheet extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Text('Guide complet — à quoi sert chaque encart',
+                              child: Text('Guide complet — du projet au résultat',
                                   style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink)),
                             ),
                             Icon(Icons.chevron_right, size: 18, color: AppColors.ink.withValues(alpha: 0.4)),
