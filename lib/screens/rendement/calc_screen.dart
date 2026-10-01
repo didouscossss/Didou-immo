@@ -18,6 +18,11 @@ import '../../widgets/synced_text_field.dart';
 import '../../widgets/tip.dart';
 import '../../widgets/verdict_card.dart';
 
+/// Nombre de comparaisons vraies dans [diffs] — sert à compter, pour un
+/// encart donné, combien de ses champs diffèrent déjà de l'exemple
+/// pré-rempli (voir `SectionTitle.progress`).
+int _countDiff(List<bool> diffs) => diffs.where((d) => d).length;
+
 /// Onglet "Bien" — équivalent de `CalcScreen` du prototype.
 class CalcScreen extends StatefulWidget {
   final VoidCallback onSave;
@@ -155,7 +160,12 @@ class _CalcScreenState extends State<CalcScreen> {
     // reste volontairement sobre (voir `_card`).
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
-      SectionTitle('Informations générales', icon: Icons.badge_outlined, color: const Color(0xFF7C6FE0), done: form.nom.trim().isNotEmpty),
+      SectionTitle(
+        'Informations générales',
+        icon: Icons.badge_outlined,
+        color: const Color(0xFF7C6FE0),
+        progress: (form.nom.trim().isNotEmpty ? 1 : 0, 1),
+      ),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
       SyncedTextField(
@@ -409,7 +419,13 @@ class _CalcScreenState extends State<CalcScreen> {
         'Prix et travaux',
         icon: Icons.payments_outlined,
         color: const Color(0xFF3B82C4),
-        done: form.prix != PropertyInput.defaultForm().prix || form.surface != PropertyInput.defaultForm().surface,
+        progress: (
+          _countDiff([
+            form.prix != PropertyInput.defaultForm().prix,
+            form.surface != PropertyInput.defaultForm().surface,
+          ]),
+          2
+        ),
       ),
       AbsorbPointer(
         absorbing: state.identityLocked,
@@ -493,10 +509,39 @@ class _CalcScreenState extends State<CalcScreen> {
         'Revenus & charges',
         icon: Icons.account_balance_wallet_outlined,
         color: const Color(0xFF2FA39B),
-        done: form.mode == RentalMode.longue
-            ? form.loyer != PropertyInput.defaultForm().loyer
-            : (form.prixNuitBasse != PropertyInput.defaultForm().prixNuitBasse ||
-                form.prixNuitHaute != PropertyInput.defaultForm().prixNuitHaute),
+        // Tous les champs numériques de l'encart, pas seulement le loyer :
+        // éditer un seul champ sur les 5 (ou 11 en courte durée) ne suffit
+        // plus à cocher tout l'encart — voir `SectionTitle.progress`.
+        // "Frais de gestion" exclu : son défaut est 0, une réponse
+        // légitime (bien géré soi-même) — l'exiger différent du défaut
+        // pénaliserait à tort ce cas réel plutôt que signaler un oubli.
+        progress: form.mode == RentalMode.longue
+            ? (
+                _countDiff([
+                  form.loyer != PropertyInput.defaultForm().loyer,
+                  form.vacancePct != PropertyInput.defaultForm().vacancePct,
+                  form.chargesCopro != PropertyInput.defaultForm().chargesCopro,
+                  form.taxeFonciere != PropertyInput.defaultForm().taxeFonciere,
+                  form.assurance != PropertyInput.defaultForm().assurance,
+                ]),
+                5
+              )
+            : (
+                _countDiff([
+                  form.prixNuitBasse != PropertyInput.defaultForm().prixNuitBasse,
+                  form.prixNuitHaute != PropertyInput.defaultForm().prixNuitHaute,
+                  form.nuitsBasseSaison != PropertyInput.defaultForm().nuitsBasseSaison,
+                  form.nuitsHauteSaison != PropertyInput.defaultForm().nuitsHauteSaison,
+                  form.dureeSejourMoyenne != PropertyInput.defaultForm().dureeSejourMoyenne,
+                  form.commissionPct != PropertyInput.defaultForm().commissionPct,
+                  form.menagePartReservation != PropertyInput.defaultForm().menagePartReservation,
+                  form.abonnements != PropertyInput.defaultForm().abonnements,
+                  form.taxeSejour != PropertyInput.defaultForm().taxeSejour,
+                  form.taxeFonciere != PropertyInput.defaultForm().taxeFonciere,
+                  form.assurance != PropertyInput.defaultForm().assurance,
+                ]),
+                11
+              ),
       ),
       if (form.mode == RentalMode.longue) ...[
         Row(children: [
@@ -600,9 +645,14 @@ class _CalcScreenState extends State<CalcScreen> {
         'Financement',
         icon: Icons.account_balance_outlined,
         color: const Color(0xFF5B6FD8),
-        done: form.apport != PropertyInput.defaultForm().apport ||
-            form.tauxPct != PropertyInput.defaultForm().tauxPct ||
+        progress: (
+          _countDiff([
+            form.apport != PropertyInput.defaultForm().apport,
+            form.tauxPct != PropertyInput.defaultForm().tauxPct,
             form.dureePretAns != PropertyInput.defaultForm().dureePretAns,
+          ]),
+          3
+        ),
       ),
       NumberField(label: 'Apport personnel', value: form.apport, suffix: '€', onChanged: (v) => set((f) => f.copyWith(apport: v))),
       const SizedBox(height: 12),
@@ -660,7 +710,10 @@ class _CalcScreenState extends State<CalcScreen> {
         "Capacité d'emprunt",
         icon: Icons.speed_outlined,
         color: const Color(0xFFE0705C),
-        done: form.revenuMensuelNet != PropertyInput.defaultForm().revenuMensuelNet,
+        // "Autres crédits en cours" exclu : son défaut est 0, une réponse
+        // légitime (pas d'autre crédit) — seul le revenu est un champ sans
+        // défaut honnête à 0.
+        progress: (form.revenuMensuelNet != PropertyInput.defaultForm().revenuMensuelNet ? 1 : 0, 1),
       ),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
