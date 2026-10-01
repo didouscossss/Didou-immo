@@ -155,7 +155,7 @@ class _CalcScreenState extends State<CalcScreen> {
     // reste volontairement sobre (voir `_card`).
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
-      const SectionTitle('Informations générales', icon: Icons.badge_outlined, color: Color(0xFF7C6FE0)),
+      SectionTitle('Informations générales', icon: Icons.badge_outlined, color: const Color(0xFF7C6FE0), done: form.nom.trim().isNotEmpty),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
       SyncedTextField(
@@ -405,7 +405,12 @@ class _CalcScreenState extends State<CalcScreen> {
       ]),
       const SizedBox(height: 20),
       SectionCard(children: [
-      const SectionTitle('Prix et travaux', icon: Icons.payments_outlined, color: Color(0xFF3B82C4)),
+      SectionTitle(
+        'Prix et travaux',
+        icon: Icons.payments_outlined,
+        color: const Color(0xFF3B82C4),
+        done: form.prix != PropertyInput.defaultForm().prix || form.surface != PropertyInput.defaultForm().surface,
+      ),
       AbsorbPointer(
         absorbing: state.identityLocked,
         child: Opacity(
@@ -484,7 +489,15 @@ class _CalcScreenState extends State<CalcScreen> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
-      const SectionTitle('Revenus & charges', icon: Icons.account_balance_wallet_outlined, color: Color(0xFF2FA39B)),
+      SectionTitle(
+        'Revenus & charges',
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF2FA39B),
+        done: form.mode == RentalMode.longue
+            ? form.loyer != PropertyInput.defaultForm().loyer
+            : (form.prixNuitBasse != PropertyInput.defaultForm().prixNuitBasse ||
+                form.prixNuitHaute != PropertyInput.defaultForm().prixNuitHaute),
+      ),
       if (form.mode == RentalMode.longue) ...[
         Row(children: [
           Expanded(child: NumberField(label: 'Loyer mensuel', value: form.loyer, suffix: '€', onChanged: (v) => set((f) => f.copyWith(loyer: v)))),
@@ -583,7 +596,14 @@ class _CalcScreenState extends State<CalcScreen> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
-      const SectionTitle('Financement', icon: Icons.account_balance_outlined, color: Color(0xFF5B6FD8)),
+      SectionTitle(
+        'Financement',
+        icon: Icons.account_balance_outlined,
+        color: const Color(0xFF5B6FD8),
+        done: form.apport != PropertyInput.defaultForm().apport ||
+            form.tauxPct != PropertyInput.defaultForm().tauxPct ||
+            form.dureePretAns != PropertyInput.defaultForm().dureePretAns,
+      ),
       NumberField(label: 'Apport personnel', value: form.apport, suffix: '€', onChanged: (v) => set((f) => f.copyWith(apport: v))),
       const SizedBox(height: 12),
       Row(children: [
@@ -636,7 +656,12 @@ class _CalcScreenState extends State<CalcScreen> {
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
-      const SectionTitle("Capacité d'emprunt", icon: Icons.speed_outlined, color: Color(0xFFE0705C)),
+      SectionTitle(
+        "Capacité d'emprunt",
+        icon: Icons.speed_outlined,
+        color: const Color(0xFFE0705C),
+        done: form.revenuMensuelNet != PropertyInput.defaultForm().revenuMensuelNet,
+      ),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
         Expanded(child: NumberField(label: 'Revenus mensuels nets', value: form.revenuMensuelNet, suffix: '€', onChanged: (v) => set((f) => f.copyWith(revenuMensuelNet: v)))),
