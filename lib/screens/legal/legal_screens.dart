@@ -217,15 +217,19 @@ class CgvScreen extends StatelessWidget {
         _Section(
           "Description de l'offre",
           "Version gratuite : jusqu'à 3 biens enregistrés.\n"
-              "Abonnement « Illimité » : 4,99 €/mois ou 35 €/an, sans limite de biens enregistrés. Paiement géré par "
-              "Google Play Billing (application Android), avec renouvellement automatique à chaque échéance sauf "
-              "résiliation.",
+              "Abonnement « Illimité » : 5,99 €/mois ou 41,99 €/an, sans limite de biens enregistrés. Paiement géré "
+              "par Google Play Billing (application Android) ou Stripe (site web), selon la plateforme utilisée "
+              "pour s'abonner, avec renouvellement automatique à chaque échéance sauf résiliation. Un compte abonné "
+              "via l'un de ces deux moyens de paiement est reconnu comme abonné sur l'autre plateforme, sans qu'il "
+              "soit jamais nécessaire de payer deux fois.",
         ),
         _Section(
           'Résiliation',
-          "Tu peux résilier ton abonnement à tout moment depuis le Google Play Store (Menu > Abonnements). La "
-              "résiliation prend effet à la fin de la période déjà payée ; aucun remboursement au prorata n'est "
-              "effectué pour la période en cours.",
+          "Abonnement souscrit sur l'application Android : résiliable à tout moment depuis le Google Play Store "
+              "(Menu > Abonnements).\n"
+              "Abonnement souscrit sur le site web : contacte-nous pour résilier.\n"
+              "Dans les deux cas, la résiliation prend effet à la fin de la période déjà payée ; aucun remboursement "
+              "au prorata n'est effectué pour la période en cours.",
         ),
         _Section(
           'Droit de rétractation',
