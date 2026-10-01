@@ -1,18 +1,31 @@
 import 'package:flutter/material.dart';
 
+import '../../models/app_tab.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/section_title.dart';
+import 'app_tab_meta.dart';
+
+/// Un onglet vers lequel un pas du parcours renvoie (voir [_JourneyStep.targets])
+/// — un libellé propre à l'étape (ex. "Onglets Marché et Carte" plutôt que
+/// deux chips séparées "Marché"/"Carte") associé à l'onglet réellement visé
+/// au clic.
+class _TabTarget {
+  final String label;
+  final AppTab tab;
+  const _TabTarget(this.label, this.tab);
+}
 
 /// Une étape du parcours "du projet au résultat" (voir [_journeySteps]) —
-/// le cœur de cet écran, demandé par l'utilisateur en remplacement d'une
-/// simple liste d'encarts expliqués : une vraie marche à suivre, dans
-/// l'ordre où on avance réellement dans l'appli.
+/// le cœur de cet écran : une vraie marche à suivre, dans l'ordre où on
+/// avance réellement dans l'appli, plutôt qu'une simple liste d'encarts
+/// expliqués (voir [_guideTabs] plus bas, qui reste disponible pour qui
+/// veut creuser un point précis).
 class _JourneyStep {
   final String title;
   final IconData icon;
   final Color color;
   final String body;
-  final String tabHint;
+  final List<_TabTarget> targets;
   // Puces optionnelles — seule l'étape "verdict" en a besoin, pour détailler
   // les quelques seuils concrets (score, cash-flow, rentabilité...) plutôt
   // que les noyer dans un paragraphe.
@@ -22,15 +35,14 @@ class _JourneyStep {
     required this.icon,
     required this.color,
     required this.body,
-    required this.tabHint,
+    required this.targets,
     this.bullets,
   });
 }
 
 /// Index de l'étape "verdict" dans [_journeySteps] — mise en avant
-/// visuellement (carte plus large, bordure colorée) puisque c'est la
-/// réponse à "ce projet est-il bon ou pas", ce que l'utilisateur a
-/// explicitement demandé de faire ressortir.
+/// visuellement (carte teintée, bordure colorée) puisque c'est la réponse
+/// à "ce projet est-il bon ou pas".
 const int _kVerdictStepIndex = 7;
 
 const List<_JourneyStep> _journeySteps = [
@@ -40,7 +52,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFF7C6FE0),
     body: "Nom, localisation, prix d'achat, travaux, surface. C'est la carte d'identité du projet : tout le reste de "
         "l'appli s'appuie dessus.",
-    tabHint: 'Onglet Bien',
+    targets: [_TabTarget('Onglet Bien', AppTab.calc)],
   ),
   _JourneyStep(
     title: 'Renseigne des revenus réalistes',
@@ -49,7 +61,7 @@ const List<_JourneyStep> _journeySteps = [
     body: "Loyer attendu, vacance locative, charges de copro, frais de gestion. Mieux vaut rester prudent sur ces "
         "chiffres : la rentabilité se recalcule sous tes yeux à chaque champ rempli, pas besoin de valider quoi "
         "que ce soit.",
-    tabHint: 'Onglet Bien',
+    targets: [_TabTarget('Onglet Bien', AppTab.calc)],
   ),
   _JourneyStep(
     title: 'Monte ton financement',
@@ -57,7 +69,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFF5B6FD8),
     body: "Apport, taux, durée du prêt — et vérifie ta capacité d'emprunt pendant que tu y es. C'est ce qui "
         "détermine ton cash-flow mensuel, l'un des indicateurs les plus importants à la fin.",
-    tabHint: 'Onglet Bien',
+    targets: [_TabTarget('Onglet Bien', AppTab.calc)],
   ),
   _JourneyStep(
     title: 'Vérifie que tu achètes au bon prix',
@@ -65,7 +77,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFF3B82C4),
     body: "Compare le prix et le loyer de ton bien à ceux du secteur (et visualise-les sur la carte si tu hésites "
         "entre plusieurs villes). Un bien peut sembler rentable sur le papier et pourtant être acheté trop cher.",
-    tabHint: 'Onglets Marché et Carte',
+    targets: [_TabTarget('Onglet Marché', AppTab.marche), _TabTarget('Onglet Carte', AppTab.carte)],
   ),
   _JourneyStep(
     title: 'Anticipe la fiscalité',
@@ -73,7 +85,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFFD4A72C),
     body: "Regarde ce que chaque régime (micro-foncier, réel, LMNP...) te laisserait réellement net d'impôt selon "
         "ta tranche. Un même loyer peut rapporter très différemment selon le choix fait ici.",
-    tabHint: 'Onglet Fiscalité',
+    targets: [_TabTarget('Onglet Fiscalité', AppTab.fisc)],
   ),
   _JourneyStep(
     title: 'Projette-toi dans le temps',
@@ -81,7 +93,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFF4A9B6E),
     body: "Remboursement du prêt, évolution de ton patrimoine, revente simulée dans quelques années. Un bien peut "
         "être tendu les premières années et devenir très rentable sur la durée — ou l'inverse.",
-    tabHint: 'Onglet Projection',
+    targets: [_TabTarget('Onglet Projection', AppTab.proj)],
   ),
   _JourneyStep(
     title: 'Stress-teste avant de signer',
@@ -89,7 +101,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFFE0705C),
     body: "L'encart « Et si...? » simule un scénario pessimiste : taux qui monte, occupation qui baisse, travaux "
         "imprévus. Si le projet tient encore debout dans ce scénario, c'est plutôt bon signe.",
-    tabHint: 'Onglet Bien',
+    targets: [_TabTarget('Onglet Bien', AppTab.calc)],
   ),
   _JourneyStep(
     title: 'Lis le résultat : bon ou pas bon ?',
@@ -97,7 +109,7 @@ const List<_JourneyStep> _journeySteps = [
     color: Color(0xFF2F5D50),
     body: "Trois indicateurs, toujours affichés en haut de l'onglet Bien, résument tout le projet en un coup "
         "d'œil :",
-    tabHint: 'Onglet Bien',
+    targets: [_TabTarget('Onglet Bien', AppTab.calc)],
     bullets: [
       "Score d'investissement /100 : 80+ Excellent, 60-79 Bon, 40-59 Moyen, en dessous de 40 Risqué. Il combine "
           "rentabilité, cash-flow, écart au marché et taux d'occupation.",
@@ -116,7 +128,7 @@ const List<_JourneyStep> _journeySteps = [
     body: "Convaincu, ou pas encore ? « Enregistrer ce bien » l'ajoute à Comparer et Patrimoine : tu peux alors le "
         "mettre face à d'autres projets, suivre l'ensemble de ton patrimoine, et exporter tes données en PDF ou "
         "CSV.",
-    tabHint: 'Onglets Comparer et Patrimoine',
+    targets: [_TabTarget('Onglet Comparer', AppTab.biens), _TabTarget('Onglet Patrimoine', AppTab.patrimoine)],
   ),
 ];
 
@@ -133,19 +145,15 @@ class _GuideField {
 /// Le contenu expliqué d'un onglet entier — un bloc par onglet de l'appli,
 /// dans l'ordre où ils apparaissent dans la barre du bas / le menu latéral.
 class _GuideTab {
-  final String label;
-  final IconData icon;
-  final Color color;
+  final AppTab tab;
   final String intro;
   final List<_GuideField> fields;
-  const _GuideTab({required this.label, required this.icon, required this.color, required this.intro, required this.fields});
+  const _GuideTab({required this.tab, required this.intro, required this.fields});
 }
 
 const List<_GuideTab> _guideTabs = [
   _GuideTab(
-    label: 'Bien',
-    icon: Icons.home_outlined,
-    color: Color(0xFF7C6FE0),
+    tab: AppTab.calc,
     intro: "Le point de départ de toute simulation : tu décris le bien, son financement, ses revenus et ses charges — "
         "la rentabilité se recalcule automatiquement à chaque champ rempli.",
     fields: [
@@ -191,9 +199,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Marché',
-    icon: Icons.location_on_outlined,
-    color: Color(0xFF7C6FE0),
+    tab: AppTab.marche,
     intro: "Resitue ton bien par rapport aux prix réels du secteur, pour savoir si tu achètes au bon prix.",
     fields: [
       _GuideField(
@@ -204,9 +210,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Carte',
-    icon: Icons.map_outlined,
-    color: Color(0xFF3B82C4),
+    tab: AppTab.carte,
     intro: "La même donnée de prix au m², mais sur une carte — pratique pour comparer plusieurs secteurs ou villes.",
     fields: [
       _GuideField(
@@ -216,9 +220,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Fiscalité',
-    icon: Icons.account_balance_outlined,
-    color: Color(0xFF5B6FD8),
+    tab: AppTab.fisc,
     intro: "La fiscalité peut faire la différence entre un bon et un mauvais investissement.",
     fields: [
       _GuideField(
@@ -241,9 +243,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Projection',
-    icon: Icons.trending_up,
-    color: Color(0xFF4A9B6E),
+    tab: AppTab.proj,
     intro: "Projette le bien dans le temps : remboursement du prêt, évolution de sa valeur, revente simulée.",
     fields: [
       _GuideField(
@@ -266,9 +266,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Comparer',
-    icon: Icons.layers_outlined,
-    color: Color(0xFFD4A72C),
+    tab: AppTab.biens,
     intro: "Une fois plusieurs biens enregistrés, cet onglet les met côte à côte pour t'aider à choisir.",
     fields: [
       _GuideField('Comparatif', "Tableau récapitulatif — rentabilité, cash-flow et score de tous tes biens."),
@@ -278,9 +276,7 @@ const List<_GuideTab> _guideTabs = [
     ],
   ),
   _GuideTab(
-    label: 'Patrimoine',
-    icon: Icons.insights_outlined,
-    color: Color(0xFF2FA39B),
+    tab: AppTab.patrimoine,
     intro: "Une vue d'ensemble de tous tes biens enregistrés, comme un portefeuille d'investissement.",
     fields: [
       _GuideField(
@@ -291,87 +287,93 @@ const List<_GuideTab> _guideTabs = [
   ),
 ];
 
-/// Écran "Guide complet" — un vrai parcours pas à pas ("du projet au
-/// résultat", demandé par l'utilisateur) suivi d'un détail de référence,
-/// onglet par onglet et encart par encart, pour qui veut creuser un point
-/// précis. Un vrai écran (pas une sheet) : le contenu est trop long pour
-/// une feuille qu'on referme d'un tap en dehors, et ça permet de défiler
-/// et revenir en arrière normalement — identique sur mobile et sur le
-/// site web.
+/// Onglet "Guide" — un vrai parcours pas à pas ("du projet au résultat")
+/// suivi d'un détail de référence, onglet par onglet et encart par encart,
+/// pour qui veut creuser un point précis.
+///
+/// Un onglet principal à part entière (comme "Bien" ou "Projection"),
+/// plutôt qu'enfoui dans le panneau d'aide : demandé explicitement pour le
+/// mettre en avant, vu l'importance du contenu pour un nouvel utilisateur.
+/// Ses chips "Onglet X" sont cliquables ([onGoToTab]) — bascule directement
+/// vers l'onglet concerné, comme une mini table des matières active plutôt
+/// qu'un simple repère visuel.
 class GuideCompletScreen extends StatelessWidget {
-  const GuideCompletScreen({super.key});
+  final void Function(AppTab tab) onGoToTab;
+  const GuideCompletScreen({super.key, required this.onGoToTab});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Guide complet')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildHero(),
-          const SizedBox(height: 28),
-          Text(
-            'Du projet au résultat, étape par étape',
-            style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      children: [
+        _buildHero(),
+        const SizedBox(height: 24),
+        Text(
+          'Du projet au résultat, étape par étape',
+          style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Suis-les dans l'ordre pour ton premier bien — tout reste modifiable à tout moment ensuite.",
+          style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
+        ),
+        const SizedBox(height: 20),
+        for (int i = 0; i < _journeySteps.length; i++)
+          _JourneyStepTile(
+            step: _journeySteps[i],
+            index: i,
+            isLast: i == _journeySteps.length - 1,
+            highlight: i == _kVerdictStepIndex,
+            onGoToTab: onGoToTab,
           ),
-          const SizedBox(height: 4),
-          Text(
-            "Suis-les dans l'ordre pour ton premier bien — tout reste modifiable à tout moment ensuite.",
-            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
+        const SizedBox(height: 12),
+        Divider(color: AppColors.border, height: 48),
+        Text(
+          'Le détail de chaque encart',
+          style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Pour creuser un champ en particulier, sans suivre tout le parcours.",
+          style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
+        ),
+        const SizedBox(height: 20),
+        for (final guideTab in _guideTabs) ...[
+          InkWell(
+            onTap: () => onGoToTab(guideTab.tab),
+            borderRadius: BorderRadius.circular(14),
+            child: SectionTitle(kTabMeta[guideTab.tab]!.label, icon: kTabMeta[guideTab.tab]!.icon, color: _tabColor(guideTab.tab)),
           ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              guideTab.intro,
+              style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)).copyWith(height: 1.45),
+            ),
+          ),
+          for (final field in guideTab.fields) _GuideFieldTile(field, color: _tabColor(guideTab.tab)),
           const SizedBox(height: 20),
-          for (int i = 0; i < _journeySteps.length; i++)
-            _JourneyStepTile(
-              step: _journeySteps[i],
-              index: i,
-              isLast: i == _journeySteps.length - 1,
-              highlight: i == _kVerdictStepIndex,
-            ),
-          const SizedBox(height: 12),
-          Divider(color: AppColors.border, height: 48),
-          Text(
-            'Le détail de chaque encart',
-            style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Pour creuser un champ en particulier, sans suivre tout le parcours.",
-            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
-          ),
-          const SizedBox(height: 20),
-          for (final tab in _guideTabs) ...[
-            SectionTitle(tab.label, icon: tab.icon, color: tab.color),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                tab.intro,
-                style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)).copyWith(height: 1.45),
-              ),
-            ),
-            for (final field in tab.fields) _GuideFieldTile(field, color: tab.color),
-            const SizedBox(height: 20),
-          ],
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Icon(Icons.info_outline, size: 16, color: AppColors.ink.withValues(alpha: 0.5)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  "Pour les hypothèses de calcul elles-mêmes (sources des prix, barèmes fiscaux utilisés...), "
-                  "retrouve-les dans Méthodologie, juste à côté de ce guide.",
-                  style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6)),
-                ),
-              ),
-            ]),
-          ),
         ],
-      ),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(Icons.info_outline, size: 16, color: AppColors.ink.withValues(alpha: 0.5)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Pour les hypothèses de calcul elles-mêmes (sources des prix, barèmes fiscaux utilisés...), "
+                "retrouve-les dans Méthodologie, depuis l'icône d'aide.",
+                style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.6)),
+              ),
+            ),
+          ]),
+        ),
+      ],
     );
   }
 
@@ -407,12 +409,44 @@ class GuideCompletScreen extends StatelessWidget {
   }
 }
 
+/// Couleur par onglet pour la section de référence — reprend celle déjà
+/// utilisée par le premier [SectionTitle] de chaque écran, pour que le code
+/// couleur reste cohérent avec l'onglet réel plutôt qu'une teinte inventée
+/// ici.
+Color _tabColor(AppTab tab) {
+  switch (tab) {
+    case AppTab.guide:
+      return const Color(0xFF2F5D50);
+    case AppTab.calc:
+      return const Color(0xFF7C6FE0);
+    case AppTab.marche:
+      return const Color(0xFF7C6FE0);
+    case AppTab.carte:
+      return const Color(0xFF3B82C4);
+    case AppTab.fisc:
+      return const Color(0xFF5B6FD8);
+    case AppTab.proj:
+      return const Color(0xFF4A9B6E);
+    case AppTab.biens:
+      return const Color(0xFFD4A72C);
+    case AppTab.patrimoine:
+      return const Color(0xFF2FA39B);
+  }
+}
+
 class _JourneyStepTile extends StatelessWidget {
   final _JourneyStep step;
   final int index;
   final bool isLast;
   final bool highlight;
-  const _JourneyStepTile({required this.step, required this.index, required this.isLast, this.highlight = false});
+  final void Function(AppTab tab) onGoToTab;
+  const _JourneyStepTile({
+    required this.step,
+    required this.index,
+    required this.isLast,
+    required this.onGoToTab,
+    this.highlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -488,18 +522,25 @@ class _JourneyStepTile extends StatelessWidget {
                         ),
                     ],
                     const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: step.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.place_outlined, size: 12, color: step.color),
-                        const SizedBox(width: 4),
-                        Text(step.tabHint, style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: step.color)),
-                      ]),
-                    ),
+                    Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final target in step.targets)
+                        InkWell(
+                          onTap: () => onGoToTab(target.tab),
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: step.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Row(mainAxisSize: MainAxisSize.min, children: [
+                              Icon(Icons.arrow_forward, size: 12, color: step.color),
+                              const SizedBox(width: 4),
+                              Text(target.label, style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: step.color)),
+                            ]),
+                          ),
+                        ),
+                    ]),
                   ],
                 ),
               ),

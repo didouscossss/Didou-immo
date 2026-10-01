@@ -15,6 +15,7 @@ import 'biens_screen.dart';
 import 'calc_screen.dart';
 import 'carte_screen.dart';
 import 'fiscalite_screen.dart';
+import 'guide_complet_screen.dart';
 import 'marche_screen.dart';
 import 'methodologie_sheet.dart';
 import 'onboarding_sheet.dart';
@@ -457,6 +458,8 @@ class _RendementHomeState extends State<RendementHome> {
   Widget _buildActiveScreen(RendementState state, AppTab active) {
     final themeKey = ValueKey((state.darkMode, state.niveau));
     switch (active) {
+      case AppTab.guide:
+        return GuideCompletScreen(key: themeKey, onGoToTab: _setActive);
       case AppTab.calc:
         return CalcScreen(key: themeKey, onSave: () => _handleSave(state));
       case AppTab.marche:

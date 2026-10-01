@@ -12,6 +12,7 @@ class AppTabMeta {
 }
 
 const Map<AppTab, AppTabMeta> kTabMeta = {
+  AppTab.guide: AppTabMeta('Guide', Icons.route_outlined),
   AppTab.calc: AppTabMeta('Bien', Icons.home_outlined),
   AppTab.marche: AppTabMeta('Marché', Icons.location_on_outlined),
   AppTab.carte: AppTabMeta('Carte', Icons.map_outlined),
