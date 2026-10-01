@@ -1,7 +1,7 @@
 name: didou_immo
 description: Didou Immo — calculateur de rentabilité immobilière, aide à l'achat.
 publish_to: 'none'
-version: 1.0.0+18
+version: 1.0.0+19
 
 environment:
   sdk: ^3.9.0
@@ -47,6 +47,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_storage: ^12.4.10
   file_picker: ^11.0.3
+
+  # Ouvre un lien externe (Play Store depuis le web, site web depuis l'app
+  # Android) — fonctionne nativement sur toutes les plateformes, contrairement
+  # à package:web qui ne compile que pour le web (voir lib/services/web_nav/).
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

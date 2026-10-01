@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show kIsWeb, listEquals;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_tab.dart';
 import '../../state/rendement_state.dart';
@@ -206,6 +207,8 @@ class _RendementHomeState extends State<RendementHome> {
               children: [
                 Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
                 Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 12, color: AppColors.textMuted)),
+                const SizedBox(height: 12),
+                _crossPromoChip(),
               ],
             ),
           ),
@@ -262,6 +265,8 @@ class _RendementHomeState extends State<RendementHome> {
           if (showTitle) ...[
             Text('Didou-Immo', style: AppTextStyles.serif(fontSize: 21, fontWeight: FontWeight.w700, color: AppColors.ink)),
             Text("Calculez avant d'investir", style: AppTextStyles.sans(fontSize: 11, color: AppColors.textMuted)),
+            const SizedBox(height: 8),
+            _crossPromoChip(),
             const SizedBox(height: 12),
           ],
           if (showTitle)
@@ -315,6 +320,54 @@ class _RendementHomeState extends State<RendementHome> {
       onPageChanged: (i) => setState(() => _active = visibleTabs[i]),
       itemBuilder: (context, i) => _buildActiveScreen(state, visibleTabs[i]),
     );
+  }
+
+  /// Lien croisé site web <-> appli Android — demandé par l'utilisateur
+  /// pour que chaque plateforme fasse découvrir l'autre : le badge Google
+  /// Play s'affiche sur le web (et renvoie vers la fiche Play Store), le
+  /// lien vers le site s'affiche dans l'appli Android (et ouvre le
+  /// navigateur sur didou-immo.fr). `url_launcher` fonctionne nativement
+  /// sur les deux plateformes (contrairement à `package:web`, web
+  /// seulement — voir lib/services/web_nav/), donc pas besoin ici du
+  /// pattern d'import conditionnel.
+  Widget _crossPromoChip() {
+    final isWeb = kIsWeb;
+    return InkWell(
+      onTap: () => _openExternalUrl(
+        isWeb ? 'https://play.google.com/store/apps/details?id=com.didouimmo.didou_immo' : 'https://didou-immo.fr',
+      ),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withValues(alpha: AppColors.isDark ? 0.18 : 0.1),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (isWeb)
+            Image.asset('assets/images/google_play_icon.png', height: 16, width: 16)
+          else
+            Icon(Icons.language, size: 16, color: AppColors.accent),
+          const SizedBox(width: 6),
+          Text(
+            isWeb ? 'Disponible sur Google Play' : 'Aussi sur didou-immo.fr',
+            style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Impossible d'ouvrir le lien.")),
+      );
+    }
   }
 
   void _openAccount() {
