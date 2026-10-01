@@ -164,7 +164,19 @@ class _CalcScreenState extends State<CalcScreen> {
         'Informations générales',
         icon: Icons.badge_outlined,
         color: const Color(0xFF7C6FE0),
-        progress: (form.nom.trim().isNotEmpty ? 1 : 0, 1),
+        // 2 champs à remplir ici : le nom et la localisation (la checklist
+        // de visite, juste en dessous, est un outil à part, pas un champ du
+        // bien). `commune` pointe vers le même objet `const` tant que le
+        // picker n'a jamais été utilisé : toute sélection (même "Nantes" à
+        // nouveau) crée une nouvelle instance, détectée par cette
+        // comparaison de référence.
+        progress: (
+          _countDiff([
+            form.nom.trim().isNotEmpty,
+            form.commune != PropertyInput.defaultForm().commune,
+          ]),
+          2
+        ),
       ),
       _blockLabel('Nom du bien'),
       const SizedBox(height: 8),
@@ -419,12 +431,20 @@ class _CalcScreenState extends State<CalcScreen> {
         'Prix et travaux',
         icon: Icons.payments_outlined,
         color: const Color(0xFF3B82C4),
+        // "Frais de notaire"/"Travaux" ne comptent dans le total que
+        // lorsqu'ils sont réellement affichés (repliés par défaut en mode
+        // novice) — sinon le total resterait figé à 2 alors que 4 cases
+        // sont visibles à l'écran une fois dépliées. Toujours comptés
+        // remplis quand visibles : auto-calculés à partir de prix/surface
+        // (voir `notaireAuto`/`travauxAuto`), pas des champs qu'on "oublie"
+        // indépendamment.
         progress: (
           _countDiff([
             form.prix != PropertyInput.defaultForm().prix,
             form.surface != PropertyInput.defaultForm().surface,
-          ]),
-          2
+          ]) +
+              (!isNovice || _showFraisAnnexes ? 2 : 0),
+          !isNovice || _showFraisAnnexes ? 4 : 2
         ),
       ),
       AbsorbPointer(
@@ -509,12 +529,14 @@ class _CalcScreenState extends State<CalcScreen> {
         'Revenus & charges',
         icon: Icons.account_balance_wallet_outlined,
         color: const Color(0xFF2FA39B),
-        // Tous les champs numériques de l'encart, pas seulement le loyer :
-        // éditer un seul champ sur les 5 (ou 11 en courte durée) ne suffit
-        // plus à cocher tout l'encart — voir `SectionTitle.progress`.
-        // "Frais de gestion" exclu : son défaut est 0, une réponse
-        // légitime (bien géré soi-même) — l'exiger différent du défaut
-        // pénaliserait à tort ce cas réel plutôt que signaler un oubli.
+        // Le total compte TOUS les champs visibles de l'encart (6 en longue
+        // durée, 12 en courte) — doit correspondre exactement au nombre de
+        // cases réellement affichées à l'écran, signalé par l'utilisateur
+        // comme incohérent quand ce n'était pas le cas. "Frais de gestion"
+        // est compté dans le total (c'est bien une case visible) mais
+        // toujours considéré rempli : son défaut est 0, une réponse
+        // légitime (bien géré soi-même) qu'exiger différente pénaliserait
+        // à tort.
         progress: form.mode == RentalMode.longue
             ? (
                 _countDiff([
@@ -523,8 +545,9 @@ class _CalcScreenState extends State<CalcScreen> {
                   form.chargesCopro != PropertyInput.defaultForm().chargesCopro,
                   form.taxeFonciere != PropertyInput.defaultForm().taxeFonciere,
                   form.assurance != PropertyInput.defaultForm().assurance,
-                ]),
-                5
+                ]) +
+                    1, // + "Frais de gestion", toujours compté rempli
+                6
               )
             : (
                 _countDiff([
@@ -535,12 +558,13 @@ class _CalcScreenState extends State<CalcScreen> {
                   form.dureeSejourMoyenne != PropertyInput.defaultForm().dureeSejourMoyenne,
                   form.commissionPct != PropertyInput.defaultForm().commissionPct,
                   form.menagePartReservation != PropertyInput.defaultForm().menagePartReservation,
+                  form.ameublementAnnuel != PropertyInput.defaultForm().ameublementAnnuel,
                   form.abonnements != PropertyInput.defaultForm().abonnements,
                   form.taxeSejour != PropertyInput.defaultForm().taxeSejour,
                   form.taxeFonciere != PropertyInput.defaultForm().taxeFonciere,
                   form.assurance != PropertyInput.defaultForm().assurance,
                 ]),
-                11
+                12
               ),
       ),
       if (form.mode == RentalMode.longue) ...[
@@ -710,10 +734,14 @@ class _CalcScreenState extends State<CalcScreen> {
         "Capacité d'emprunt",
         icon: Icons.speed_outlined,
         color: const Color(0xFFE0705C),
-        // "Autres crédits en cours" exclu : son défaut est 0, une réponse
-        // légitime (pas d'autre crédit) — seul le revenu est un champ sans
-        // défaut honnête à 0.
-        progress: (form.revenuMensuelNet != PropertyInput.defaultForm().revenuMensuelNet ? 1 : 0, 1),
+        // 2 champs visibles (revenus + autres crédits) : le total doit
+        // compter les deux. "Autres crédits en cours" reste toujours
+        // considéré rempli : son défaut est 0, une réponse légitime (pas
+        // d'autre crédit) qu'exiger différente pénaliserait à tort.
+        progress: (
+          (form.revenuMensuelNet != PropertyInput.defaultForm().revenuMensuelNet ? 1 : 0) + 1,
+          2
+        ),
       ),
       if (isNovice) const Tip("On se base sur la règle des 35 % : la banque accepte rarement que tes mensualités (tous crédits compris) dépassent 35 % de tes revenus nets."),
       Row(children: [
