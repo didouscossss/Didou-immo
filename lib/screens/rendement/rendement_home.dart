@@ -231,18 +231,28 @@ class _RendementHomeState extends State<RendementHome> {
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              _headerIconButton(
-                icon: Icons.dashboard_customize_outlined,
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+            // Les 4 boutons à leur taille normale (56px chacun) ne tiennent
+            // pas dans les 232px du menu latéral — ils débordaient du cadre
+            // du menu, par-dessus le contenu. Même filet de sécurité que le
+            // badge juste au-dessus : réduit au lieu de déborder.
+            child: SizedBox(
+              width: double.infinity,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  _headerIconButton(
+                    icon: Icons.dashboard_customize_outlined,
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TabCustomizationScreen())),
+                  ),
+                  _headerIconButton(
+                    icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                    onTap: state.toggleDarkMode,
+                  ),
+                  _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
+                  _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+                ]),
               ),
-              _headerIconButton(
-                icon: state.darkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                onTap: state.toggleDarkMode,
-              ),
-              _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
-              _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
-            ]),
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -332,29 +342,43 @@ class _RendementHomeState extends State<RendementHome> {
   /// pattern d'import conditionnel.
   Widget _crossPromoChip() {
     final isWeb = kIsWeb;
-    return InkWell(
-      onTap: () => _openExternalUrl(
-        isWeb ? 'https://play.google.com/store/apps/details?id=com.didouimmo.didou_immo' : 'https://didou-immo.fr',
-      ),
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.accent.withValues(alpha: AppColors.isDark ? 0.18 : 0.1),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (isWeb)
-            Image.asset('assets/images/google_play_icon.png', height: 16, width: 16)
-          else
-            Icon(Icons.language, size: 16, color: AppColors.accent),
-          const SizedBox(width: 6),
-          Text(
-            isWeb ? 'Disponible sur Google Play' : 'Aussi sur didou-immo.fr',
-            style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent),
+    // SizedBox(width: infinity) + FittedBox(scaleDown) : dans le menu
+    // latéral PC (232px, étroit), le texte du badge dépassait du cadre
+    // arrondi — un Row en taille naturelle ne se réduit pas tout seul
+    // face à une largeur disponible trop juste. Même technique que la
+    // barre d'onglets du bas (voir _buildTabBar) : réduit la taille au
+    // lieu de laisser déborder, quelle que soit la largeur réellement
+    // disponible (sidebar PC ou en-tête mobile).
+    return SizedBox(
+      width: double.infinity,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: InkWell(
+          onTap: () => _openExternalUrl(
+            isWeb ? 'https://play.google.com/store/apps/details?id=com.didouimmo.didou_immo' : 'https://didou-immo.fr',
           ),
-        ]),
+          borderRadius: BorderRadius.circular(999),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.accent.withValues(alpha: AppColors.isDark ? 0.18 : 0.1),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (isWeb)
+                Image.asset('assets/images/google_play_icon.png', height: 16, width: 16)
+              else
+                Icon(Icons.language, size: 16, color: AppColors.accent),
+              const SizedBox(width: 6),
+              Text(
+                isWeb ? 'Disponible sur Google Play' : 'Aussi sur didou-immo.fr',
+                style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent),
+              ),
+            ]),
+          ),
+        ),
       ),
     );
   }
