@@ -3,8 +3,127 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/section_title.dart';
 
+/// Une étape du parcours "du projet au résultat" (voir [_journeySteps]) —
+/// le cœur de cet écran, demandé par l'utilisateur en remplacement d'une
+/// simple liste d'encarts expliqués : une vraie marche à suivre, dans
+/// l'ordre où on avance réellement dans l'appli.
+class _JourneyStep {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final String body;
+  final String tabHint;
+  // Puces optionnelles — seule l'étape "verdict" en a besoin, pour détailler
+  // les quelques seuils concrets (score, cash-flow, rentabilité...) plutôt
+  // que les noyer dans un paragraphe.
+  final List<String>? bullets;
+  const _JourneyStep({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.body,
+    required this.tabHint,
+    this.bullets,
+  });
+}
+
+/// Index de l'étape "verdict" dans [_journeySteps] — mise en avant
+/// visuellement (carte plus large, bordure colorée) puisque c'est la
+/// réponse à "ce projet est-il bon ou pas", ce que l'utilisateur a
+/// explicitement demandé de faire ressortir.
+const int _kVerdictStepIndex = 7;
+
+const List<_JourneyStep> _journeySteps = [
+  _JourneyStep(
+    title: 'Décris le bien',
+    icon: Icons.home_outlined,
+    color: Color(0xFF7C6FE0),
+    body: "Nom, localisation, prix d'achat, travaux, surface. C'est la carte d'identité du projet : tout le reste de "
+        "l'appli s'appuie dessus.",
+    tabHint: 'Onglet Bien',
+  ),
+  _JourneyStep(
+    title: 'Renseigne des revenus réalistes',
+    icon: Icons.account_balance_wallet_outlined,
+    color: Color(0xFF2FA39B),
+    body: "Loyer attendu, vacance locative, charges de copro, frais de gestion. Mieux vaut rester prudent sur ces "
+        "chiffres : la rentabilité se recalcule sous tes yeux à chaque champ rempli, pas besoin de valider quoi "
+        "que ce soit.",
+    tabHint: 'Onglet Bien',
+  ),
+  _JourneyStep(
+    title: 'Monte ton financement',
+    icon: Icons.account_balance_outlined,
+    color: Color(0xFF5B6FD8),
+    body: "Apport, taux, durée du prêt — et vérifie ta capacité d'emprunt pendant que tu y es. C'est ce qui "
+        "détermine ton cash-flow mensuel, l'un des indicateurs les plus importants à la fin.",
+    tabHint: 'Onglet Bien',
+  ),
+  _JourneyStep(
+    title: 'Vérifie que tu achètes au bon prix',
+    icon: Icons.location_on_outlined,
+    color: Color(0xFF3B82C4),
+    body: "Compare le prix et le loyer de ton bien à ceux du secteur (et visualise-les sur la carte si tu hésites "
+        "entre plusieurs villes). Un bien peut sembler rentable sur le papier et pourtant être acheté trop cher.",
+    tabHint: 'Onglets Marché et Carte',
+  ),
+  _JourneyStep(
+    title: 'Anticipe la fiscalité',
+    icon: Icons.description_outlined,
+    color: Color(0xFFD4A72C),
+    body: "Regarde ce que chaque régime (micro-foncier, réel, LMNP...) te laisserait réellement net d'impôt selon "
+        "ta tranche. Un même loyer peut rapporter très différemment selon le choix fait ici.",
+    tabHint: 'Onglet Fiscalité',
+  ),
+  _JourneyStep(
+    title: 'Projette-toi dans le temps',
+    icon: Icons.trending_up,
+    color: Color(0xFF4A9B6E),
+    body: "Remboursement du prêt, évolution de ton patrimoine, revente simulée dans quelques années. Un bien peut "
+        "être tendu les premières années et devenir très rentable sur la durée — ou l'inverse.",
+    tabHint: 'Onglet Projection',
+  ),
+  _JourneyStep(
+    title: 'Stress-teste avant de signer',
+    icon: Icons.bolt,
+    color: Color(0xFFE0705C),
+    body: "L'encart « Et si...? » simule un scénario pessimiste : taux qui monte, occupation qui baisse, travaux "
+        "imprévus. Si le projet tient encore debout dans ce scénario, c'est plutôt bon signe.",
+    tabHint: 'Onglet Bien',
+  ),
+  _JourneyStep(
+    title: 'Lis le résultat : bon ou pas bon ?',
+    icon: Icons.task_alt,
+    color: Color(0xFF2F5D50),
+    body: "Trois indicateurs, toujours affichés en haut de l'onglet Bien, résument tout le projet en un coup "
+        "d'œil :",
+    tabHint: 'Onglet Bien',
+    bullets: [
+      "Score d'investissement /100 : 80+ Excellent, 60-79 Bon, 40-59 Moyen, en dessous de 40 Risqué. Il combine "
+          "rentabilité, cash-flow, écart au marché et taux d'occupation.",
+      "Cash-flow mensuel positif = le loyer couvre le crédit et les charges. Négatif = il faudra compléter de ta "
+          "poche chaque mois.",
+      "Rentabilité nette : à partir d'environ 4 %, c'est considéré correct pour ce type de bien — en dessous, "
+          "compare avec d'autres projets avant de te décider.",
+      "Capacité d'emprunt dépassée (plus de 35 % d'endettement) ou DPE pénalisant (F ou G, location bientôt ou "
+          "déjà interdite) : deux signaux d'alerte à regarder aussi.",
+    ],
+  ),
+  _JourneyStep(
+    title: 'Enregistre et compare',
+    icon: Icons.layers_outlined,
+    color: Color(0xFFD4A72C),
+    body: "Convaincu, ou pas encore ? « Enregistrer ce bien » l'ajoute à Comparer et Patrimoine : tu peux alors le "
+        "mettre face à d'autres projets, suivre l'ensemble de ton patrimoine, et exporter tes données en PDF ou "
+        "CSV.",
+    tabHint: 'Onglets Comparer et Patrimoine',
+  ),
+];
+
 /// Un encart expliqué (un "encart" = une des cartes grises qu'on retrouve
-/// dans chaque onglet, reconnaissables à leur [SectionTitle] coloré).
+/// dans chaque onglet, reconnaissables à leur [SectionTitle] coloré) — le
+/// détail de référence, gardé sous le parcours ci-dessus pour qui veut
+/// aller plus loin qu'une étape en particulier.
 class _GuideField {
   final String title;
   final String body;
@@ -22,66 +141,52 @@ class _GuideTab {
   const _GuideTab({required this.label, required this.icon, required this.color, required this.intro, required this.fields});
 }
 
-/// Contenu du guide — un équivalent détaillé, encart par encart, de ce que
-/// [MethodologieSheet] résume en quelques lignes et que le tuto de prise en
-/// main ([OnboardingSheet]) ne fait que survoler onglet par onglet. Gardé
-/// séparé de ces deux-là (plutôt que de les allonger) : ce sont des points
-/// d'entrée courts et rapides à lire, celui-ci est la version longue pour
-/// qui veut vraiment comprendre le "pourquoi" de chaque champ.
 const List<_GuideTab> _guideTabs = [
   _GuideTab(
     label: 'Bien',
     icon: Icons.home_outlined,
     color: Color(0xFF7C6FE0),
     intro: "Le point de départ de toute simulation : tu décris le bien, son financement, ses revenus et ses charges — "
-        "la rentabilité se recalcule automatiquement à chaque champ rempli, pas besoin de valider quoi que ce soit.",
+        "la rentabilité se recalcule automatiquement à chaque champ rempli.",
     fields: [
       _GuideField(
         'Informations générales',
         "Le nom du bien ne sert qu'à t'y retrouver une fois plusieurs biens enregistrés. Le type de location "
-            "(longue ou courte durée) change les champs proposés ensuite : la courte durée affiche des champs "
-            "saisonniers (prix par nuit, nuits occupées en basse/haute saison) à la place du loyer mensuel classique, "
-            "parce que les deux façons de louer ne se calculent pas pareil.",
+            "(longue ou courte durée) change les champs proposés ensuite.",
       ),
       _GuideField(
         'Caractéristiques du bien',
         "Localisation, surface et capacité d'accueil permettent de comparer ton bien aux repères de prix du secteur "
-            "(onglet Marché) et, en courte durée, d'estimer un potentiel de nuitées réaliste pour la zone.",
+            "et, en courte durée, d'estimer un potentiel de nuitées réaliste.",
       ),
       _GuideField(
         'Prix et travaux',
-        "Prix d'achat, frais de notaire et travaux forment le coût total réel du projet, pas seulement le prix "
-            "affiché par le vendeur. C'est cette base qui sert à calculer la rentabilité brute et nette, et le "
-            "montant à financer.",
+        "Prix d'achat, frais de notaire et travaux forment le coût total réel du projet. C'est cette base qui sert "
+            "à calculer la rentabilité et le montant à financer.",
       ),
       _GuideField(
         'Revenus & charges',
-        "Loyer (ou revenus saisonniers en courte durée), vacance locative, charges de copropriété et frais de "
-            "gestion donnent le revenu net réellement perçu une fois les charges déduites. C'est ce chiffre-là, pas "
-            "le loyer affiché, qui détermine si le bien est vraiment rentable.",
+        "Loyer, vacance locative, charges de copropriété et frais de gestion donnent le revenu net réellement "
+            "perçu — c'est ce chiffre-là, pas le loyer affiché, qui détermine si le bien est vraiment rentable.",
       ),
       _GuideField(
         'Financement',
-        "Apport, taux d'intérêt et durée du prêt déterminent la mensualité de crédit, donc le cash-flow mensuel — "
-            "ce qu'il te reste, ou ce qu'il te manque, chaque mois une fois le prêt et les charges payés.",
+        "Apport, taux d'intérêt et durée du prêt déterminent la mensualité de crédit, donc le cash-flow mensuel.",
       ),
       _GuideField(
         'Comparer des offres de prêt',
-        "Permet de saisir plusieurs propositions de banque (taux, durée, assurance) et de voir laquelle coûte "
-            "réellement le moins cher sur la durée totale du prêt — pas seulement sur le taux affiché, qui ne dit "
-            "pas tout une fois l'assurance comptée.",
+        "Saisis plusieurs propositions de banque pour voir laquelle coûte réellement le moins cher sur la durée "
+            "totale — pas seulement sur le taux affiché.",
       ),
       _GuideField(
         "Capacité d'emprunt",
-        "À partir de tes revenus et de tes crédits en cours, estime le montant maximum qu'une banque accepterait "
-            "généralement de te prêter (taux d'endettement). Utile pour savoir si le projet est finançable avant "
-            "même de contacter une banque.",
+        "Estime, à partir de tes revenus et crédits en cours, le montant maximum qu'une banque accepterait "
+            "généralement de te prêter.",
       ),
       _GuideField(
         'Et si...? (stress-test)',
-        "Simule un scénario pessimiste — le taux qui grimpe, l'occupation qui baisse, des travaux imprévus — pour "
-            "voir si le projet reste viable même si tout ne se passe pas comme prévu. Un réflexe essentiel avant de "
-            "s'engager sur 15 ou 20 ans.",
+        "Simule un scénario pessimiste pour voir si le projet reste viable même si tout ne se passe pas comme "
+            "prévu.",
       ),
     ],
   ),
@@ -93,9 +198,8 @@ const List<_GuideTab> _guideTabs = [
     fields: [
       _GuideField(
         'Localisation & marché',
-        "Une fois la commune renseignée, affiche le prix et le loyer moyen au m² du secteur (voir Méthodologie pour "
-            "la source) et calcule l'écart avec ton bien. Un score d'investissement résume ensuite cette comparaison "
-            "en un coup d'œil, pour ne pas avoir à interpréter plusieurs chiffres séparément.",
+        "Affiche le prix et le loyer moyen au m² du secteur et calcule l'écart avec ton bien. Un score "
+            "d'investissement résume cette comparaison en un coup d'œil.",
       ),
     ],
   ),
@@ -103,13 +207,11 @@ const List<_GuideTab> _guideTabs = [
     label: 'Carte',
     icon: Icons.map_outlined,
     color: Color(0xFF3B82C4),
-    intro: "La même donnée de prix au m², mais sur une carte — pratique pour comparer plusieurs secteurs ou villes "
-        "avant même de choisir où investir.",
+    intro: "La même donnée de prix au m², mais sur une carte — pratique pour comparer plusieurs secteurs ou villes.",
     fields: [
       _GuideField(
         'Carte des prix',
-        "Affiche le prix et le loyer au m² zone par zone. Utile pour repérer rapidement les secteurs sous-évalués "
-            "ou, à l'inverse, ceux où les prix sont déjà tendus — sans avoir à chercher commune par commune.",
+        "Affiche le prix et le loyer au m² zone par zone, pour repérer les secteurs sous-évalués ou déjà tendus.",
       ),
     ],
   ),
@@ -117,29 +219,24 @@ const List<_GuideTab> _guideTabs = [
     label: 'Fiscalité',
     icon: Icons.account_balance_outlined,
     color: Color(0xFF5B6FD8),
-    intro: "La fiscalité peut faire la différence entre un bon et un mauvais investissement — cet onglet t'aide à "
-        "anticiper, pas à remplir ta déclaration à ta place.",
+    intro: "La fiscalité peut faire la différence entre un bon et un mauvais investissement.",
     fields: [
       _GuideField(
         'Régimes fiscaux',
-        "Compare, selon ta tranche d'imposition (TMI), ce que chaque régime (micro-foncier, réel, LMNP...) te "
-            "laisserait réellement net d'impôt. Un même loyer peut rapporter très différemment selon le régime "
-            "choisi — c'est souvent là que se joue une vraie différence de rentabilité.",
+        "Compare, selon ta tranche d'imposition, ce que chaque régime te laisserait réellement net d'impôt.",
       ),
       _GuideField(
         'Documents & démarches',
-        "Liste les documents à réunir et les démarches à anticiper pour le régime retenu, pour ne pas découvrir une "
-            "obligation administrative après coup, une fois le bien déjà acheté.",
+        "Liste ce qu'il faut réunir et anticiper pour le régime retenu.",
       ),
       _GuideField(
         'Échéances récurrentes',
-        "Rappelle les dates et obligations qui reviennent chaque année (déclarations, taxe foncière...) une fois le "
-            "bien en exploitation, pour les anticiper plutôt que les découvrir.",
+        "Rappelle les dates et obligations qui reviennent chaque année une fois le bien en exploitation.",
       ),
       _GuideField(
         'Structure de détention',
-        "En nom propre, en SCI à l'IR ou à l'IS... la structure juridique choisie pour détenir le bien a un impact "
-            "fiscal et patrimonial fort, en particulier en cas de revente ou de transmission plus tard.",
+        "En nom propre ou en SCI : la structure choisie a un impact fiscal et patrimonial fort, en particulier à "
+            "la revente.",
       ),
     ],
   ),
@@ -147,31 +244,24 @@ const List<_GuideTab> _guideTabs = [
     label: 'Projection',
     icon: Icons.trending_up,
     color: Color(0xFF4A9B6E),
-    intro: "Projette le bien dans le temps : remboursement du prêt, évolution de sa valeur, et ce qu'il te "
-        "resterait si tu le revendais.",
+    intro: "Projette le bien dans le temps : remboursement du prêt, évolution de sa valeur, revente simulée.",
     fields: [
       _GuideField(
         'Projection patrimoniale',
-        "À partir d'hypothèses de croissance des loyers et de la valeur du bien, simule l'évolution de ton "
-            "patrimoine année après année. Le graphique montre si tu t'enrichis réellement avec ce bien, et à quel "
-            "rythme.",
+        "Simule l'évolution de ton patrimoine année après année à partir d'hypothèses de croissance.",
       ),
       _GuideField(
         "Tableau d'amortissement",
-        "Détaille, échéance par échéance, la part d'intérêts et de capital remboursés. Utile pour savoir combien tu "
-            "dois réellement encore à la banque à un instant donné, par exemple en vue d'une revente anticipée.",
+        "Détaille la part d'intérêts et de capital remboursés, utile pour une revente anticipée.",
       ),
       _GuideField(
         'Simulation de revente',
-        "Estime la plus-value nette si tu revends le bien après la durée de projection choisie, impôt sur la "
-            "plus-value déjà déduit. Cette imposition diminue avec le temps, jusqu'à disparaître après 22 à 30 ans "
-            "de détention.",
+        "Estime la plus-value nette si tu revends après la durée choisie, impôt déjà déduit.",
       ),
       _GuideField(
         'TRI',
-        "Le Taux de Rendement Interne résume en un seul pourcentage la performance globale du projet (loyers + "
-            "revente), en tenant compte du moment où chaque euro entre et sort. C'est la mesure la plus complète "
-            "pour comparer deux projets très différents entre eux.",
+        "Résume en un seul pourcentage la performance globale du projet (loyers + revente) — la mesure la plus "
+            "complète pour comparer deux projets entre eux.",
       ),
     ],
   ),
@@ -179,52 +269,35 @@ const List<_GuideTab> _guideTabs = [
     label: 'Comparer',
     icon: Icons.layers_outlined,
     color: Color(0xFFD4A72C),
-    intro: "Une fois plusieurs biens enregistrés, cet onglet les met côte à côte pour t'aider à choisir entre eux.",
+    intro: "Une fois plusieurs biens enregistrés, cet onglet les met côte à côte pour t'aider à choisir.",
     fields: [
-      _GuideField(
-        'Comparatif',
-        "Tableau récapitulatif de tous tes biens enregistrés — rentabilité, cash-flow et score — pour repérer en "
-            "un coup d'œil lequel est le plus intéressant.",
-      ),
-      _GuideField(
-        'Comparatif graphique',
-        "Les mêmes indicateurs (rentabilité nette, cash-flow, score) présentés sous forme de graphiques en barres — "
-            "souvent plus parlant qu'un tableau de chiffres pour trancher entre plusieurs biens.",
-      ),
-      _GuideField(
-        'Historique des ventes',
-        "Garde une trace des biens que tu as marqués comme vendus, avec leur date de vente. Utile pour suivre tes "
-            "décisions passées et affiner ton jugement au fil du temps.",
-      ),
-      _GuideField(
-        'Exporter en CSV',
-        "Exporte toutes tes données dans un fichier exploitable dans un tableur — pratique pour un suivi personnel "
-            "plus poussé, ou pour les partager avec un comptable ou un conseiller.",
-      ),
+      _GuideField('Comparatif', "Tableau récapitulatif — rentabilité, cash-flow et score de tous tes biens."),
+      _GuideField('Comparatif graphique', "Les mêmes indicateurs sous forme de graphiques, souvent plus parlants."),
+      _GuideField('Historique des ventes', "Garde une trace des biens marqués comme vendus, avec leur date."),
+      _GuideField('Exporter en CSV', "Exporte toutes tes données dans un fichier exploitable dans un tableur."),
     ],
   ),
   _GuideTab(
     label: 'Patrimoine',
     icon: Icons.insights_outlined,
     color: Color(0xFF2FA39B),
-    intro: "Une vue d'ensemble de tous tes biens enregistrés, comme un portefeuille d'investissement plutôt que "
-        "bien par bien.",
+    intro: "Une vue d'ensemble de tous tes biens enregistrés, comme un portefeuille d'investissement.",
     fields: [
       _GuideField(
         'Patrimoine',
-        "Agrège la valeur, les revenus et le cash-flow de l'ensemble de tes biens enregistrés, pour donner une "
-            "vision globale de ton patrimoine immobilier — pas bien par bien, mais dans son ensemble.",
+        "Agrège la valeur, les revenus et le cash-flow de l'ensemble de tes biens pour une vision globale.",
       ),
     ],
   ),
 ];
 
-/// Écran "Guide complet" — explique, onglet par onglet puis encart par
-/// encart, à quoi sert chaque section de l'appli et pourquoi elle compte,
-/// comme demandé en plus du tuto rapide et de la méthodologie déjà
-/// existants. Un vrai écran (pas une feuille) : le contenu est trop long
-/// pour une sheet, et ça permet de défiler et de revenir en arrière
-/// normalement, identique sur mobile comme sur le site web.
+/// Écran "Guide complet" — un vrai parcours pas à pas ("du projet au
+/// résultat", demandé par l'utilisateur) suivi d'un détail de référence,
+/// onglet par onglet et encart par encart, pour qui veut creuser un point
+/// précis. Un vrai écran (pas une sheet) : le contenu est trop long pour
+/// une feuille qu'on referme d'un tap en dehors, et ça permet de défiler
+/// et revenir en arrière normalement — identique sur mobile et sur le
+/// site web.
 class GuideCompletScreen extends StatelessWidget {
   const GuideCompletScreen({super.key});
 
@@ -235,20 +308,37 @@ class GuideCompletScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            "Comment utiliser l'application",
-            style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Chaque onglet ci-dessous correspond à ceux de la barre de navigation. Dans chacun, les encarts se "
-            "remplissent de haut en bas — commence par l'onglet Bien, les autres se nourrissent de ce que tu y "
-            "renseignes. Le mode Novice/Avancé (icône en haut), le réordonnancement des onglets et des encarts "
-            "(icône Personnaliser) et le thème clair/sombre sont accessibles à tout moment et n'effacent jamais tes "
-            "données.",
-            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.65)).copyWith(height: 1.5),
-          ),
+          _buildHero(),
           const SizedBox(height: 28),
+          Text(
+            'Du projet au résultat, étape par étape',
+            style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Suis-les dans l'ordre pour ton premier bien — tout reste modifiable à tout moment ensuite.",
+            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
+          ),
+          const SizedBox(height: 20),
+          for (int i = 0; i < _journeySteps.length; i++)
+            _JourneyStepTile(
+              step: _journeySteps[i],
+              index: i,
+              isLast: i == _journeySteps.length - 1,
+              highlight: i == _kVerdictStepIndex,
+            ),
+          const SizedBox(height: 12),
+          Divider(color: AppColors.border, height: 48),
+          Text(
+            'Le détail de chaque encart',
+            style: AppTextStyles.serif(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.ink),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            "Pour creuser un champ en particulier, sans suivre tout le parcours.",
+            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.55)),
+          ),
+          const SizedBox(height: 20),
           for (final tab in _guideTabs) ...[
             SectionTitle(tab.label, icon: tab.icon, color: tab.color),
             Padding(
@@ -258,7 +348,7 @@ class GuideCompletScreen extends StatelessWidget {
                 style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)).copyWith(height: 1.45),
               ),
             ),
-            for (final field in tab.fields) _GuideFieldTile(field),
+            for (final field in tab.fields) _GuideFieldTile(field, color: tab.color),
             const SizedBox(height: 20),
           ],
           Container(
@@ -284,11 +374,147 @@ class GuideCompletScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildHero() {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.sectionBandGradient,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ClipOval(
+          child: Image.asset('assets/images/didou_face.png', width: 44, height: 44, fit: BoxFit.cover),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Salut, je suis Didou 👋', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            const SizedBox(height: 6),
+            Text(
+              "Voici comment aller d'une idée de bien à un vrai résultat chiffré, avec une réponse claire : "
+              "bon investissement, ou pas pour toi.",
+              style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.75)).copyWith(height: 1.5),
+            ),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _JourneyStepTile extends StatelessWidget {
+  final _JourneyStep step;
+  final int index;
+  final bool isLast;
+  final bool highlight;
+  const _JourneyStepTile({required this.step, required this.index, required this.isLast, this.highlight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 36,
+            child: Column(children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: step.color),
+                child: Icon(step.icon, size: 16, color: Colors.white),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    color: AppColors.border,
+                  ),
+                ),
+            ]),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: highlight ? step.color.withValues(alpha: AppColors.isDark ? 0.16 : 0.07) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: highlight ? step.color.withValues(alpha: 0.4) : AppColors.border, width: highlight ? 1.5 : 1),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Text('Étape ${index + 1}', style: AppTextStyles.mono(fontSize: 11, color: step.color)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(step.title, style: AppTextStyles.serif(fontSize: 15.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                      ),
+                    ]),
+                    const SizedBox(height: 8),
+                    Text(
+                      step.body,
+                      style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.75)).copyWith(height: 1.55),
+                    ),
+                    if (step.bullets != null) ...[
+                      const SizedBox(height: 10),
+                      for (final b in step.bullets!)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 5,
+                                height: 5,
+                                margin: const EdgeInsets.only(top: 7, right: 10),
+                                decoration: BoxDecoration(color: step.color, shape: BoxShape.circle),
+                              ),
+                              Expanded(
+                                child: Text(b, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.8)).copyWith(height: 1.5)),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: step.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.place_outlined, size: 12, color: step.color),
+                        const SizedBox(width: 4),
+                        Text(step.tabHint, style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: step.color)),
+                      ]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _GuideFieldTile extends StatelessWidget {
   final _GuideField field;
-  const _GuideFieldTile(this.field);
+  final Color color;
+  const _GuideFieldTile(this.field, {required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +532,7 @@ class _GuideFieldTile extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: 14),
           childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
-          iconColor: AppColors.accent,
+          iconColor: color,
           collapsedIconColor: AppColors.ink.withValues(alpha: 0.4),
           title: Text(field.title, style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
           children: [
