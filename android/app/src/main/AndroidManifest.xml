@@ -46,5 +46,13 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Requis par url_launcher pour ouvrir un lien https dans le
+             navigateur (lien vers didou-immo.fr depuis l'appli, voir
+             rendement_home.dart) — sans ça, Android 11+ peut refuser de
+             résoudre l'intent par défaut de visibilité des paquets. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
     </queries>
 </manifest>
