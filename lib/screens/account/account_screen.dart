@@ -6,6 +6,7 @@ import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/arrival_bounce.dart';
 import '../admin/admin_screen.dart';
+import '../formation/formation_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
 import '../referral/referral_screen.dart';
@@ -87,6 +88,22 @@ class AccountScreen extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminScreen())),
               icon: const Icon(Icons.admin_panel_settings_outlined),
               label: const Text('Administration'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.gold,
+                side: BorderSide(color: AppColors.gold),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Formation payante (59 €, paiement unique) en cours de
+            // préparation — pas encore de paiement branché, réservée aux
+            // comptes admin pour la relire avant de décider comment la
+            // vendre (voir FormationScreen).
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FormationScreen())),
+              icon: const Icon(Icons.school_outlined),
+              label: const Text('Formation complète (admin)'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.gold,
                 side: BorderSide(color: AppColors.gold),
