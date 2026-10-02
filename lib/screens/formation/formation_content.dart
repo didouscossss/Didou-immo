@@ -9,12 +9,36 @@ class FormationLesson {
   const FormationLesson(this.title, this.body);
 }
 
+/// Une des réponses proposées à une question de quiz — qu'elle soit la
+/// bonne ou non, elle porte toujours sa propre explication : demandé par
+/// l'utilisateur pour qu'une mauvaise réponse explique pourquoi ce n'est
+/// pas la bonne, pas seulement "faux, réessaie".
+class FormationQuizOption {
+  final String text;
+  final bool correct;
+  final String explanation;
+  const FormationQuizOption({required this.text, required this.correct, required this.explanation});
+}
+
+/// Une question de quiz — toujours une mise en situation concrète plutôt
+/// qu'une question de cours ("Qu'est-ce que le LMNP ?"), pour vérifier que
+/// la notion est comprise au-delà de la définition.
+class FormationQuizQuestion {
+  final String scenario;
+  final List<FormationQuizOption> options;
+  const FormationQuizQuestion({required this.scenario, required this.options});
+}
+
 class FormationModule {
   final String title;
   final String subtitle;
   final IconData icon;
   final Color color;
   final List<FormationLesson> lessons;
+  /// Quiz de fin de module — mises en situation avec explications
+  /// (voir [FormationQuizQuestion]). Vide (par défaut) pour les modules qui
+  /// n'en ont pas besoin (l'intro, et le récapitulatif final).
+  final List<FormationQuizQuestion> quiz;
   /// "L'essentiel à retenir" — un court récapitulatif à puces affiché à la
   /// fin du module, dans la lecture leçon par leçon (voir
   /// `FormationModuleScreen`). Sert de synthèse mémorisable plutôt que de
@@ -28,13 +52,14 @@ class FormationModule {
     required this.icon,
     required this.color,
     required this.lessons,
+    this.quiz = const [],
     required this.takeaways,
   });
 }
 
 /// Contenu complet de la formation "Réussir son premier investissement
 /// locatif" — 13 modules, du tout premier réflexe jusqu'à la revente, avec
-/// 3 études de cas chiffrées pour voir la méthode appliquée de bout en
+/// 4 études de cas chiffrées pour voir la méthode appliquée de bout en
 /// bout. Rédigé pour un débutant complet : chaque module renvoie, quand
 /// c'est pertinent, vers l'onglet de l'app qui permet de mettre la notion
 /// en pratique immédiatement (Didou-Immo n'est pas juste évoqué en intro,
@@ -132,6 +157,83 @@ const List<FormationModule> formationModules = [
             "irréguliers, il revend à perte. L'erreur n'était pas le bien en lui-même : c'était de copier un "
             "projet qui ne correspondait ni à son temps disponible, ni à son objectif.",
       ),
+      FormationLesson(
+        "Qui fait quoi autour de toi",
+        "Le notaire authentifie la vente et perçoit les frais de mutation (reversés en grande partie à l'État "
+            "et aux collectivités, pas à lui) — tu peux en choisir un différent de celui du vendeur, sans "
+            "surcoût, les deux se partageant alors les honoraires. L'agent immobilier représente généralement "
+            "le vendeur (c'est lui qui le rémunère, même quand les frais d'agence sont affichés « à la charge "
+            "de l'acquéreur ») : utile pour trouver un bien, mais garde à l'esprit que son intérêt n'est pas "
+            "automatiquement aligné avec le tien lors de la négociation. Le courtier en financement travaille, "
+            "lui, pour toi : il démarche les banques à ta place. L'expert-comptable n'est pas obligatoire mais "
+            "devient vite rentable dès le régime réel ou le LMNP (voir le module Fiscalité). Savoir qui "
+            "défend tes intérêts, et qui défend ceux de quelqu'un d'autre, évite bien des malentendus.",
+      ),
+      FormationLesson(
+        "Combien de temps ça prend, réellement",
+        "Compte en moyenne 3 à 6 mois entre le début de la recherche sérieuse et la signature définitive pour "
+            "un premier achat — parfois plus dans un marché tendu où les bons biens partent vite, parfois "
+            "moins si tu es très réactif et déjà prêt financièrement. La gestion ensuite, une fois le bien "
+            "loué et stabilisé, représente en réalité peu de temps au quotidien (quelques heures par mois en "
+            "gestion directe, pour les messages, le suivi des paiements et l'administratif courant), avec des "
+            "pics ponctuels lors d'un changement de locataire ou d'un imprévu. C'est un projet qui demande de "
+            "la disponibilité en amont (recherche, visites, montage du dossier) bien plus qu'au quotidien une "
+            "fois en place — prévoir ce rythme dès le départ évite l'épuisement ou l'abandon en cours de route.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Un ami te propose de racheter avec lui l'immeuble de rapport qu'il vient de visiter : "
+            "rendement affiché 9 %, mais à 2h30 de route de chez toi et avec de la gestion quotidienne "
+            "(colocation, turnover fréquent). Tu n'as ni le temps libre ni l'envie de gérer ça à distance. "
+            "Que fais-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "Je fonce, un rendement à 9 % ne se refuse pas.",
+            correct: false,
+            explanation: "Le rendement affiché ne dit rien de ta capacité réelle à gérer ce bien. Un bon "
+                "projet sur le papier devient un mauvais projet pour toi s'il ne correspond pas à ton temps "
+                "disponible — c'est exactement l'erreur de Julien dans l'exemple du module.",
+          ),
+          FormationQuizOption(
+            text: "Je regarde si une agence de gestion locale peut tout prendre en charge, et je recalcule "
+                "la rentabilité nette avec ses frais inclus avant de décider.",
+            correct: true,
+            explanation: "Exactement la bonne démarche : le rendement affiché n'est qu'un point de départ. "
+                "En intégrant le vrai coût de la solution qui correspond à TA situation (ici, la gestion "
+                "déléguée), tu obtiens un chiffre comparable à ta réalité, pas à celle de ton ami.",
+          ),
+          FormationQuizOption(
+            text: "Je refuse par principe, un rendement aussi élevé cache forcément un problème.",
+            correct: false,
+            explanation: "Un rendement élevé n'est pas automatiquement suspect (voir le module Choisir sa "
+                "zone) — le vrai problème ici est l'inadéquation avec ton temps disponible, pas le chiffre "
+                "lui-même. Refuser sans même évaluer la solution de gestion déléguée, c'est écarter une "
+                "option potentiellement viable trop vite.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu négocies l'achat d'un bien. L'agent immobilier te dit : « Faites-moi confiance, c'est "
+            "une super affaire, il faut signer vite. » Quelle est la bonne lecture de la situation ?",
+        options: [
+          FormationQuizOption(
+            text: "L'agent travaille pour moi, je peux suivre son conseil sans vérifier.",
+            correct: false,
+            explanation: "Dans l'immense majorité des cas, l'agent est rémunéré par le vendeur et représente "
+                "donc en priorité ses intérêts, même quand les frais sont facturés à l'acheteur. Ce n'est pas "
+                "malhonnête de sa part — c'est juste sa position dans la transaction, à prendre en compte.",
+          ),
+          FormationQuizOption(
+            text: "Je garde en tête que son rôle n'est pas de défendre mon intérêt à moi, et je fais ma "
+                "propre vérification (chiffrage, PV d'AG, délai de vente) avant de me décider.",
+            correct: true,
+            explanation: "C'est la bonne posture : ni méfiance excessive, ni confiance aveugle. L'agent peut "
+                "être un bon professionnel et, en même temps, ne pas être celui qui vérifie que CE projet est "
+                "bon pour TOI — ce rôle-là te revient.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -184,6 +286,79 @@ const List<FormationModule> formationModules = [
             "qui se révèlent indispensables (pas optionnels), et les frais de dossier. Il lui manque plus de "
             "17 000 € qu'il doit emprunter dans l'urgence, via un crédit à la consommation bien plus cher que "
             "son crédit immobilier.",
+      ),
+      FormationLesson(
+        "Ce qui ne s'applique PAS à l'investissement locatif",
+        "Plusieurs aides et dispositifs connus concernent uniquement la résidence principale, pas un bien "
+            "locatif : le Prêt à Taux Zéro (PTZ) est réservé aux primo-accédants qui achètent pour y habiter "
+            "eux-mêmes, pas pour louer. Le Prêt Accession Sociale (PAS) et le Prêt Action Logement suivent la "
+            "même logique. Confondre les deux catégories fait perdre un temps précieux à monter un dossier "
+            "d'aide pour lequel le projet n'est, en réalité, jamais éligible. À l'inverse, certains dispositifs "
+            "fiscaux (amortissement LMNP, déficit foncier au régime réel) n'existent QUE pour le locatif, pas "
+            "pour une résidence principale — vérifie toujours de quel côté se trouve le dispositif avant de "
+            "bâtir ton budget dessus.",
+      ),
+      FormationLesson(
+        "Fixer une enveloppe maximale, et s'y tenir",
+        "Avant même la première visite, fixe un prix maximum tout compris (pas seulement un prix d'achat "
+            "maximum) à partir de ta capacité d'emprunt et de ton apport disponible — puis ne le dépasse pas, "
+            "même pour « le bien parfait qui ne repassera jamais ». En pratique, le marché produit en continu "
+            "de nouvelles opportunités : le bien manqué aujourd'hui a presque toujours un équivalent qui "
+            "réapparaît dans les semaines ou mois suivants. Dépasser son enveloppe pour un coup de cœur est la "
+            "porte d'entrée la plus fréquente vers un cash-flow trop tendu dès la première année — garder "
+            "cette limite écrite quelque part (et pas seulement « dans sa tête ») aide à résister à la "
+            "pression du moment lors d'une négociation ou d'une visite groupée.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "En préparant ton financement, un conseiller bancaire te parle d'un « prêt à taux "
+            "avantageux pour les primo-accédants » pour ton projet locatif. Que fais-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "Je fonce, un taux avantageux est toujours bon à prendre.",
+            correct: false,
+            explanation: "Les dispositifs primo-accédants (PTZ, PAS...) sont quasi systématiquement réservés "
+                "à une résidence principale. Avant de t'enthousiasmer, vérifie que ton projet locatif y est "
+                "bien éligible — ce n'est presque jamais le cas.",
+          ),
+          FormationQuizOption(
+            text: "Je demande explicitement si ce dispositif s'applique à un achat locatif, et pas "
+                "seulement à une résidence principale.",
+            correct: true,
+            explanation: "La bonne question, systématiquement. Beaucoup de dispositifs « avantageux » sont "
+                "fléchés résidence principale — le vérifier avant d'y consacrer du temps évite une mauvaise "
+                "surprise au moment du dossier.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu as fixé ton enveloppe maximale à 160 000 € tout compris. Une agence te présente un "
+            "bien « rare » à 172 000 € en te pressant de te décider avant la fin de la semaine. Que fais-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "Je dépasse mon enveloppe pour cette fois, le bien a l'air exceptionnel.",
+            correct: false,
+            explanation: "C'est exactement le scénario qui mène à un cash-flow trop tendu dès la première "
+                "année. Un bien « rare » aujourd'hui a presque toujours un équivalent qui réapparaît — la "
+                "pression du délai est un signal à prendre avec recul, pas une raison de dépasser son budget.",
+          ),
+          FormationQuizOption(
+            text: "Je garde mon enveloppe fixée à l'avance et je laisse passer ce bien si je ne peux pas "
+                "négocier le prix à l'intérieur de ma limite.",
+            correct: true,
+            explanation: "La discipline budgétaire protège justement contre ce genre de pression. Si le prix "
+                "ne rentre pas dans l'enveloppe calculée à partir de ta vraie capacité, ce n'est pas le bon "
+                "bien pour toi, quelle que soit sa rareté affichée.",
+          ),
+          FormationQuizOption(
+            text: "Je demande un délai supplémentaire à l'agence, sans rien changer à mon enveloppe.",
+            correct: false,
+            explanation: "Demander un délai ne résout rien si l'intention sous-jacente est quand même de "
+                "dépasser l'enveloppe une fois le délai obtenu. La bonne réponse n'est pas de gagner du temps, "
+                "c'est de ne pas dépasser la limite fixée à l'avance.",
+          ),
+        ],
       ),
     ],
   ),
@@ -263,6 +438,74 @@ const List<FormationModule> formationModules = [
             "dégât des eaux non déclaré par le vendeur précédent : 12 000 € de travaux imprévus, largement "
             "au-dessus de la décote initiale qui l'avait attiré.",
       ),
+      FormationLesson(
+        "Se faire connaître des professionnels locaux",
+        "Les meilleures opportunités ne passent pas toujours par une annonce publique — un agent qui te "
+            "connaît comme acheteur sérieux (dossier prêt, réactif, pas chronophage) te rappelle en priorité "
+            "quand un bien correspondant à tes critères rentre en mandat, parfois avant même sa mise en ligne. "
+            "Même logique avec les artisans de confiance : celui qui a fait tes premiers travaux connaît "
+            "parfois un propriétaire qui vend, ou un bien qui va se libérer. Se construire ce réseau prend du "
+            "temps et de la régularité (rappeler, donner des nouvelles de ta recherche, être précis sur tes "
+            "critères) — un investissement qui paie souvent sur le deuxième ou troisième achat, rarement sur "
+            "le tout premier.",
+      ),
+      FormationLesson(
+        "Combien de biens faut-il visiter avant d'acheter",
+        "Il n'y a pas de chiffre magique, mais la plupart des premiers achats réussis suivent un schéma "
+            "similaire : une dizaine d'annonces étudiées en détail pour chaque bien réellement visité, et "
+            "plusieurs visites (souvent entre 5 et 15) avant de trouver celui qui coche vraiment les critères "
+            "fixés en amont. Visiter peu de biens n'est pas un gage de rapidité si ça mène à un mauvais choix "
+            "— c'est au contraire souvent un chemin plus long au global (temps perdu en travaux imprévus, "
+            "vacance locative non anticipée). À l'inverse, visiter sans fin sans jamais se décider cache "
+            "parfois une peur de se tromper plus qu'un vrai manque de bon bien — fixer des critères clairs dès "
+            "le départ (module précédent) aide à reconnaître le bon moment pour arrêter de chercher.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu cherches activement depuis 3 semaines et tu n'as toujours pas visité de bien "
+            "correspondant vraiment à tes critères. Un ami te dit que « ça fait long, il faut peut-être "
+            "revoir tes critères à la baisse ». Que penses-tu de ce conseil ?",
+        options: [
+          FormationQuizOption(
+            text: "Il a raison, 3 semaines c'est long, je dois être trop exigeant.",
+            correct: false,
+            explanation: "Rien ne dit que 3 semaines soit long — la plupart des premiers achats demandent "
+                "plusieurs mois et de nombreuses visites avant de trouver le bon bien. Revoir ses critères à "
+                "la baisse trop vite est souvent ce qui mène ensuite aux pièges classiques du premier achat.",
+          ),
+          FormationQuizOption(
+            text: "Je relativise : quelques semaines de recherche, ce n'est pas long pour un premier achat, "
+                "et je continue avec mes critères tant qu'ils restent cohérents avec mon objectif.",
+            correct: true,
+            explanation: "Exactement. Le rythme normal d'une recherche sérieuse se compte en mois, pas en "
+                "semaines. Tant que les critères restent justifiés par l'objectif fixé au départ, il n'y a pas "
+                "de raison de les assouplir simplement par impatience.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Un agent immobilier te présente un bien hors marché, pas encore publié, « parce qu'il te "
+            "fait confiance ». C'est la première fois que tu travailles avec lui. Comment réagis-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "Je me méfie, un bien qui n'est pas publié cache forcément un défaut.",
+            correct: false,
+            explanation: "Ce n'est pas automatique : une partie des bonnes affaires passent justement par le "
+                "réseau avant publication. Le vrai réflexe n'est pas la méfiance de principe, c'est de "
+                "vérifier le bien lui-même avec la même rigueur qu'une annonce classique (PV d'AG, visite, "
+                "chiffrage).",
+          ),
+          FormationQuizOption(
+            text: "Je visite et j'applique exactement la même grille de vérification que pour n'importe "
+                "quelle autre annonce, sans me précipiter sous prétexte que c'est « en avant-première ».",
+            correct: true,
+            explanation: "La bonne attitude : un bien hors marché peut être une vraie opportunité, mais il "
+                "mérite exactement la même rigueur (PV d'AG, chiffrage, visite complète) qu'une annonce "
+                "publique — le canal par lequel on trouve un bien ne change rien à la méthode pour l'évaluer.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -329,6 +572,84 @@ const List<FormationModule> formationModules = [
             "met sept mois à trouver son premier locataire, loin des 4 à 8 % de vacance locative habituels "
             "qu'il avait budgétés.",
       ),
+      FormationLesson(
+        "Analyser un quartier à l'échelle de la rue",
+        "Les statistiques à l'échelle de la ville ne disent pas tout : un quartier peut se dégrader ou se "
+            "revaloriser bien plus vite que la moyenne communale. En visite, regarde la vacance commerciale "
+            "en pied d'immeuble (plusieurs locaux fermés durablement est un signal faible mais réel), "
+            "l'entretien général des façades et trottoirs alentour, et la mixité des âges dans le quartier "
+            "(un quartier qui vieillit sans aucun renouvellement de population locative est un risque pour la "
+            "demande future). À l'inverse, des travaux de voirie en cours, de nouveaux commerces qui "
+            "ouvrent, ou un projet de rénovation urbaine annoncé sont des signaux positifs qui précèdent "
+            "souvent une hausse de la demande — et donc des prix — avant qu'elle soit visible dans les "
+            "statistiques globales de la ville.",
+      ),
+      FormationLesson(
+        "Les signaux d'alerte à ne pas ignorer",
+        "Une vacance locative anormalement élevée chez les investisseurs déjà installés dans le secteur (à "
+            "demander directement en visite ou via un agent local) est le signal le plus fiable, bien plus "
+            "que n'importe quelle statistique nationale. Une population qui vieillit sans renouvellement "
+            "(peu de jeunes actifs ou de familles qui s'installent) annonce une demande locative qui va "
+            "continuer de se contracter. Une dépendance très forte à un seul employeur local (une usine, une "
+            "administration) expose à un risque brutal en cas de fermeture ou de restructuration. Aucun de "
+            "ces signaux, pris isolément, n'est forcément rédhibitoire — mais leur accumulation sur une même "
+            "zone doit alerter, même quand le prix d'achat semble très attractif.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu visites un bien dans un quartier où tu remarques trois locaux commerciaux fermés "
+            "depuis plusieurs mois au rez-de-chaussée des immeubles voisins. Le reste du quartier semble "
+            "correct. Que fais-tu de cette observation ?",
+        options: [
+          FormationQuizOption(
+            text: "Je l'ignore, ce n'est qu'un détail visuel, le prix du bien reste l'essentiel.",
+            correct: false,
+            explanation: "Une vacance commerciale durable est un signal faible mais réel de la santé "
+                "économique du quartier — pas un détail à ignorer, même si le bien lui-même semble correct.",
+          ),
+          FormationQuizOption(
+            text: "Je m'en sers comme signal d'alerte à creuser : je vérifie la vacance locative réelle "
+                "auprès d'investisseurs déjà installés dans le secteur avant de me décider.",
+            correct: true,
+            explanation: "La bonne réaction : ce signal seul ne suffit pas à rejeter le bien, mais il mérite "
+                "d'être vérifié par un indicateur plus direct — la vacance locative réellement observée dans "
+                "le secteur, bien plus fiable qu'une impression visuelle.",
+          ),
+          FormationQuizOption(
+            text: "Je renonce immédiatement à ce bien, des commerces fermés annoncent toujours un quartier "
+                "en déclin.",
+            correct: false,
+            explanation: "C'est une réaction trop radicale pour un seul signal faible. Plusieurs raisons "
+                "ponctuelles (travaux de voirie temporaires, renouvellement de bail en cours) peuvent "
+                "expliquer des locaux fermés sans refléter un vrai déclin — il faut creuser avant de "
+                "trancher.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Deux biens au même prix : l'un dans une ville dont la population augmente, avec un "
+            "rendement affiché de 5,5 %, l'autre dans une ville qui perd des habitants, avec un rendement "
+            "affiché de 8 %. Lequel choisir, et pourquoi ?",
+        options: [
+          FormationQuizOption(
+            text: "Le second, le rendement affiché plus élevé est toujours à privilégier.",
+            correct: false,
+            explanation: "Le rendement affiché ne dit rien de la vacance locative réelle ni de la facilité de "
+                "revente — une ville qui perd des habitants compense souvent un loyer attractif par une "
+                "vacance locative plus longue et une revente plus difficile, ce qui réduit la rentabilité "
+                "réelle au final.",
+          ),
+          FormationQuizOption(
+            text: "Ça dépend de mon objectif (module 1) : pour du cash-flow pur avec une gestion attentive, "
+                "le second peut se défendre ; pour sécuriser mon premier achat, je privilégie plutôt le "
+                "premier.",
+            correct: true,
+            explanation: "La bonne réponse reconnaît qu'il n'y a pas de choix universellement meilleur — tout "
+                "dépend de l'objectif fixé au module 1 et de ta tolérance au risque de vacance locative.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -384,6 +705,74 @@ const List<FormationModule> formationModules = [
             "pressé la compare à un autre bien dont il a, lui, calculé la nette-nette (3,2 %) et croit à tort "
             "que le premier bien est deux fois plus rentable que le second — alors que les deux chiffres ne "
             "sont tout simplement pas calculés sur la même base.",
+      ),
+      FormationLesson(
+        "Le TRI, pour comparer deux projets qui ne se ressemblent pas",
+        "La rentabilité nette-nette décrit une photo à l'instant T, mais ne dit rien de l'évolution dans le "
+            "temps ni de l'argent récupéré à la revente. Le Taux de Rendement Interne (TRI) résout ce "
+            "problème : il résume en un seul pourcentage la performance globale d'un projet — tous les loyers "
+            "encaissés année après année, PLUS la plus-value nette à la revente — en tenant compte du moment "
+            "où chaque euro entre et sort. Deux projets très différents (l'un avec un cash-flow confortable "
+            "mais peu de plus-value attendue, l'autre avec un cash-flow serré mais une forte revalorisation "
+            "espérée) deviennent alors directement comparables sur un seul chiffre, calculé automatiquement "
+            "par l'onglet « Projection » de l'app pour n'importe quelle durée simulée.",
+      ),
+      FormationLesson(
+        "La rentabilité évolue dans le temps, pas seulement à l'achat",
+        "Le chiffre calculé le jour de l'achat n'est qu'un point de départ : le loyer évolue (révision "
+            "annuelle via l'indice IRL, voir le module Gestion), les charges de copropriété aussi (souvent à "
+            "la hausse avec le temps), et la valeur du bien varie avec le marché local. Un bien acheté avec "
+            "une rentabilité nette-nette de 3,5 % peut très bien afficher 4,5 % cinq ans plus tard si les "
+            "loyers du secteur ont bien progressé — ou au contraire se dégrader si le quartier décroche. "
+            "Réévaluer sa rentabilité réelle une fois par an (pas seulement au moment de l'achat) permet de "
+            "détecter tôt un problème — ou une opportunité de refinancement (voir le module Penser sur le "
+            "long terme) — plutôt que de le découvrir des années plus tard.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu compares deux projets : le Projet A a un excellent cash-flow mensuel mais une "
+            "revalorisation attendue quasi nulle ; le Projet B a un cash-flow neutre mais une forte "
+            "plus-value attendue à la revente dans 10 ans. Comment les comparer objectivement ?",
+        options: [
+          FormationQuizOption(
+            text: "Je compare leur rentabilité nette-nette actuelle, c'est le chiffre le plus complet.",
+            correct: false,
+            explanation: "La rentabilité nette-nette ne regarde que les loyers à l'instant T — elle ignore "
+                "complètement la plus-value attendue à la revente, qui est pourtant l'essentiel de l'avantage "
+                "du Projet B. Comparer sur ce seul chiffre désavantage injustement les projets patrimoniaux.",
+          ),
+          FormationQuizOption(
+            text: "Je simule le TRI de chaque projet sur le même horizon (10 ans), loyers et revente "
+                "compris, pour les comparer sur une base équivalente.",
+            correct: true,
+            explanation: "Exactement l'usage du TRI : il intègre à la fois les loyers encaissés dans le temps "
+                "ET la revente, ce qui permet de comparer deux stratégies très différentes sur un même pied "
+                "d'égalité.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Cinq ans après l'achat d'un bien, tu n'as jamais recalculé sa rentabilité réelle. Les "
+            "loyers du quartier ont bien augmenté depuis. Que risques-tu en ne vérifiant jamais ?",
+        options: [
+          FormationQuizOption(
+            text: "Rien de particulier, la rentabilité calculée à l'achat reste valable tant que je ne "
+                "revends pas.",
+            correct: false,
+            explanation: "La rentabilité réelle évolue avec le loyer, les charges et la valeur du bien — ne "
+                "jamais la recalculer, c'est risquer de sous-exploiter un bien qui vaut maintenant plus que "
+                "prévu (occasion de refinancement manquée) ou de ne pas détecter une dégradation progressive.",
+          ),
+          FormationQuizOption(
+            text: "Je risque de passer à côté d'une opportunité de refinancement si le bien s'est "
+                "revalorisé, ou de ne pas détecter à temps une dégradation si la situation s'inverse.",
+            correct: true,
+            explanation: "C'est exactement le risque : sans réévaluation régulière, ni les bonnes surprises "
+                "(refinancement possible) ni les mauvaises (dégradation progressive) ne sont détectées à "
+                "temps pour agir.",
+          ),
+        ],
       ),
     ],
   ),
@@ -447,6 +836,72 @@ const List<FormationModule> formationModules = [
             "Trois ans plus tard, en comparant pour un second achat, il réalise qu'il paie depuis le début près "
             "de trois fois le prix nécessaire pour la même couverture — sans jamais avoir pris dix minutes "
             "pour comparer au moment de son premier crédit.",
+      ),
+      FormationLesson(
+        "Le dossier à préparer avant le premier rendez-vous",
+        "Arriver avec un dossier complet accélère considérablement l'étude de ta demande : tes 3 derniers "
+            "bulletins de salaire (ou bilans si indépendant), ton dernier avis d'imposition, tes 3 derniers "
+            "relevés de compte de tous tes comptes, un justificatif de l'apport disponible (relevé "
+            "d'épargne), le compromis de vente ou l'annonce du bien visé, et surtout une simulation de "
+            "rentabilité chiffrée du projet (loyer attendu, charges, cash-flow prévisionnel) — c'est ce "
+            "dernier document, souvent absent des dossiers de primo-investisseurs, qui différencie un projet "
+            "pris au sérieux par la banque d'un projet présenté uniquement à l'oral.",
+      ),
+      FormationLesson(
+        "Les leviers qui marchent vraiment pour négocier son prêt",
+        "Mettre plusieurs banques en concurrence reste le levier le plus efficace — une offre écrite d'un "
+            "établissement concurrent pèse plus lourd dans une négociation que n'importe quel argument "
+            "verbal. Domicilier tes revenus dans la banque prêteuse se négocie encore souvent contre une "
+            "baisse de taux ou une réduction des frais de dossier, même si cette pratique est désormais "
+            "encadrée dans le temps (plafonnée à quelques années). Un apport plus confortable que le minimum "
+            "demandé, ou une épargne résiduelle visible après l'achat, rassure et peut aussi se négocier. En "
+            "revanche, négocier uniquement sur le taux nominal sans regarder l'assurance emprunteur (souvent "
+            "le vrai poste d'économie, voir l'exemple de ce module) laisse de l'argent sur la table.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu as rendez-vous avec ta banque dans une semaine pour présenter ton projet locatif. Tu "
+            "as rassemblé tes bulletins de salaire et ton avis d'imposition. Que te manque-t-il probablement "
+            "le plus pour convaincre ?",
+        options: [
+          FormationQuizOption(
+            text: "Rien, les documents de revenus suffisent à étudier n'importe quel dossier.",
+            correct: false,
+            explanation: "Les documents de revenus prouvent ta solvabilité personnelle, mais ne disent rien "
+                "du projet lui-même. Sans simulation de rentabilité chiffrée, la banque n'a aucun moyen "
+                "d'évaluer si CE projet précis est viable.",
+          ),
+          FormationQuizOption(
+            text: "Une simulation de rentabilité chiffrée du bien visé (loyer, charges, cash-flow "
+                "prévisionnel), qui manque souvent dans les dossiers de primo-investisseurs.",
+            correct: true,
+            explanation: "C'est exactement le document qui différencie un dossier pris au sérieux — il "
+                "montre que le projet a été pensé au-delà de l'envie d'investir, avec des chiffres réels à "
+                "l'appui.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Une banque te propose un taux de 3,6 % avec son assurance groupe. Une autre banque te "
+            "propose 3,8 % mais tu sais que tu peux y déléguer ton assurance à un tarif très inférieur. "
+            "Laquelle choisir, et comment le vérifier ?",
+        options: [
+          FormationQuizOption(
+            text: "La première automatiquement, le taux nominal le plus bas est toujours le meilleur choix.",
+            correct: false,
+            explanation: "Le taux nominal seul ne dit pas le coût total du crédit — l'assurance emprunteur "
+                "peut représenter plusieurs milliers d'euros d'écart, parfois plus que la différence de taux "
+                "elle-même (voir l'exemple chiffré de ce module).",
+          ),
+          FormationQuizOption(
+            text: "Je calcule le coût total (taux + assurance réelle, groupe ou déléguée) sur toute la "
+                "durée pour chaque offre avant de comparer.",
+            correct: true,
+            explanation: "La seule comparaison qui a du sens : le TAEG et le coût total sur la durée, "
+                "assurance comprise — pas le taux nominal affiché isolément.",
+          ),
+        ],
       ),
     ],
   ),
@@ -521,6 +976,74 @@ const List<FormationModule> formationModules = [
             "qu'il ne peut pas louer tant que 18 000 € de travaux, totalement absents de son budget initial, "
             "n'auront pas été réalisés.",
       ),
+      FormationLesson(
+        "Travaux soi-même ou par des professionnels ?",
+        "Le bricolage personnel peut faire sens pour des finitions simples (peinture, petite déco) si tu as "
+            "vraiment le temps et la compétence — mais il devient un piège dès qu'il touche à l'électricité, "
+            "la plomberie ou la structure : une non-conformité découverte plus tard coûte souvent bien plus "
+            "cher à reprendre qu'un chantier confié directement à un professionnel, sans compter le risque "
+            "sur l'assurance en cas de sinistre lié à des travaux non réalisés dans les règles. Le vrai coût "
+            "à comparer n'est pas seulement le prix du devis contre le prix des matériaux seuls, c'est aussi "
+            "le temps que tu immobilises (et donc le loyer non perçu pendant que le chantier traîne) et le "
+            "risque si le résultat n'est pas à la hauteur.",
+      ),
+      FormationLesson(
+        "Le calendrier réaliste d'un chantier de rénovation",
+        "Pour un chantier de rafraîchissement standard (peinture, sols, petite salle de bain), compte "
+            "généralement 3 à 6 semaines une fois les artisans mobilisés — mais prévoir 2 à 4 semaines "
+            "supplémentaires avant le démarrage effectif, le temps d'obtenir les devis et de caler les "
+            "plannings des différents corps de métier. Pour des travaux plus lourds touchant à "
+            "l'électricité, au chauffage ou à l'isolation (comme dans l'exemple de ce module), compte "
+            "plutôt 2 à 4 mois, avec un risque de délai supplémentaire si des aides type MaPrimeRénov' "
+            "rallongent l'instruction du dossier. Intégrer ce délai réaliste dans ton calendrier (et ton "
+            "budget de mensualité pendant la vacance) évite la mauvaise surprise d'un bien qui reste vide "
+            "plus longtemps que prévu avant son premier loyer.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu viens d'acheter un studio et tu envisages de refaire toi-même l'installation "
+            "électrique pour économiser sur le devis d'un artisan. Qu'en penses-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "Bonne idée, ça permet d'économiser le coût de la main d'œuvre.",
+            correct: false,
+            explanation: "L'électricité touche directement à la sécurité et à la conformité du logement — "
+                "une non-conformité découverte plus tard coûte souvent plus cher à reprendre que le devis "
+                "initial, sans compter le risque sur ton assurance en cas de sinistre.",
+          ),
+          FormationQuizOption(
+            text: "Je confie ce chantier à un professionnel certifié, et je réserve le bricolage personnel "
+                "aux finitions simples (peinture, petite déco) si j'en ai le temps.",
+            correct: true,
+            explanation: "La bonne répartition : le bricolage personnel se justifie sur des finitions "
+                "simples, jamais sur ce qui touche à la sécurité ou à la conformité du logement.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu prévois de relouer ton bien 3 semaines après l'achat, le temps de « juste rafraîchir "
+            "un peu ». Les travaux incluent en réalité la réfection complète de la salle de bain. Ton "
+            "planning est-il réaliste ?",
+        options: [
+          FormationQuizOption(
+            text: "Oui, 3 semaines suffisent largement pour un rafraîchissement.",
+            correct: false,
+            explanation: "Une réfection de salle de bain n'est pas un simple rafraîchissement — ce type de "
+                "chantier demande plutôt 3 à 6 semaines une fois les artisans mobilisés, sans compter le "
+                "délai d'obtention des devis en amont. Un planning trop serré mène presque toujours à un "
+                "dépassement.",
+          ),
+          FormationQuizOption(
+            text: "Non, je prévois un délai plus réaliste (6 à 10 semaines au total) et j'intègre cette "
+                "vacance locative supplémentaire dans mon budget prévisionnel.",
+            correct: true,
+            explanation: "C'est la bonne estimation. Sous-estimer systématiquement les délais de travaux est "
+                "l'un des pièges les plus fréquents d'un premier projet — mieux vaut un délai large anticipé "
+                "qu'une vacance locative imprévue qui grignote le cash-flow.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -588,6 +1111,73 @@ const List<FormationModule> formationModules = [
             "paie chaque année l'équivalent d'un mois de loyer en impôt qu'un simple changement de régime "
             "(avec un comptable, souvent facturé 300 à 500 €/an en LMNP réel) lui aurait évité.",
       ),
+      FormationLesson(
+        "Les obligations déclaratives, concrètement",
+        "Au micro-foncier ou micro-BIC, une seule ligne à reporter sur ta déclaration de revenus classique "
+            "(formulaire 2042), l'abattement forfaitaire étant appliqué automatiquement. Au régime réel "
+            "(foncier ou LMNP), une liasse fiscale dédiée est à produire chaque année (formulaire 2044 pour "
+            "le foncier réel, liasse 2031 et annexes pour le LMNP réel), détaillant charges et amortissements "
+            "— en pratique, quasiment jamais rempli sans l'aide d'un comptable une fois en LMNP réel, tant le "
+            "calcul des amortissements est technique. Au-delà de l'impôt sur le revenu, ne pas oublier la "
+            "Cotisation Foncière des Entreprises (CFE), due chaque année en LMNP même si l'activité reste "
+            "modeste, avec une exonération possible la première année selon les communes.",
+      ),
+      FormationLesson(
+        "Faut-il un expert-comptable, et pour quel coût",
+        "Au micro-foncier ou micro-BIC, un expert-comptable n'apporte généralement aucune valeur : il n'y a "
+            "rien à optimiser, l'abattement est automatique. Dès le régime réel, et plus encore en LMNP réel, "
+            "un comptable spécialisé devient rapidement rentable : son forfait annuel (souvent entre 300 et "
+            "600 € pour un ou deux biens) est en général largement couvert par l'économie d'impôt qu'il "
+            "permet de sécuriser (voir l'exemple chiffré de ce module), sans compter le temps que tu "
+            "économises et la tranquillité d'un dossier fiscal conforme en cas de contrôle. Un bon réflexe : "
+            "comparer le coût du comptable à l'économie d'impôt estimée AVANT de choisir un régime, pas après "
+            "— c'est souvent ce calcul qui tranche entre micro et réel pour un investisseur hésitant.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu loues un studio meublé, 7 200 €/an de loyers. Tu hésites entre rester au micro-BIC "
+            "(simple, sans comptable) et passer au réel (plus complexe, avec un comptable à environ 400 "
+            "€/an). Comment trancher ?",
+        options: [
+          FormationQuizOption(
+            text: "Je reste au micro-BIC, pas besoin de payer un comptable pour un seul petit bien.",
+            correct: false,
+            explanation: "La taille du bien ne dit rien de l'écart fiscal potentiel — c'est le calcul "
+                "(amortissement + charges réelles comparé à l'abattement forfaitaire de 50 %) qui tranche, "
+                "pas une impression de simplicité.",
+          ),
+          FormationQuizOption(
+            text: "Je fais estimer par un comptable l'économie d'impôt réelle du régime réel pour mon cas "
+                "précis, et je compare ce montant à son forfait annuel avant de décider.",
+            correct: true,
+            explanation: "La bonne méthode : comparer le coût du comptable à l'économie réelle qu'il permet. "
+                "Dans la majorité des cas en LMNP avec un crédit en cours, l'écart dépasse largement le "
+                "forfait annuel, comme dans l'exemple chiffré de ce module.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu passes au LMNP au régime réel pour ta première année de location meublée. Que dois-tu "
+            "absolument prévoir, au-delà du calcul de l'impôt sur les loyers ?",
+        options: [
+          FormationQuizOption(
+            text: "Rien de plus, une fois le régime réel choisi, il n'y a qu'une seule déclaration à faire.",
+            correct: false,
+            explanation: "Le régime réel implique une liasse fiscale dédiée, bien plus technique qu'une "
+                "simple ligne sur la déclaration de revenus — et la Cotisation Foncière des Entreprises (CFE) "
+                "reste due chaque année, indépendamment de l'impôt sur les loyers eux-mêmes.",
+          ),
+          FormationQuizOption(
+            text: "La liasse fiscale dédiée du régime réel, et la Cotisation Foncière des Entreprises (CFE), "
+                "due chaque année même si le résultat fiscal est à zéro.",
+            correct: true,
+            explanation: "Exactement les deux obligations à anticiper — la CFE en particulier est souvent "
+                "découverte tardivement par les nouveaux loueurs en meublé, alors qu'elle est due "
+                "indépendamment du montant d'impôt sur les loyers.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -652,6 +1242,75 @@ const List<FormationModule> formationModules = [
             "délai contractuel de déclaration d'un impayé (souvent 2 à 3 mois) est dépassé. Il perd "
             "l'intégralité des loyers impayés, plus les frais de procédure pour récupérer son logement.",
       ),
+      FormationLesson(
+        "Fixer le bon loyer, ni trop haut ni trop bas",
+        "Un loyer trop élevé par rapport au marché local rallonge la recherche de locataire — chaque mois de "
+            "vacance supplémentaire coûte souvent plus cher que la différence de loyer espérée sur l'année. "
+            "Un loyer trop bas trouve preneur plus vite, mais rogne directement la rentabilité, parfois pour "
+            "des années si le locataire reste en place longtemps. Dans les zones dites « tendues », un "
+            "encadrement des loyers peut en plus fixer un plafond légal à ne pas dépasser, consultable "
+            "commune par commune. La bonne méthode reste de comparer ton bien à plusieurs annonces "
+            "comparables récentes du même secteur (surface, standing, année de rénovation) plutôt que de se "
+            "fier à une seule référence ou à une estimation approximative — l'onglet « Marché » de l'app "
+            "donne un premier repère de loyer moyen au m² du secteur pour cadrer cette comparaison.",
+      ),
+      FormationLesson(
+        "Faire évoluer le loyer dans le temps",
+        "En cours de bail, le loyer d'un logement loué nu ou meublé peut être révisé une fois par an si une "
+            "clause de révision est prévue au contrat, en suivant l'évolution de l'Indice de Référence des "
+            "Loyers (IRL) publié chaque trimestre par l'INSEE — pas à ta propre appréciation du marché. Entre "
+            "deux locataires, en revanche, tu retrouves ta liberté de fixer un nouveau loyer plus proche du "
+            "marché actuel (sous réserve, en zone tendue, du plafond légal applicable au relogement). "
+            "Beaucoup de propriétaires oublient d'appliquer la révision annuelle IRL par simple oubli "
+            "administratif — sur plusieurs années, ce sont plusieurs centaines d'euros de loyer cumulés "
+            "jamais perçus, pour une démarche qui ne prend que quelques minutes.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Tu fixes le loyer de ton nouveau bien 15 % au-dessus de la moyenne des annonces "
+            "comparables du quartier, pensant « tenter le coup, je baisserai si besoin ». Quel est le risque "
+            "principal de cette stratégie ?",
+        options: [
+          FormationQuizOption(
+            text: "Aucun risque réel, je peux toujours baisser le loyer plus tard si ça ne se loue pas.",
+            correct: false,
+            explanation: "Le risque n'est pas l'impossibilité de baisser, c'est le coût du temps perdu : "
+                "chaque mois de vacance locative pendant que le bien reste trop cher coûte souvent plus que "
+                "toute la différence de loyer espérée sur l'année entière.",
+          ),
+          FormationQuizOption(
+            text: "Chaque mois de vacance locative pendant la recherche coûte potentiellement plus cher que "
+                "le surplus de loyer visé sur l'année — mieux vaut partir d'un loyer cohérent avec le marché "
+                "local.",
+            correct: true,
+            explanation: "Exactement le bon calcul : un loyer surévalué qui rallonge la vacance locative "
+                "coûte presque toujours plus cher que le gain espéré — comparer à plusieurs annonces "
+                "comparables avant de fixer le prix évite ce piège.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Ton bail prévoit une clause de révision annuelle du loyer, mais tu n'y as plus pensé "
+            "depuis 3 ans. Qu'as-tu probablement perdu, et que fais-tu maintenant ?",
+        options: [
+          FormationQuizOption(
+            text: "Rien d'important, l'IRL varie peu d'une année sur l'autre.",
+            correct: false,
+            explanation: "Même une variation modeste de l'IRL, cumulée sur 3 ans et sur 12 mois de loyer "
+                "chaque année, représente souvent plusieurs centaines d'euros jamais perçus — un montant loin "
+                "d'être négligeable pour une simple formalité administrative.",
+          ),
+          FormationQuizOption(
+            text: "J'ai probablement perdu plusieurs centaines d'euros cumulés ; j'applique la révision pour "
+                "l'avenir et je vérifie si un rattrapage reste possible selon les règles en vigueur.",
+            correct: true,
+            explanation: "La bonne réaction : reconnaître la perte cumulée, corriger pour la suite, et "
+                "vérifier les règles de rattrapage applicables plutôt que de considérer l'oubli comme "
+                "définitivement perdu sans vérification.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
@@ -707,11 +1366,82 @@ const List<FormationModule> formationModules = [
             "pense « ne pas avoir les moyens » de se relancer — alors que son premier bien, sans qu'elle le "
             "sache, lui permettrait de le faire dès aujourd'hui.",
       ),
+      FormationLesson(
+        "Diversifier : villes, types de biens, stratégies",
+        "Une fois les deux ou trois premiers biens acquis, concentrer tout son patrimoine sur une seule ville "
+            "ou un seul type de bien expose à un risque collectif : si cette ville ou ce segment de marché se "
+            "retourne, c'est l'ensemble du patrimoine qui encaisse le choc en même temps. Diversifier "
+            "progressivement — une autre ville, un autre type de bien (passer du studio au T3 familial, ou "
+            "de la longue durée à la courte durée), voire une autre stratégie (ajouter du LMNP à côté d'un "
+            "foncier nu) — répartit ce risque sans nécessairement complexifier la gestion si chaque bien "
+            "reste individuellement simple à suivre. Cette diversification n'a pas besoin d'être planifiée "
+            "dès le premier achat — elle se construit naturellement, projet après projet, à mesure que "
+            "l'expérience et la capacité d'emprunt augmentent.",
+      ),
+      FormationLesson(
+        "Les bases de la transmission de patrimoine",
+        "Un bien détenu en nom propre se transmet par succession classique, avec les droits de succession "
+            "applicables selon le lien de parenté et un abattement renouvelable tous les 15 ans par enfant. "
+            "Une SCI familiale facilite souvent la transmission progressive : les parts peuvent être données "
+            "petit à petit, dans la limite des abattements fiscaux, plutôt que de transmettre le bien entier "
+            "d'un coup — une donation-partage anticipée évite aussi des conflits ultérieurs entre héritiers "
+            "sur un bien physique difficile à diviser équitablement. Ce sujet, souvent repoussé « à plus "
+            "tard » par de jeunes investisseurs, mérite d'être anticipé dès que le patrimoine commence à "
+            "prendre de la valeur — un notaire ou un conseiller en gestion de patrimoine reste le bon "
+            "interlocuteur pour structurer cette réflexion, bien avant qu'elle devienne urgente.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "Après 3 achats réussis, tous des studios dans la même ville, on te propose un T3 "
+            "familial dans une autre ville, avec un profil de locataire différent. Ta première réaction est "
+            "de refuser « pour rester sur ce que je maîtrise ». Qu'en penses-tu ?",
+        options: [
+          FormationQuizOption(
+            text: "C'est prudent, mieux vaut rester sur une stratégie qu'on maîtrise déjà.",
+            correct: false,
+            explanation: "Rester concentré sur un seul type de bien et une seule ville, une fois plusieurs "
+                "projets déjà réalisés, expose au contraire à un risque collectif si ce segment précis se "
+                "retourne — la diversification progressive sert justement à répartir ce risque.",
+          ),
+          FormationQuizOption(
+            text: "Je l'étudie sérieusement comme une occasion de diversifier mon patrimoine, en appliquant "
+                "la même méthode rigoureuse que pour mes précédents achats, sans la écarter par habitude.",
+            correct: true,
+            explanation: "La bonne attitude : la diversification n'est pas une prise de risque en soi si "
+                "elle suit la même rigueur méthodologique que les achats précédents — c'est justement le fait "
+                "de rester sur un seul segment qui, à terme, concentre le risque.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu as 35 ans, deux biens locatifs, et tu te dis que la transmission de patrimoine est « "
+            "un sujet pour dans 30 ans ». Est-ce le bon raisonnement ?",
+        options: [
+          FormationQuizOption(
+            text: "Oui, c'est bien trop tôt pour s'en préoccuper à cet âge.",
+            correct: false,
+            explanation: "Les mécanismes de transmission (comme les abattements renouvelables tous les 15 "
+                "ans, ou la structuration en SCI familiale) sont justement plus efficaces quand ils sont "
+                "anticipés tôt — attendre réduit les options disponibles plutôt que de simplement reporter "
+                "une décision neutre dans le temps.",
+          ),
+          FormationQuizOption(
+            text: "Non, certains mécanismes (abattements renouvelables, SCI familiale) sont plus efficaces "
+                "anticipés tôt — une première réflexion avec un professionnel peut se faire sans urgence, "
+                "mais pas trop tard.",
+            correct: true,
+            explanation: "Exactement : ce n'est pas un sujet à traiter dans l'urgence à 35 ans, mais ce n'est "
+                "pas non plus un sujet à repousser indéfiniment — une première structuration réfléchie tôt "
+                "garde plus d'options ouvertes qu'une réflexion tardive.",
+          ),
+        ],
+      ),
     ],
   ),
   FormationModule(
     title: 'Études de cas chiffrées',
-    subtitle: "La méthode appliquée de bout en bout, sur 3 profils différents",
+    subtitle: "La méthode appliquée de bout en bout, sur 4 profils différents",
     icon: Icons.insights_outlined,
     color: Color(0xFFD4A72C),
     takeaways: [
@@ -771,6 +1501,97 @@ const List<FormationModule> formationModules = [
             "rendement affiché élevé qui cache des problèmes structurels (DPE, démographie, copropriété) "
             "invisibles tant qu'on ne regarde que le loyer et le prix. Un simple chiffrage dans Didou-Immo, DPE "
             "et vacance réaliste inclus, aurait suffi à voir le problème avant de visiter.",
+      ),
+      FormationLesson(
+        "Cas n°4 — La colocation, rentable mais chronophage",
+        "Exemple fictif. Maison de 110 m² (4 chambres) en périphérie d'une ville étudiante, achetée 175 000 "
+            "€, 15 000 € de travaux pour cloisonner et équiper chaque chambre. Louée en colocation, 4 "
+            "chambres à 420 €/mois charges comprises chacune, soit un loyer total potentiel de 1 680 €/mois "
+            "— bien au-dessus du loyer qu'obtiendrait la même maison louée à une seule famille (environ 950 "
+            "€/mois dans ce secteur).\n\n"
+            "Financement : 20 000 € d'apport, le reste sur 20 ans à 3,8 %, mensualité d'environ 870 €/mois. "
+            "Même en comptant une vacance locative plus élevée que la moyenne (chambre individuelle vacante "
+            "plus souvent qu'un bail familial unique, environ 10 % retenu par sécurité), le cash-flow ressort "
+            "nettement positif, autour de +380 €/mois. Rentabilité brute proche de 10 %, sans aucun problème "
+            "structurel caché cette fois — contrairement au cas n°3.\n\n"
+            "Le vrai coût de ce projet n'est pas financier : la gestion d'une colocation (turnover plus "
+            "fréquent qu'un bail classique, répartition des charges entre colocataires, usure plus rapide des "
+            "parties communes) demande largement plus de temps qu'un bien loué à un seul locataire. Beaucoup "
+            "de propriétaires en colocation finissent par déléguer cette gestion à une agence spécialisée, ce "
+            "qui réduit d'autant le cash-flow net réel.\n\n"
+            "Verdict : un excellent projet sur le papier ET dans les faits, mais seulement pour quelqu'un prêt "
+            "à y consacrer du temps (ou à en payer la délégation) — exactement le type d'arbitrage évoqué dès "
+            "le module 1 : le bon bien n'est pas seulement celui qui a les meilleurs chiffres, c'est celui "
+            "qui correspond aussi à ta disponibilité réelle.",
+      ),
+    ],
+    quiz: [
+      FormationQuizQuestion(
+        scenario: "En comparant uniquement les rentabilités brutes affichées des 4 cas de ce module (6,6 %, "
+            "4,5 %, 11 %, 10 %), lequel semble le plus attractif sur le papier — et pourquoi cette lecture "
+            "seule est-elle incomplète ?",
+        options: [
+          FormationQuizOption(
+            text: "Le cas n°3 (11 %) est objectivement le meilleur choix, c'est le chiffre le plus élevé.",
+            correct: false,
+            explanation: "C'est exactement le piège du cas n°3 : le rendement affiché le plus haut cachait "
+                "un DPE bloquant et une vacance locative réelle très supérieure à la moyenne — une fois ces "
+                "éléments intégrés, c'était en réalité le cas le plus risqué des quatre.",
+          ),
+          FormationQuizOption(
+            text: "Aucun des quatre n'est « le meilleur » dans l'absolu — chacun convient à un objectif et "
+                "une disponibilité différents, et le rendement brut seul ne permet jamais de trancher.",
+            correct: true,
+            explanation: "Exactement la leçon de ce module : le cas n°1 convient au cash-flow immédiat, le "
+                "n°2 à la stratégie patrimoniale, le n°4 à qui a du temps à y consacrer, et le n°3 démontre "
+                "qu'un rendement affiché élevé peut cacher un vrai risque. Le bon choix dépend toujours du "
+                "profil de l'investisseur, pas d'un seul chiffre.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Tu as peu de temps libre en semaine et tu détestes gérer des conflits entre locataires. "
+            "Lequel des 4 cas de ce module te correspondrait le moins bien, même si ses chiffres sont bons ?",
+        options: [
+          FormationQuizOption(
+            text: "Le cas n°4 (la colocation), à cause du temps de gestion qu'il demande malgré d'excellents "
+                "chiffres.",
+            correct: true,
+            explanation: "Correct — c'est précisément le point du cas n°4 : d'excellents chiffres ne "
+                "suffisent pas si le temps de gestion réel ne correspond pas à ta situation. Une délégation à "
+                "une agence reste possible, mais réduit alors le cash-flow net réel.",
+          ),
+          FormationQuizOption(
+            text: "Le cas n°1 (le T2 cash-flow), parce que son rendement est plus faible que le n°4.",
+            correct: false,
+            explanation: "Le rendement du cas n°1 est effectivement plus modeste, mais sa gestion est bien "
+                "plus simple (un seul locataire, pas de colocation) — ce n'est donc pas le cas qui "
+                "correspondrait le moins bien à un profil cherchant à minimiser le temps de gestion.",
+          ),
+        ],
+      ),
+      FormationQuizQuestion(
+        scenario: "Dans le cas n°2 (le studio étudiant), le cash-flow mensuel est neutre à légèrement "
+            "négatif. Pourquoi ce projet peut-il malgré tout être un bon choix pour certains profils ?",
+        options: [
+          FormationQuizOption(
+            text: "Un cash-flow négatif n'est jamais acceptable, ce projet est donc à éviter dans tous les "
+                "cas.",
+            correct: false,
+            explanation: "Un cash-flow neutre ou légèrement négatif n'est pas rédhibitoire en soi — tout "
+                "dépend de l'objectif de l'investisseur. Pour une stratégie patrimoniale assumée (module 1), "
+                "ce type de profil est cohérent, à condition de pouvoir encaisser l'effort mensuel.",
+          ),
+          FormationQuizOption(
+            text: "Parce qu'il correspond à une stratégie patrimoniale assumée : forte tension locative, "
+                "amortissement LMNP qui annule l'impôt, et revalorisation attendue qui compense le cash-flow "
+                "serré sur le long terme.",
+            correct: true,
+            explanation: "Exactement — ce projet n'a de sens que pour quelqu'un qui vise la plus-value et "
+                "peut absorber un effort d'épargne mensuel modéré, pas pour quelqu'un qui cherche un "
+                "complément de revenu immédiat.",
+          ),
+        ],
       ),
     ],
   ),
