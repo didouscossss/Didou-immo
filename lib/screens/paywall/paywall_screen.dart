@@ -20,6 +20,11 @@ import '../legal/legal_screens.dart';
 /// sur Android (`BillingService`), Stripe Checkout sur le web (`_buyWeb`,
 /// pas de Play Billing hors Android) — un compte abonné via l'un des deux
 /// est donc reconnu comme abonné sur l'autre, sans double paiement.
+///
+/// L'offre annuelle inclut en plus la formation complète "Réussir son
+/// premier investissement locatif" (voir `UserAccountState.hasFormationAccess`
+/// et `FormationScreen`), mise en avant par un badge sur sa carte — pas
+/// l'offre mensuelle.
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
 
@@ -33,6 +38,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _loading = true;
   bool _purchasing = false;
   String? _webError;
+  // Capturé juste avant l'achat Android (voir `onTap` des cartes plus bas,
+  // dérivé de `_billingPeriodSuffix`) — Play Billing ne renvoie pas
+  // directement l'offre achetée dans `PurchaseDetails`, donc on garde celle
+  // choisie côté UI pour la transmettre à `activateSubscription` une fois
+  // l'achat confirmé (voir `_onPurchase`). Détermine l'accès à la formation
+  // complète, incluse avec l'offre annuelle (voir
+  // `UserAccountState.hasFormationAccess`).
+  String? _pendingPlan;
 
   @override
   void initState() {
@@ -65,7 +78,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (!mounted) return;
     final account = context.read<UserAccountState>();
     if (account.user != null) {
-      await account.activateSubscription();
+      await account.activateSubscription(plan: _pendingPlan);
     }
     if (!mounted) return;
     setState(() => _purchasing = false);
@@ -181,7 +194,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
               Card(
                 child: ListTile(
                   title: const Text('Abonnement Illimité (Didou-immo)'),
-                  subtitle: const Text('Sans engagement, résiliable à tout moment'),
+                  subtitle: Text.rich(
+                    TextSpan(children: [
+                      const TextSpan(text: 'Sans engagement, résiliable à tout moment\n'),
+                      TextSpan(
+                        text: '🎓 Formation complète incluse (valeur 59 €)',
+                        style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600),
+                      ),
+                    ]),
+                  ),
+                  isThreeLine: true,
                   trailing: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -206,10 +228,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
               if (!_loading)
                 ..._products.map((p) {
                   final period = _billingPeriodSuffix(p);
+                  // Seule l'offre annuelle inclut la formation complète (voir
+                  // la discussion avec l'utilisateur) — dérivé du même
+                  // suffixe que celui déjà affiché ('/an', '/2 ans'...),
+                  // Play Billing ne renvoie pas directement 'monthly'/'yearly'.
+                  final isYearly = period != null && period.startsWith('/an');
                   return Card(
                     child: ListTile(
                       title: Text(p.title),
-                      subtitle: Text(p.description),
+                      subtitle: isYearly
+                          ? Text.rich(
+                              TextSpan(children: [
+                                TextSpan(text: '${p.description}\n'),
+                                TextSpan(
+                                  text: '🎓 Formation complète incluse (valeur 59 €)',
+                                  style: TextStyle(color: AppColors.gold, fontWeight: FontWeight.w600),
+                                ),
+                              ]),
+                            )
+                          : Text(p.description),
+                      isThreeLine: isYearly,
                       trailing: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.end,
@@ -226,6 +264,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       enabled: !_purchasing,
                       onTap: () {
+                        _pendingPlan = isYearly ? 'yearly' : 'monthly';
                         setState(() => _purchasing = true);
                         _billing.buySubscription(p);
                       },

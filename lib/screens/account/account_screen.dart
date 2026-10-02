@@ -95,23 +95,25 @@ class AccountScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
-            const SizedBox(height: 12),
-            // Formation payante (59 €, paiement unique) en cours de
-            // préparation — pas encore de paiement branché, réservée aux
-            // comptes admin pour la relire avant de décider comment la
-            // vendre (voir FormationScreen).
-            OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FormationScreen())),
-              icon: const Icon(Icons.school_outlined),
-              label: const Text('Formation complète (admin)'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.gold,
-                side: BorderSide(color: AppColors.gold),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
           ],
+          const SizedBox(height: 12),
+          // Visible par tout le monde (plus réservée aux admins) : incluse
+          // avec l'abonnement annuel (voir UserAccountState.hasFormationAccess
+          // et FormationScreen, qui affiche lui-même l'argumentaire de vente
+          // si le compte n'a pas (encore) cet accès).
+          OutlinedButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FormationScreen())),
+            icon: Icon(account.hasFormationAccess ? Icons.school_outlined : Icons.lock_outline),
+            label: Text(account.hasFormationAccess
+                ? 'Formation complète'
+                : 'Formation complète (incluse avec l\'annuel)'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.gold,
+              side: BorderSide(color: AppColors.gold),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LegalHubScreen())),

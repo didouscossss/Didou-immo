@@ -108,11 +108,21 @@ exports.activateSubscription = onCall(async (request) => {
   if (!uid) {
     throw new HttpsError("unauthenticated", "Connecte-toi pour activer l'abonnement.");
   }
+  // `plan` ('monthly' | 'yearly') vient du client (voir `paywall_screen.dart`,
+  // qui sait quelle offre a été achetée au moment du tap) — sert uniquement à
+  // débloquer la formation complète, incluse avec l'offre annuelle (voir la
+  // discussion avec l'utilisateur). Une valeur inattendue est silencieusement
+  // ignorée plutôt que de faire échouer l'activation de l'abonnement
+  // lui-même, qui reste prioritaire.
+  const plan = request.data && request.data.plan;
   const userRef = db.collection("users").doc(uid);
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(userRef);
     const data = snap.exists ? snap.data() : {};
     const update = {isSubscribed: true};
+    if (plan === "monthly" || plan === "yearly") {
+      update.subscriptionPlan = plan;
+    }
     if (!data.subscriptionStartedAt) {
       update.subscriptionStartedAt = FieldValue.serverTimestamp();
     }
@@ -188,6 +198,11 @@ exports.createStripeCheckoutSession = onCall(
         customer_email: request.auth.token.email || undefined,
         success_url: successUrl,
         cancel_url: cancelUrl,
+        // Relu par `stripeWebhook` pour poser `subscriptionPlan` une fois le
+        // paiement confirmé — sert uniquement à débloquer la formation
+        // complète, incluse avec l'offre annuelle (voir la discussion avec
+        // l'utilisateur).
+        metadata: {plan},
       });
       return {url: session.url};
     },
@@ -228,6 +243,7 @@ exports.stripeWebhook = onRequest(
         const session = event.data.object;
         const uid = session.client_reference_id;
         if (uid) {
+          const plan = session.metadata && session.metadata.plan;
           const userRef = db.collection("users").doc(uid);
           await db.runTransaction(async (tx) => {
             const snap = await tx.get(userRef);
@@ -236,6 +252,9 @@ exports.stripeWebhook = onRequest(
               isSubscribed: true,
               stripeCustomerId: session.customer,
             };
+            if (plan === "monthly" || plan === "yearly") {
+              update.subscriptionPlan = plan;
+            }
             if (!data.subscriptionStartedAt) {
               update.subscriptionStartedAt = FieldValue.serverTimestamp();
             }
