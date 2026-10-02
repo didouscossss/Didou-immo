@@ -46,18 +46,21 @@ service cloud.firestore {
       // du parrainage — sauf le cas précis, vérifié ci-dessus, d'une
       // validation de code cadeau légitime. `referredBy`/`referredByUid` ne
       // sont écrits que par la Cloud Function `applyReferralCode` ;
-      // `isSubscribed`/`subscriptionStartedAt` que par `activateSubscription` ;
+      // `isSubscribed`/`subscriptionPlan`/`subscriptionStartedAt` que par
+      // `activateSubscription` (ou `stripeWebhook` côté web) ;
       // `referralQualifiedAt`/`qualifiedReferralsCount` que par
       // `checkReferralMilestones` (voir functions/index.js) — ces fonctions
       // tournent en admin et contournent ces règles. Sans ça, un client
-      // pourrait par exemple forger `subscriptionStartedAt` dans le passé ou
-      // `referralQualifiedAt` directement pour obtenir l'accès gratuit à vie
-      // sans jamais avoir payé ni parrainé personne.
+      // pourrait par exemple forger `subscriptionPlan: 'yearly'` sans avoir
+      // payé l'offre annuelle, pour débloquer la formation complète (incluse
+      // uniquement avec cette offre, voir `UserAccountState.hasFormationAccess`)
+      // sans jamais l'avoir payée.
       allow update: if isOwner(uid) && (
         !request.resource.data.diff(resource.data).affectedKeys()
           .hasAny([
-            'isSubscribed', 'grantedFree', 'isAdmin', 'referredBy', 'referredByUid',
-            'subscriptionStartedAt', 'referralQualifiedAt', 'qualifiedReferralsCount',
+            'isSubscribed', 'subscriptionPlan', 'grantedFree', 'isAdmin',
+            'referredBy', 'referredByUid', 'subscriptionStartedAt',
+            'referralQualifiedAt', 'qualifiedReferralsCount',
           ]) ||
         isRedeemingValidAccessCode()
       );

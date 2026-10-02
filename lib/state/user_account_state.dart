@@ -31,6 +31,16 @@ class UserAccountState extends ChangeNotifier {
   bool get isAdmin => userDoc?['isAdmin'] == true;
   String? get referralCode => userDoc?['referralCode'] as String?;
 
+  /// 'monthly' ou 'yearly' — posé côté serveur (`activateSubscription` ou
+  /// `stripeWebhook`, voir `functions/index.js`) au moment de l'achat.
+  String? get subscriptionPlan => userDoc?['subscriptionPlan'] as String?;
+
+  /// La formation complète est incluse avec l'offre annuelle (pas la
+  /// mensuelle) — voir la discussion avec l'utilisateur. Les comptes admin y
+  /// ont aussi accès, pour pouvoir relire/mettre à jour le contenu sans
+  /// payer.
+  bool get hasFormationAccess => isAdmin || (isSubscribed && subscriptionPlan == 'yearly');
+
   /// `true` si CE compte a lui-même été parrainé (a saisi un code) — sert à
   /// déterminer son propre seuil de palier (voir [referralMilestoneThreshold]).
   bool get wasReferred => userDoc?['referredBy'] != null;
@@ -184,10 +194,12 @@ class UserAccountState extends ChangeNotifier {
   /// À appeler juste après un achat Play Billing confirmé (voir
   /// `paywall_screen.dart`) — marque le compte comme abonné (sert aussi de
   /// point de départ au décompte du palier de parrainage, voir
-  /// `qualifiedReferralsCount`). Voir `ReferralService.activateSubscription`.
-  Future<void> activateSubscription() async {
+  /// `qualifiedReferralsCount`). `plan` ('monthly'/'yearly') détermine
+  /// l'accès à la formation complète (voir [hasFormationAccess]). Voir
+  /// `ReferralService.activateSubscription`.
+  Future<void> activateSubscription({String? plan}) async {
     if (user == null) return;
-    await _referral.activateSubscription();
+    await _referral.activateSubscription(plan: plan);
     await refresh();
   }
 

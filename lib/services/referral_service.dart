@@ -97,8 +97,13 @@ class ReferralService {
   /// (voir `paywall_screen.dart`) — voir la Cloud Function
   /// `activateSubscription` (`functions/index.js`) pour le détail, et la
   /// doc de cette classe pour le mécanisme d'ensemble.
-  Future<void> activateSubscription() async {
-    await _functions.httpsCallable('activateSubscription').call();
+  ///
+  /// `plan` ('monthly' ou 'yearly', connu côté client au moment du tap sur
+  /// l'offre, voir `paywall_screen.dart`) sert uniquement à débloquer la
+  /// formation complète — incluse avec l'offre annuelle (voir
+  /// `UserAccountState.hasFormationAccess`).
+  Future<void> activateSubscription({String? plan}) async {
+    await _functions.httpsCallable('activateSubscription').call({'plan': plan});
   }
 
   /// Codes cadeaux gérés depuis Firestore (option b, voir doc de la classe).
