@@ -118,6 +118,20 @@ const List<FormationModule> formationModules = [
             "revenus actuels, ta capacité à encaisser un effort d'épargne mensuel, et ton horizon de temps. "
             "Tranche cette question avant de regarder la moindre annonce : elle détermine tout le reste.",
       ),
+      FormationLesson(
+        "Exemples concrets — deux bons choix, et une erreur à ne pas reproduire",
+        "✅ Claire, 32 ans, 2 500 €/mois de revenus, achète un T2 à 85 000 € dans une ville moyenne. Loyer 480 "
+            "€/mois, cash-flow positif dès le premier mois (+60 €/mois environ). Bon choix : cohérent avec son "
+            "objectif assumé de compléter son revenu tout de suite.\n\n"
+            "✅ Marc, 45 ans, revenus confortables, achète un deux-pièces à 210 000 € dans une grande ville "
+            "dynamique. Cash-flow légèrement négatif (-40 €/mois) mais plus-value attendue forte sur 15 ans. Bon "
+            "choix aussi — cohérent avec SON objectif à lui, préparer sa retraite, pas avec celui de Claire.\n\n"
+            "❌ Julien copie à l'identique le projet de son collègue — un immeuble de rapport en zone rurale, "
+            "rendement affiché à 9 % — sans avoir ni le temps de le gérer à 3 heures de route de chez lui, ni "
+            "le même objectif patrimonial. Deux ans plus tard, usé par la gestion à distance et des loyers "
+            "irréguliers, il revend à perte. L'erreur n'était pas le bien en lui-même : c'était de copier un "
+            "projet qui ne correspondait ni à son temps disponible, ni à son objectif.",
+      ),
     ],
   ),
   FormationModule(
@@ -158,6 +172,18 @@ const List<FormationModule> formationModules = [
             "rafraîchissement), l'ameublement si tu loues meublé, et les premiers mois de charges de copropriété "
             "avant le premier loyer encaissé. Un budget qui ne prévoit que le prix d'achat est un budget faux — "
             "l'onglet « Bien » de Didou-Immo inclut ces frais par défaut (ajustables) pour cette raison précise.",
+      ),
+      FormationLesson(
+        "Exemple concret — le même bien à 180 000 €, deux budgets très différents",
+        "✅ Sarah budgète large dès le départ : prix 180 000 € + notaire 14 400 € (8 %) + travaux 8 000 € + "
+            "environ 3 mois de charges de copropriété avant le premier loyer (750 €) + frais de dossier "
+            "bancaire (900 €) + ameublement pour louer meublé (3 500 €). Budget total réel : 207 550 €. Elle "
+            "calibre son prêt sur ce vrai montant dès la simulation — tout se passe ensuite sans accroc.\n\n"
+            "❌ Thomas budgète seulement le prix affiché (180 000 €), plus une petite marge « au cas où » de "
+            "5 000 €. Une fois le compromis signé, il découvre les 14 400 € de notaire, les 8 000 € de travaux "
+            "qui se révèlent indispensables (pas optionnels), et les frais de dossier. Il lui manque plus de "
+            "17 000 € qu'il doit emprunter dans l'urgence, via un crédit à la consommation bien plus cher que "
+            "son crédit immobilier.",
       ),
     ],
   ),
@@ -224,6 +250,19 @@ const List<FormationModule> formationModules = [
             "trop vite sur un premier achat, alors que c'est justement celui où il faut prendre le plus de temps "
             "pour apprendre.",
       ),
+      FormationLesson(
+        "Exemple concret — bien lire une annonce (et le prix d'une négligence)",
+        "✅ Une annonce mentionne « charges de copropriété : 1 800 €/an, PV d'AG disponibles sur demande ». "
+            "Inès les demande avant même la visite et découvre un ravalement de façade déjà voté mais pas "
+            "encore facturé, environ 4 000 € à sa charge en tant que futur copropriétaire. Elle intègre ce "
+            "montant dans sa négociation et obtient 5 000 € de rabais sur le prix affiché — la découverte "
+            "devient un argument plutôt qu'une mauvaise surprise après-vente.\n\n"
+            "❌ Yanis visite un bien « à fort potentiel, idéal investisseur » sans creuser cette formule un "
+            "peu trop enthousiaste. Séduit par un prix 15 % sous le marché du secteur et pressé par l'agent "
+            "(« un autre investisseur est intéressé »), il signe vite. Après l'achat, il découvre un sinistre "
+            "dégât des eaux non déclaré par le vendeur précédent : 12 000 € de travaux imprévus, largement "
+            "au-dessus de la décote initiale qui l'avait attiré.",
+      ),
     ],
   ),
   FormationModule(
@@ -277,6 +316,19 @@ const List<FormationModule> formationModules = [
             "Aucune des deux options n'est « la bonne » dans l'absolu — c'est un arbitrage à faire selon ton "
             "objectif défini au module 1 (cash-flow immédiat ou patrimoine long terme).",
       ),
+      FormationLesson(
+        "Exemple concret — deux villes, deux dynamiques opposées",
+        "✅ Léa compare deux villes à prix d'achat presque identique (95 000 € contre 98 000 € pour un bien "
+            "équivalent). Ville A perd 0,8 % d'habitants par an et voit son chômage augmenter ; Ville B gagne "
+            "1,2 % d'habitants par an, avec une nouvelle ligne de tram annoncée et une université qui "
+            "s'agrandit. Elle choisit Ville B malgré un rendement affiché légèrement inférieur (5,8 % contre "
+            "6,3 %) — en pariant sur une vacance locative plus faible et une revente bien plus facile le "
+            "moment venu.\n\n"
+            "❌ Bastien choisit sa ville natale « parce qu'il la connaît », sans vérifier le moindre "
+            "indicateur objectif. Il découvre après coup que la commune perd des habitants depuis dix ans : il "
+            "met sept mois à trouver son premier locataire, loin des 4 à 8 % de vacance locative habituels "
+            "qu'il avait budgétés.",
+      ),
     ],
   ),
   FormationModule(
@@ -318,6 +370,20 @@ const List<FormationModule> formationModules = [
             "hausse continue du marché. Un prévisionnel honnête teste systématiquement un scénario dégradé avant "
             "de signer — c'est le rôle du stress-test « Et si...? » de l'app : si le projet encaisse encore un "
             "taux plus élevé, une occupation plus faible et des travaux imprévus, c'est un bon signal.",
+      ),
+      FormationLesson(
+        "Exemple concret — le même bien, trois façons de le regarder",
+        "Un bien à 150 000 €, loué 750 €/mois (9 000 €/an).\n\n"
+            "✅ Rentabilité brute : 9 000 / 150 000 = 6 %. Rentabilité nette, après charges de copropriété "
+            "(900 €), taxe foncière (1 100 €), assurance (200 €) et frais de gestion (540 €) : loyers nets "
+            "d'environ 6 260 € sur un coût total voisin de 150 000 €, soit 4,2 %. Rentabilité nette-nette, "
+            "après impôt au micro-foncier (TMI 30 % + 17,2 % de prélèvements sociaux) : environ 3,2 %. Une "
+            "bonne pratique consiste à toujours présenter ces trois chiffres ensemble, jamais la brute "
+            "seule.\n\n"
+            "❌ Une annonce met en avant « rentabilité de 6 % » (c'est la brute, sans le dire). Un acheteur "
+            "pressé la compare à un autre bien dont il a, lui, calculé la nette-nette (3,2 %) et croit à tort "
+            "que le premier bien est deux fois plus rentable que le second — alors que les deux chiffres ne "
+            "sont tout simplement pas calculés sur la même base.",
       ),
     ],
   ),
@@ -369,6 +435,18 @@ const List<FormationModule> formationModules = [
             "et la capacité d'emprunt, mais demande un cadre juridique clair dès le départ (répartition, sortie "
             "d'un associé, désaccords) pour éviter les conflits plus tard. Pour un premier achat, un prêt "
             "amortissable classique, seul ou en couple, reste le montage le plus simple à maîtriser.",
+      ),
+      FormationLesson(
+        "Exemple concret — déléguer son assurance emprunteur",
+        "✅ Sur un prêt de 160 000 € sur 20 ans, l'assurance groupe proposée par la banque coûte 0,34 %/an, "
+            "soit environ 544 €/an — 10 880 € sur toute la durée du prêt. En délégation d'assurance (profil "
+            "non-fumeur, en bonne santé), un assureur externe propose 0,12 %/an pour une couverture "
+            "équivalente, soit environ 192 €/an — 3 840 € sur 20 ans. Écart : plus de 7 000 € d'économie, pour "
+            "la même protection, juste en comparant avant de signer.\n\n"
+            "❌ Paul accepte l'assurance groupe « pour aller plus vite », pensant que l'écart serait minime. "
+            "Trois ans plus tard, en comparant pour un second achat, il réalise qu'il paie depuis le début près "
+            "de trois fois le prix nécessaire pour la même couverture — sans jamais avoir pris dix minutes "
+            "pour comparer au moment de son premier crédit.",
       ),
     ],
   ),
@@ -430,6 +508,19 @@ const List<FormationModule> formationModules = [
             "demandent presque toujours de passer par un artisan certifié RGE (Reconnu Garant de "
             "l'Environnement) et de monter le dossier avant le démarrage des travaux, jamais après.",
       ),
+      FormationLesson(
+        "Exemple concret — anticiper un DPE pénalisant plutôt que le subir",
+        "✅ Un bien classé F est affiché à 110 000 €, contre 125 000 € pour un équivalent classé D dans le "
+            "même immeuble. Noémie fait chiffrer les travaux de rénovation énergétique nécessaires (isolation, "
+            "changement du système de chauffage) avant de faire une offre : environ 13 000 €. Elle intègre ce "
+            "montant dans sa négociation et dans son budget global — projet final à 123 000 € tout compris, "
+            "cohérent, avec un DPE qui remontera en D une fois les travaux faits.\n\n"
+            "❌ Hugo achète un bien classé G « pas cher » sans se poser la question du DPE, pensant le "
+            "relouer tel quel à son locataire sortant. Après l'achat, il découvre que la location de ce "
+            "logement est déjà interdite légalement pour ce classement — il se retrouve propriétaire d'un bien "
+            "qu'il ne peut pas louer tant que 18 000 € de travaux, totalement absents de son budget initial, "
+            "n'auront pas été réalisés.",
+      ),
     ],
   ),
   FormationModule(
@@ -484,6 +575,19 @@ const List<FormationModule> formationModules = [
             "cumulés, il l'est aussi fiscalement à la sortie. Ce calcul est fait automatiquement par l'onglet "
             "« Projection » de Didou-Immo pour n'importe quelle durée de détention simulée.",
       ),
+      FormationLesson(
+        "Exemple concret — LMNP au réel contre micro-BIC, l'écart réel en euros",
+        "Loyers meublés perçus : 8 400 €/an.\n\n"
+            "✅ Au régime réel : amortissement comptable du bien et du mobilier (environ 4 500 €/an) plus "
+            "charges réelles déductibles (intérêts d'emprunt, copropriété, assurance — environ 3 200 €/an). "
+            "Résultat fiscal ramené proche de zéro : 0 € d'impôt sur ces loyers, alors que le cash-flow réel, "
+            "lui, reste positif.\n\n"
+            "❌ Camille reste au régime micro-BIC « par simplicité », sans jamais comparer. Avec l'abattement "
+            "forfaitaire de 50 %, sa base imposable est de 4 200 €, taxée à sa tranche (30 % + 17,2 % de "
+            "prélèvements sociaux) : environ 1 980 € d'impôt chaque année. Sans l'avoir jamais calculé, elle "
+            "paie chaque année l'équivalent d'un mois de loyer en impôt qu'un simple changement de régime "
+            "(avec un comptable, souvent facturé 300 à 500 €/an en LMNP réel) lui aurait évité.",
+      ),
     ],
   ),
   FormationModule(
@@ -537,6 +641,17 @@ const List<FormationModule> formationModules = [
             "une petite réserve de trésorerie dédiée à chaque bien (quelques centaines d'euros) absorbe ces "
             "imprévus sans déséquilibrer ton budget personnel.",
       ),
+      FormationLesson(
+        "Exemple concret — un impayé bien géré contre un impayé ignoré",
+        "✅ Dès le 5ᵉ jour de retard, Inès envoie une relance écrite datée (preuve à l'appui) et active son "
+            "assurance loyers impayés dès le premier mois complet non payé — elle avait vérifié le délai de "
+            "carence et de déclaration de son contrat avant même de souscrire. Elle est indemnisée dès le 3ᵉ "
+            "mois d'impayé, limitant sa perte réelle à environ un mois de loyer.\n\n"
+            "❌ David attend « que ça s'arrange », sans relancer par écrit — donc sans aucune preuve "
+            "exploitable. Quatre mois plus tard, il découvre que son assurance refuse de l'indemniser : le "
+            "délai contractuel de déclaration d'un impayé (souvent 2 à 3 mois) est dépassé. Il perd "
+            "l'intégralité des loyers impayés, plus les frais de procédure pour récupérer son logement.",
+      ),
     ],
   ),
   FormationModule(
@@ -580,6 +695,17 @@ const List<FormationModule> formationModules = [
             "géographique une fois plusieurs projets réalisés. Et surtout : arrêter de se former une fois le "
             "premier bien acheté, alors que la réglementation (fiscale, énergétique, locative) continue de "
             "changer après.",
+      ),
+      FormationLesson(
+        "Exemple concret — refinancer plutôt que stagner",
+        "✅ Après 8 ans, le bien de Farid (acheté 150 000 €) est désormais estimé à 195 000 € et le capital "
+            "restant dû n'est plus que de 95 000 €. En faisant réévaluer son bien et en sollicitant sa banque, "
+            "il dégage environ 100 000 € de capacité via un refinancement — qui lui sert d'apport pour un "
+            "second bien, sans avoir eu à revendre le premier ni à épargner pendant des années de plus.\n\n"
+            "❌ Amandine, exactement dans la même situation patrimoniale, ne fait jamais réévaluer son bien "
+            "ni ne regarde sa situation globale. Huit ans plus tard, elle n'a toujours qu'un seul bien et "
+            "pense « ne pas avoir les moyens » de se relancer — alors que son premier bien, sans qu'elle le "
+            "sache, lui permettrait de le faire dès aujourd'hui.",
       ),
     ],
   ),
