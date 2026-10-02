@@ -431,6 +431,8 @@ Color _tabColor(AppTab tab) {
       return const Color(0xFFD4A72C);
     case AppTab.patrimoine:
       return const Color(0xFF2FA39B);
+    case AppTab.formation:
+      return const Color(0xFFC9A227);
   }
 }
 

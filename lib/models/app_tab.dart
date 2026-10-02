@@ -3,7 +3,7 @@
 /// l'écran "Personnaliser mon affichage". Le nom de l'enum (`.name`) sert de
 /// clé de sérialisation : ne pas renommer une valeur existante sans migrer
 /// les préférences déjà enregistrées sur l'appareil des utilisateurs.
-enum AppTab { guide, calc, marche, carte, fisc, proj, biens, patrimoine }
+enum AppTab { guide, calc, marche, carte, fisc, proj, biens, patrimoine, formation }
 
 /// Ordre par défaut (celui d'origine, avant toute personnalisation) — sert
 /// aussi de filet de sécurité : toute valeur absente d'un ordre personnalisé
@@ -23,4 +23,9 @@ const List<AppTab> kDefaultTabOrder = [
   AppTab.proj,
   AppTab.biens,
   AppTab.patrimoine,
+  // En dernier (voir la doc du filet de sécurité ci-dessus) : pour un compte
+  // ayant déjà personnalisé l'ordre de ses onglets avant l'ajout de la
+  // formation, ce nouvel onglet est rajouté en fin de liste plutôt
+  // qu'inséré arbitrairement quelque part au milieu.
+  AppTab.formation,
 ];
