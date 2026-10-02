@@ -16,14 +16,15 @@ import 'formation_module_screen.dart';
 /// code, selon ce que l'utilisateur choisira à ce moment-là.
 ///
 /// Cet écran ne sert plus que de sommaire — une carte par module, qui ouvre
-/// la lecture leçon par leçon ([FormationModuleScreen]). Avant, tout le
-/// contenu (12 modules, 42 leçons) tenait empilé dans des accordéons sur
-/// cette seule page : jugé pas assez agréable à lire malgré un contenu
-/// pourtant complet.
+/// la lecture leçon par leçon ([FormationModuleScreen]), quiz de fin de
+/// module compris. Avant, tout le contenu tenait empilé dans des accordéons
+/// sur cette seule page : jugé pas assez agréable à lire malgré un contenu
+/// déjà complet.
 class FormationScreen extends StatelessWidget {
   const FormationScreen({super.key});
 
   int get _totalLessons => formationModules.fold(0, (sum, m) => sum + m.lessons.length);
+  int get _totalQuizQuestions => formationModules.fold(0, (sum, m) => sum + m.quiz.length);
 
   @override
   Widget build(BuildContext context) {
@@ -102,8 +103,8 @@ class FormationScreen extends StatelessWidget {
         Text(
           "Du tout premier réflexe jusqu'à la revente : trouver le bon bien, choisir sa zone, chiffrer sa "
           "rentabilité, le financer, gérer les travaux, comprendre la fiscalité, gérer le quotidien, et "
-          "construire un vrai patrimoine — avec 3 études de cas chiffrées pour voir la méthode appliquée de "
-          "bout en bout.",
+          "construire un vrai patrimoine — avec un exemple chiffré à chaque module, 4 études de cas complètes, "
+          "et un quiz de mise en situation à la fin de chaque module pour vérifier que c'est bien acquis.",
           style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.75)).copyWith(height: 1.5),
         ),
         const SizedBox(height: 14),
@@ -112,7 +113,7 @@ class FormationScreen extends StatelessWidget {
           const SizedBox(width: 16),
           _heroStat(Icons.menu_book_outlined, '$_totalLessons leçons'),
           const SizedBox(width: 16),
-          _heroStat(Icons.all_inclusive, 'Accès à vie'),
+          _heroStat(Icons.quiz_outlined, '$_totalQuizQuestions questions'),
         ]),
       ]),
     );
@@ -169,7 +170,9 @@ class _ModuleSummaryCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '${module.lessons.length} leçon${module.lessons.length > 1 ? 's' : ''}',
+                module.quiz.isEmpty
+                    ? '${module.lessons.length} leçon${module.lessons.length > 1 ? 's' : ''}'
+                    : '${module.lessons.length} leçons · quiz de ${module.quiz.length} questions',
                 style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: module.color),
               ),
             ]),
