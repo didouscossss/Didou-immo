@@ -78,21 +78,41 @@ const List<FormationModule> formationModules = [
     lessons: [
       FormationLesson(
         'Ce que tu vas trouver ici',
-        "Cette formation part du principe que tu n'as jamais acheté le moindre bien locatif. Elle couvre tout le "
-            "chemin : définir ton projet et ton budget, trouver un bien, choisir la bonne zone, chiffrer sa "
-            "rentabilité, le financer, gérer les travaux, comprendre la fiscalité, gérer le bien au quotidien, et "
-            "penser le temps long jusqu'à une éventuelle revente. Ce n'est pas un recueil de théorie générale : "
-            "chaque module donne des critères concrets et des pièges réels, pas des généralités qu'on retrouve "
-            "partout sur internet.",
+        "Cette formation part du principe que tu n'as jamais acheté le moindre bien locatif — aucun prérequis, "
+            "aucun jargon supposé acquis : chaque terme technique est expliqué la première fois qu'il apparaît, "
+            "et retrouvé dans le glossaire du dernier module si besoin. Elle couvre tout le chemin, dans l'ordre "
+            "où tu en as réellement besoin : définir ton projet et ton budget, trouver un bien, choisir la bonne "
+            "zone, chiffrer sa rentabilité, le financer, gérer les travaux, comprendre la fiscalité, gérer le "
+            "bien au quotidien, et penser le temps long jusqu'à une éventuelle revente — treize modules, quatre "
+            "études de cas chiffrées de bout en bout, et un quiz de mise en situation à la fin de chaque module "
+            "pour vérifier que la notion est vraiment acquise, pas seulement lue en diagonale.\n\n"
+            "Ce n'est pas un recueil de théorie générale : chaque module donne des critères concrets, des "
+            "seuils chiffrés (35 % d'endettement, 22 ans de détention, DPE F interdit en 2028...) et des pièges "
+            "réels observés chez de vrais primo-investisseurs, pas des généralités qu'on retrouve partout sur "
+            "internet. Si tu as déjà un bien locatif et que tu cherches uniquement une réponse précise sur la "
+            "fiscalité ou le financement, tu peux aller directement au module concerné — mais pour un premier "
+            "achat, suivre l'ordre proposé évite de devoir revenir en arrière sur une notion qu'un module plus "
+            "tardif suppose déjà comprise.",
       ),
       FormationLesson(
         "Comment t'en servir",
-        "Suis les modules dans l'ordre pour ton premier projet — chacun s'appuie sur le précédent. Garde "
-            "Didou-Immo ouvert à côté : dès qu'un module te demande de chiffrer quelque chose (rentabilité, "
-            "cash-flow, capacité d'emprunt...), fais-le en même temps dans l'app plutôt qu'en théorie — c'est "
-            "exactement pour ça qu'elle existe. Reviens sur un module précis plus tard, au moment où tu en as "
-            "réellement besoin (par exemple relire la fiscalité juste avant de signer) plutôt que de tout retenir "
-            "d'un coup.",
+        "Suis les modules dans l'ordre pour ton premier projet — chacun s'appuie sur le précédent, et certains "
+            "exemples renvoient volontairement à une notion vue dans un module antérieur plutôt que de la "
+            "réexpliquer depuis zéro. Un rythme d'un module par session (15 à 25 minutes selon le module) "
+            "fonctionne mieux qu'une lecture d'une traite : le contenu est dense, et une pause entre deux "
+            "modules laisse le temps à une notion de se fixer avant d'en ajouter une nouvelle par-dessus.\n\n"
+            "Garde Didou-Immo ouvert à côté : dès qu'un module te demande de chiffrer quelque chose "
+            "(rentabilité, cash-flow, capacité d'emprunt...), fais-le en même temps dans l'app plutôt qu'en "
+            "théorie — idéalement avec TES chiffres personnels ou ceux d'un bien que tu as réellement repéré, "
+            "pas un exemple abstrait. C'est exactement pour ça que l'app existe, et c'est ce qui transforme une "
+            "lecture passive en un projet qui avance réellement pendant que tu apprends.\n\n"
+            "Le quiz de fin de module n'est pas un examen à réussir du premier coup : c'est un indicateur. Une "
+            "mauvaise réponse n'est jamais sanctionnée — elle vient toujours avec une explication qui précise "
+            "pourquoi ce n'était pas la bonne piste, pour que l'erreur serve directement à mieux comprendre la "
+            "notion plutôt que de rester une case cochée au hasard. Et reviens sur un module précis plus tard, "
+            "au moment où tu en as réellement besoin (par exemple relire la fiscalité juste avant de signer, ou "
+            "la checklist finale juste avant un rendez-vous notaire) plutôt que de tout retenir d'un coup dès "
+            "la première lecture.",
       ),
     ],
   ),
@@ -112,10 +132,25 @@ const List<FormationModule> formationModules = [
         "Pourquoi l'immobilier locatif plutôt qu'autre chose",
         "Trois mécanismes expliquent pourquoi l'immobilier reste un placement de choix pour se constituer un "
             "patrimoine : l'effet de levier du crédit (tu investis avec l'argent de la banque, pas seulement le "
-            "tien), le remboursement du prêt par le loyer du locataire (ce n'est pas toi qui rembourses, c'est le "
-            "marché locatif), et la revalorisation du bien dans le temps. En échange, c'est un placement peu "
-            "liquide (on ne revend pas un appartement en un clic) et qui demande un minimum de temps de gestion — "
-            "deux contreparties à accepter en connaissance de cause, pas des surprises à découvrir après coup.",
+            "tien — aucun autre placement grand public ne te permet d'emprunter 150 000 € pour investir aussi "
+            "facilement qu'un crédit immobilier), le remboursement du prêt par le loyer du locataire (ce n'est "
+            "pas toi qui rembourses, c'est le marché locatif — ton effort d'épargne personnel reste souvent "
+            "limité, voire nul si le cash-flow est positif), et la revalorisation du bien dans le temps, qui "
+            "profite intégralement à toi alors que tu n'as financé qu'une fraction du prix avec ton propre "
+            "apport. À cela s'ajoute un quatrième mécanisme souvent sous-estimé : la dette immobilière est "
+            "remboursée en euros courants, qui perdent de la valeur avec l'inflation, pendant que le loyer, lui, "
+            "suit généralement cette même inflation (voir la révision IRL au module Gestion) — un effet qui "
+            "joue structurellement en faveur de l'emprunteur sur la durée.\n\n"
+            "En échange, c'est un placement peu liquide (on ne revend pas un appartement en un clic comme on "
+            "vend des actions en bourse — compte plusieurs mois entre la décision de vendre et l'argent "
+            "effectivement sur ton compte, voir le module Penser sur le long terme) et qui demande un minimum "
+            "de temps de gestion, même une fois le bien stabilisé (voir la leçon suivante sur le temps "
+            "réellement nécessaire). Comparé à un placement en bourse ou en assurance-vie, l'immobilier locatif "
+            "demande aussi plus de capital de départ pour démarrer (apport, frais de notaire) et de vraies "
+            "démarches administratives (dossier bancaire, bail, déclarations fiscales) — deux contreparties à "
+            "accepter en connaissance de cause, pas des surprises à découvrir après coup. Rien de tout cela ne "
+            "rend l'immobilier « meilleur » dans l'absolu : c'est un placement avec un profil "
+            "rendement/risque/liquidité différent, à choisir en connaissance de cause plutôt que par réflexe.",
       ),
       FormationLesson(
         "Les grandes stratégies, et laquelle te correspond",
@@ -131,7 +166,14 @@ const List<FormationModule> formationModules = [
             "gestion quasi quotidienne (ménage, clés, messages) et réglementation locale à vérifier avant tout "
             "achat (certaines villes limitent fortement la location saisonnière).\n\n"
             "Pour un premier projet, la location nue ou le LMNP restent les points d'entrée les plus raisonnables "
-            "— le temps d'apprendre, avant d'envisager une stratégie plus exigeante en gestion.",
+            "— le temps d'apprendre, avant d'envisager une stratégie plus exigeante en gestion.\n\n"
+            "Ces quatre stratégies ne s'excluent pas forcément : rien n'empêche de démarrer en location nue "
+            "classique pour un premier achat, le temps de se familiariser avec la gestion locative, puis de "
+            "tester le LMNP ou la colocation sur un second bien une fois plus à l'aise. En courte durée, "
+            "vérifie aussi l'encadrement local avant tout achat : de nombreuses grandes villes imposent une "
+            "déclaration en mairie, voire un numéro d'enregistrement obligatoire et un quota de nuitées annuel "
+            "pour une résidence secondaire — un cadre réglementaire qui peut changer la rentabilité réelle du "
+            "projet, et qui continue d'évoluer régulièrement selon les communes.",
       ),
       FormationLesson(
         "Définir ton objectif avant de chercher un bien",
@@ -141,7 +183,16 @@ const List<FormationModule> formationModules = [
             "plutôt vers des grandes villes dynamiques, quitte à accepter un cash-flow neutre ou légèrement "
             "négatif au départ. Il n'y a pas de bonne réponse universelle — il y a la tienne, en fonction de tes "
             "revenus actuels, ta capacité à encaisser un effort d'épargne mensuel, et ton horizon de temps. "
-            "Tranche cette question avant de regarder la moindre annonce : elle détermine tout le reste.",
+            "Tranche cette question avant de regarder la moindre annonce : elle détermine tout le reste.\n\n"
+            "Pour trancher concrètement, pose-toi trois questions précises plutôt que de rester sur une "
+            "intuition générale. As-tu déjà un revenu confortable et stable, qui te permettrait d'absorber "
+            "sans stress un effort d'épargne de 50 à 150 €/mois pendant plusieurs années si le cash-flow est "
+            "légèrement négatif ? As-tu un horizon de temps long (10 ans ou plus) devant toi avant d'avoir "
+            "besoin de récupérer ce capital ? Cherches-tu avant tout à améliorer ton quotidien financier dès "
+            "maintenant, ou à préparer un projet lointain (retraite, transmission) ? Si tu réponds plutôt non "
+            "aux deux premières questions, le cash-flow immédiat est probablement le bon objectif pour ce "
+            "premier achat — rien n'empêche de viser la plus-value sur un second projet une fois ce premier "
+            "palier atteint et l'expérience acquise.",
       ),
       FormationLesson(
         "Exemples concrets — deux bons choix, et une erreur à ne pas reproduire",
@@ -167,7 +218,18 @@ const List<FormationModule> formationModules = [
             "automatiquement aligné avec le tien lors de la négociation. Le courtier en financement travaille, "
             "lui, pour toi : il démarche les banques à ta place. L'expert-comptable n'est pas obligatoire mais "
             "devient vite rentable dès le régime réel ou le LMNP (voir le module Fiscalité). Savoir qui "
-            "défend tes intérêts, et qui défend ceux de quelqu'un d'autre, évite bien des malentendus.",
+            "défend tes intérêts, et qui défend ceux de quelqu'un d'autre, évite bien des malentendus.\n\n"
+            "Trois autres acteurs interviennent plus tard dans le processus, sans que tu aies besoin de les "
+            "choisir dès le départ. Le diagnostiqueur immobilier réalise les diagnostics obligatoires (DPE "
+            "compris, voir le module Travaux) — c'est généralement le vendeur qui le mandate, mais rien "
+            "n'empêche d'en faire réaliser un second si un doute existe sur la fiabilité du premier. Le syndic "
+            "de copropriété gère l'immeuble au quotidien et convoque les assemblées générales — tu n'en "
+            "changes pas à l'achat (le syndic en poste reste en fonction), mais sa réactivité et sa rigueur, "
+            "visibles dans les PV d'AG, en disent souvent long sur la santé de la copropriété (voir le module "
+            "Trouver le bon bien). Et le gestionnaire locatif, si tu choisis de déléguer la gestion plutôt que "
+            "de t'en charger toi-même, devient ton interlocuteur principal une fois le bien loué (voir le "
+            "module Gérer son bien au quotidien) — à distinguer de l'agent immobilier, dont le rôle s'arrête "
+            "généralement à la vente.",
       ),
       FormationLesson(
         "Combien de temps ça prend, réellement",
@@ -178,7 +240,19 @@ const List<FormationModule> formationModules = [
             "gestion directe, pour les messages, le suivi des paiements et l'administratif courant), avec des "
             "pics ponctuels lors d'un changement de locataire ou d'un imprévu. C'est un projet qui demande de "
             "la disponibilité en amont (recherche, visites, montage du dossier) bien plus qu'au quotidien une "
-            "fois en place — prévoir ce rythme dès le départ évite l'épuisement ou l'abandon en cours de route.",
+            "fois en place — prévoir ce rythme dès le départ évite l'épuisement ou l'abandon en cours de "
+            "route.\n\n"
+            "Pour donner un ordre de grandeur plus précis : une recherche active sérieuse représente "
+            "généralement 2 à 5 heures par semaine (veille des annonces, prises de contact, visites), le "
+            "montage du dossier bancaire et les échanges avec le notaire concentrent plusieurs heures sur "
+            "quelques semaines autour de la signature, et la première mise en location (annonce, sélection du "
+            "locataire, état des lieux) demande encore quelques heures ponctuelles. Une fois le bien loué et "
+            "stabilisé, en gestion directe, compte plutôt 1 à 3 heures par mois en rythme de croisière (suivi "
+            "des loyers, messages ponctuels), avec des pics plus consistants (plusieurs heures sur une à deux "
+            "semaines) lors d'un changement de locataire ou d'un imprévu technique. Ce n'est pas un projet qui "
+            "demande une disponibilité quotidienne comme pourrait le laisser croire une stratégie en courte "
+            "durée — mais sous-estimer le temps de la phase de recherche initiale est l'erreur la plus "
+            "fréquente chez un premier investisseur pressé.",
       ),
     ],
     quiz: [
@@ -311,7 +385,17 @@ const List<FormationModule> formationModules = [
             "crédits compris, le nouveau comme les existants) ne doivent pas dépasser 35 % de tes revenus nets. "
             "Certains dossiers solides (hauts revenus, reste à vivre confortable) peuvent dépasser ce seuil, mais "
             "ne compte pas dessus par défaut. Utilise l'onglet « Capacité d'emprunt » de Didou-Immo pour estimer "
-            "ce seuil avant même de chercher un bien — ça évite de tomber amoureux d'une annonce hors budget.",
+            "ce seuil avant même de chercher un bien — ça évite de tomber amoureux d'une annonce hors budget.\n\n"
+            "Ce taux de 35 % est encadré par les recommandations du Haut Conseil de Stabilité Financière "
+            "(HCSF), que la plupart des banques appliquent strictement depuis 2022 : il limite aussi la durée "
+            "du crédit à 25 ans maximum (27 ans dans certains cas de différé de remboursement, par exemple en "
+            "VEFA), et ne laisse qu'une marge de dérogation limitée (environ 20 % des dossiers d'un "
+            "établissement) pour les profils solides qui dépassent légèrement ce seuil. Un point souvent mal "
+            "compris : les loyers déjà perçus sur un bien existant, ou ceux attendus du nouveau projet, ne "
+            "sont généralement comptés qu'à hauteur de 70 % dans le calcul du taux d'endettement (une "
+            "pondération de prudence appelée décote), pas à 100 % — un propriétaire déjà en place a donc une "
+            "capacité d'emprunt réelle un peu inférieure à ce qu'un calcul naïf (mensualité contre loyer "
+            "plein) pourrait laisser penser.",
       ),
       FormationLesson(
         "Apport personnel : combien, et faut-il tout miser",
@@ -320,7 +404,16 @@ const List<FormationModule> formationModules = [
             "où un financement à 110 % reste parfois possible. Mettre plus d'apport réduit la mensualité et donc "
             "le risque, mais réduit aussi l'effet de levier : chaque euro apporté est un euro qui ne travaille "
             "plus pour un futur projet. Il n'y a pas de règle absolue ; la bonne question est « combien puis-je "
-            "apporter sans vider mon épargne de précaution (3 à 6 mois de charges) ? ».",
+            "apporter sans vider mon épargne de précaution (3 à 6 mois de charges) ? ».\n\n"
+            "L'apport n'a pas besoin de provenir uniquement de ton épargne personnelle : une donation "
+            "familiale, le déblocage d'un Plan Épargne Logement (PEL), ou la revente d'un bien existant "
+            "peuvent tous compter comme apport aux yeux de la banque, à condition d'en justifier l'origine "
+            "(les banques demandent systématiquement un justificatif pour toute somme importante entrant sur "
+            "le compte avant l'achat, dans le cadre de la lutte contre le blanchiment). Certains établissements "
+            "financent encore un projet locatif à 100 %, voire au-delà pour couvrir les frais de notaire, pour "
+            "des profils jugés très solides (hauts revenus, épargne résiduelle confortable, profession "
+            "stable) — ce n'est donc pas une règle absolue, mais un point à négocier plutôt qu'à exclure "
+            "d'office si ton dossier est particulièrement solide.",
       ),
       FormationLesson(
         "Les frais qu'on oublie systématiquement",
@@ -329,7 +422,15 @@ const List<FormationModule> formationModules = [
             "les frais de courtier si tu en utilises un, l'assurance emprunteur, les travaux (même « juste » un "
             "rafraîchissement), l'ameublement si tu loues meublé, et les premiers mois de charges de copropriété "
             "avant le premier loyer encaissé. Un budget qui ne prévoit que le prix d'achat est un budget faux — "
-            "l'onglet « Bien » de Didou-Immo inclut ces frais par défaut (ajustables) pour cette raison précise.",
+            "l'onglet « Bien » de Didou-Immo inclut ces frais par défaut (ajustables) pour cette raison précise.\n\n"
+            "Pour donner des ordres de grandeur concrets sur un bien ancien à 150 000 € : frais de notaire "
+            "environ 10 500 à 12 000 € (7 à 8 %), frais de dossier bancaire entre 500 et 1 500 € selon "
+            "l'établissement, frais de garantie (caution bancaire, généralement moins chère qu'une hypothèque, "
+            "et partiellement restituée en fin de prêt) autour de 1 à 1,5 % du montant emprunté, et frais de "
+            "courtier si tu en utilises un (souvent pris en charge par la banque, voir le module Financer son "
+            "projet). Au total, les frais annexes représentent fréquemment 9 à 12 % du prix d'achat dans "
+            "l'ancien — un ordre de grandeur à intégrer dès la première simulation plutôt qu'à découvrir une "
+            "fois le compromis signé.",
       ),
       FormationLesson(
         "Exemple concret — le même bien à 180 000 €, deux budgets très différents",
@@ -352,7 +453,14 @@ const List<FormationModule> formationModules = [
             "d'aide pour lequel le projet n'est, en réalité, jamais éligible. À l'inverse, certains dispositifs "
             "fiscaux (amortissement LMNP, déficit foncier au régime réel) n'existent QUE pour le locatif, pas "
             "pour une résidence principale — vérifie toujours de quel côté se trouve le dispositif avant de "
-            "bâtir ton budget dessus.",
+            "bâtir ton budget dessus.\n\n"
+            "À l'inverse, il existe des dispositifs spécifiquement conçus pour le locatif que beaucoup de "
+            "débutants ignorent par méconnaissance : le statut LMNP et le déficit foncier au régime réel (voir "
+            "le module Fiscalité), ou encore MaPrimeRénov' et l'éco-prêt à taux zéro pour les travaux de "
+            "rénovation énergétique (voir le module Travaux), qui restent accessibles à un bailleur, sous "
+            "conditions. Le bon réflexe, systématique, est de vérifier pour chaque dispositif dont tu entends "
+            "parler s'il cible la résidence principale ou le locatif — les deux catégories ne se recoupent "
+            "presque jamais.",
       ),
       FormationLesson(
         "Fixer une enveloppe maximale, et s'y tenir",
@@ -363,7 +471,14 @@ const List<FormationModule> formationModules = [
             "réapparaît dans les semaines ou mois suivants. Dépasser son enveloppe pour un coup de cœur est la "
             "porte d'entrée la plus fréquente vers un cash-flow trop tendu dès la première année — garder "
             "cette limite écrite quelque part (et pas seulement « dans sa tête ») aide à résister à la "
-            "pression du moment lors d'une négociation ou d'une visite groupée.",
+            "pression du moment lors d'une négociation ou d'une visite groupée.\n\n"
+            "Une enveloppe utile est écrite avec sa décomposition, pas seulement un chiffre rond en tête : "
+            "prix d'achat maximum, frais de notaire estimés, marge travaux, et marge de sécurité — ventilés "
+            "séparément, pour pouvoir arbitrer précisément (baisser le prix visé plutôt que rogner sur la "
+            "marge de sécurité, par exemple) le jour où un bien dépasse légèrement le total. Revois cette "
+            "enveloppe si ta situation change en cours de recherche (revenus, taux proposés par les banques, "
+            "découverte d'une aide ou d'un dispositif) — mais toujours AVANT une visite, jamais en pleine "
+            "négociation sous la pression d'un « il y a un autre acheteur intéressé ».",
       ),
     ],
     quiz: [
@@ -509,7 +624,13 @@ const List<FormationModule> formationModules = [
             "syndics de copropriété) fait souvent remonter des biens avant même leur publication — le fameux "
             "« off-market ». Les ventes aux enchères (notariales ou judiciaires) permettent des décotes réelles, "
             "mais demandent de l'expérience et un financement déjà bouclé avant l'enchère. Pour un premier achat, "
-            "combine plusieurs canaux plutôt que de te limiter à un seul.",
+            "combine plusieurs canaux plutôt que de te limiter à un seul.\n\n"
+            "Mets en place des alertes automatiques sur plusieurs portails plutôt que de les consulter "
+            "manuellement chaque jour — la réactivité fait souvent la différence sur un bon bien, qui peut "
+            "recevoir plusieurs offres dans les 48 heures suivant sa publication dans un marché tendu. Le "
+            "off-market, lui, se construit dans la durée (voir la leçon dédiée plus loin dans ce module) : il "
+            "est rarement accessible dès les premières semaines de recherche, mais devient une vraie source "
+            "une fois que quelques professionnels locaux te connaissent comme acheteur sérieux.",
       ),
       FormationLesson(
         "Lire une annonce entre les lignes",
@@ -518,7 +639,13 @@ const List<FormationModule> formationModules = [
             "peut signifier que le bien a un défaut qui rebute les acheteurs occupants (DPE, bruit, vis-à-vis) ; "
             "l'absence de mention du montant des charges de copropriété ou du DPE est un signal à vérifier avant "
             "la visite, pas après. Une annonce ne ment pas forcément, mais elle ne dit jamais ce qui dessert la "
-            "vente — c'est à toi de poser les questions qui manquent.",
+            "vente — c'est à toi de poser les questions qui manquent.\n\n"
+            "Les photos elles-mêmes parlent souvent autant que le texte : un grand angle très prononcé peut "
+            "exagérer la sensation d'espace d'une pièce, l'absence de photo d'une pièce précise (cuisine, "
+            "salle de bain) cache fréquemment son état réel, et des photos visiblement anciennes (luminosité, "
+            "mobilier différent d'une saison à l'autre) signalent parfois un bien resté longtemps sans trouver "
+            "preneur. Aucun de ces signaux n'est disqualifiant en soi — mais chacun mérite une question "
+            "précise avant la visite plutôt qu'une hypothèse favorable prise par défaut.",
       ),
       FormationLesson(
         "Réussir sa visite",
@@ -528,7 +655,15 @@ const List<FormationModule> formationModules = [
             "la copropriété), le bruit à différents moments de la journée si possible, la réception réseau/fibre, "
             "et le DPE réel du logement (pas celui d'un logement similaire de l'immeuble). Demande les 3 derniers "
             "procès-verbaux d'assemblée générale de copropriété avant de t'engager : c'est là que se cachent les "
-            "travaux votés mais pas encore facturés, ou les procédures en cours.",
+            "travaux votés mais pas encore facturés, ou les procédures en cours.\n\n"
+            "Une seconde visite, à un horaire différent de la première (en soirée, un week-end), révèle souvent "
+            "des informations qu'une seule visite en semaine en pleine journée ne montre jamais : bruit de "
+            "voisinage, affluence dans la rue, luminosité réelle selon l'orientation. Pense aussi à emporter "
+            "un mètre pour vérifier les dimensions annoncées (un écart de surface, même involontaire, peut "
+            "justifier une renégociation du prix ou, au-delà d'un certain seuil légal, un recours), et à poser "
+            "directement la question du motif de la vente — un vendeur pressé ou dans une situation "
+            "particulière (succession, divorce, mutation) est souvent plus ouvert à la négociation, une "
+            "information qui se recoupe avec le levier évoqué dans la leçon suivante.",
       ),
       FormationLesson(
         "Négocier le prix",
@@ -538,7 +673,15 @@ const List<FormationModule> formationModules = [
             "module Travaux), un délai de vente déjà long (vérifiable sur les portails, qui affichent parfois "
             "la date de première publication), ou une vente dans un contexte pressé (succession, divorce, "
             "mutation professionnelle). Arrive à la négociation avec un chiffre et sa justification, jamais avec "
-            "un simple « je propose moins ».",
+            "un simple « je propose moins ».\n\n"
+            "Formule toujours ton offre par écrit (mail ou lettre, pas seulement à l'oral en visite) — ça pose "
+            "une trace et un cadre, et ça évite les malentendus sur le montant exact proposé. Une négociation "
+            "se joue rarement en un seul aller-retour : prévoir une marge entre ton offre initiale et ton prix "
+            "maximum (fixé au module précédent) permet d'accepter une contre-proposition du vendeur sans "
+            "dépasser ton enveloppe. Et si le vendeur refuse en bloc sans contre-proposition, ce n'est pas "
+            "nécessairement un échec définitif — revenir avec un argument supplémentaire (un devis de travaux "
+            "chiffré entre-temps, par exemple) après quelques jours fonctionne parfois mieux qu'insister "
+            "immédiatement.",
       ),
       FormationLesson(
         "Les pièges classiques du premier achat",
@@ -549,7 +692,14 @@ const List<FormationModule> formationModules = [
             "de sécurité de 15 à 20 % à n'importe quel devis). Négliger une copropriété en difficulté (charges "
             "qui s'envolent, procédures en cours) parce que le bien lui-même semblait en bon état. Vouloir aller "
             "trop vite sur un premier achat, alors que c'est justement celui où il faut prendre le plus de temps "
-            "pour apprendre.",
+            "pour apprendre.\n\n"
+            "Deux pièges plus techniques, souvent découverts trop tard : signer un compromis sans conditions "
+            "suspensives suffisamment protectrices (l'obtention du prêt au bon taux et montant, en "
+            "particulier — sans cette clause, un refus de financement peut coûter l'indemnité d'immobilisation "
+            "versée à la signature), et ignorer un éventuel droit de préemption (la mairie ou un locataire en "
+            "place peut, dans certains cas, avoir priorité pour acheter avant toi) qui peut retarder ou remettre "
+            "en cause une vente pourtant déjà engagée. Ton notaire vérifie systématiquement ce second point, "
+            "mais le demander explicitement en amont évite les mauvaises surprises de calendrier.",
       ),
       FormationLesson(
         "Exemple concret — bien lire une annonce (et le prix d'une négligence)",
@@ -573,7 +723,13 @@ const List<FormationModule> formationModules = [
             "parfois un propriétaire qui vend, ou un bien qui va se libérer. Se construire ce réseau prend du "
             "temps et de la régularité (rappeler, donner des nouvelles de ta recherche, être précis sur tes "
             "critères) — un investissement qui paie souvent sur le deuxième ou troisième achat, rarement sur "
-            "le tout premier.",
+            "le tout premier.\n\n"
+            "En pratique, ça se traduit par des gestes simples et réguliers : rappeler un agent toutes les "
+            "deux à trois semaines pour prendre des nouvelles de sa recherche (sans être pesant), être précis "
+            "et stable dans ses critères d'une fois sur l'autre (un acheteur qui change constamment de "
+            "critères semble moins sérieux), et répondre vite quand un bien est proposé, même s'il ne "
+            "correspond finalement pas — la réactivité construit la réputation d'acheteur fiable qui fait "
+            "qu'on te rappelle en priorité la prochaine fois.",
       ),
       FormationLesson(
         "Combien de biens faut-il visiter avant d'acheter",
@@ -584,7 +740,13 @@ const List<FormationModule> formationModules = [
             "— c'est au contraire souvent un chemin plus long au global (temps perdu en travaux imprévus, "
             "vacance locative non anticipée). À l'inverse, visiter sans fin sans jamais se décider cache "
             "parfois une peur de se tromper plus qu'un vrai manque de bon bien — fixer des critères clairs dès "
-            "le départ (module précédent) aide à reconnaître le bon moment pour arrêter de chercher.",
+            "le départ (module précédent) aide à reconnaître le bon moment pour arrêter de chercher.\n\n"
+            "Si après une quinzaine de visites rien ne correspond, le problème vient rarement du marché — "
+            "c'est souvent le signe que les critères fixés au départ (zone trop restreinte, budget décorrélé "
+            "du marché réel du secteur visé) méritent d'être réexaminés, plutôt que de continuer à visiter "
+            "sans ajuster rien. À l'inverse, si le tout premier bien visité coche toutes les cases, rien "
+            "n'oblige à visiter dix autres biens par principe avant de faire une offre — la discipline de "
+            "recherche sert à éviter un mauvais choix, pas à imposer un nombre arbitraire de visites.",
       ),
     ],
     quiz: [
@@ -708,7 +870,14 @@ const List<FormationModule> formationModules = [
             "dépendant d'un seul employeur), la présence d'une université ou de grandes écoles (demande "
             "étudiante récurrente), les projets d'aménagement à venir (nouvelle ligne de transport, nouveau "
             "quartier d'affaires) qui annoncent une revalorisation avant qu'elle soit visible dans les prix, et "
-            "la proximité immédiate des transports et commerces.",
+            "la proximité immédiate des transports et commerces.\n\n"
+            "Aucun de ces critères ne doit être lu isolément : une ville qui gagne des habitants mais perd "
+            "des emplois n'est pas forcément un bon signal (nouveaux arrivants qui pourraient repartir faute "
+            "de travail local), et une forte présence étudiante sans aucune diversification économique rend "
+            "la demande locative très saisonnière (vacance quasi systématique chaque été). Le bon réflexe "
+            "consiste à croiser plusieurs indicateurs plutôt que de se focaliser sur un seul chiffre "
+            "flatteur — exactement la même logique que pour les trois niveaux de rentabilité du module "
+            "suivant : un indicateur isolé raconte toujours une histoire incomplète.",
       ),
       FormationLesson(
         "Où trouver ces données, gratuitement",
@@ -727,7 +896,13 @@ const List<FormationModule> formationModules = [
             "locative y est faible (vacance locative plus longue entre deux locataires, loyers qui stagnent). Le "
             "bon raisonnement n'est pas « rendement le plus haut » ni « ville la plus connue », mais le meilleur "
             "compromis entre un rendement correct et une demande locative réelle et durable — vérifiable "
-            "concrètement en comparant ton bien au marché local dans l'onglet « Marché ».",
+            "concrètement en comparant ton bien au marché local dans l'onglet « Marché ».\n\n"
+            "Pour mesurer concrètement la tension locative d'un secteur, au-delà du ressenti, observe le "
+            "délai moyen avant qu'une annonce de location trouve preneur (quelques jours en zone très tendue, "
+            "plusieurs semaines voire mois ailleurs) et le nombre de candidatures reçues pour une annonce "
+            "comparable — une information que des professionnels locaux (agences, autres investisseurs du "
+            "secteur) partagent volontiers si tu la demandes directement. Un prix d'achat bas sans tension "
+            "locative réelle n'est pas une bonne affaire, c'est un risque de vacance déguisé en opportunité.",
       ),
       FormationLesson(
         "Grande ville ou ville moyenne ?",
@@ -737,7 +912,14 @@ const List<FormationModule> formationModules = [
             "rendement et un ticket d'entrée plus accessible pour un premier projet, au prix d'une liquidité "
             "moindre à la revente et d'une demande locative à vérifier plus finement, quartier par quartier. "
             "Aucune des deux options n'est « la bonne » dans l'absolu — c'est un arbitrage à faire selon ton "
-            "objectif défini au module 1 (cash-flow immédiat ou patrimoine long terme).",
+            "objectif défini au module 1 (cash-flow immédiat ou patrimoine long terme).\n\n"
+            "Entre ces deux extrêmes existe une troisième catégorie souvent négligée par un premier "
+            "investisseur : les métropoles régionales de taille intermédiaire, qui combinent souvent une "
+            "bonne partie des avantages des deux — un bassin d'emploi diversifié et une demande locative "
+            "structurelle (université, administrations, entreprises), sans le ticket d'entrée des toutes plus "
+            "grandes villes. Elles méritent généralement d'être comparées systématiquement aux deux options "
+            "extrêmes avant de trancher, plutôt que d'être écartées par réflexe parce qu'elles sont moins "
+            "connues nationalement.",
       ),
       FormationLesson(
         "Exemple concret — deux villes, deux dynamiques opposées",
@@ -762,7 +944,14 @@ const List<FormationModule> formationModules = [
             "demande future). À l'inverse, des travaux de voirie en cours, de nouveaux commerces qui "
             "ouvrent, ou un projet de rénovation urbaine annoncé sont des signaux positifs qui précèdent "
             "souvent une hausse de la demande — et donc des prix — avant qu'elle soit visible dans les "
-            "statistiques globales de la ville.",
+            "statistiques globales de la ville.\n\n"
+            "Parler directement aux commerçants du quartier (boulangerie, bar, pressing) donne souvent une "
+            "information plus fraîche que n'importe quelle statistique : ils voient l'évolution du quartier "
+            "au quotidien, bien avant qu'elle ne soit mesurable dans les données officielles. Marcher la rue à "
+            "pied, au-delà du simple trajet entre la voiture et l'entrée de l'immeuble, permet aussi de "
+            "repérer des détails qui ne figurent sur aucune annonce : la qualité de l'éclairage public le "
+            "soir, la présence ou non de nuisances sonores récurrentes, l'état du bâti sur toute la longueur "
+            "de la rue plutôt que sur le seul immeuble visité.",
       ),
       FormationLesson(
         "Les signaux d'alerte à ne pas ignorer",
@@ -773,7 +962,12 @@ const List<FormationModule> formationModules = [
             "continuer de se contracter. Une dépendance très forte à un seul employeur local (une usine, une "
             "administration) expose à un risque brutal en cas de fermeture ou de restructuration. Aucun de "
             "ces signaux, pris isolément, n'est forcément rédhibitoire — mais leur accumulation sur une même "
-            "zone doit alerter, même quand le prix d'achat semble très attractif.",
+            "zone doit alerter, même quand le prix d'achat semble très attractif.\n\n"
+            "Un dernier signal, facile à observer sans aucune donnée officielle : la proportion de logements "
+            "visiblement vacants ou de panneaux « à vendre » qui restent en place pendant des mois dans une "
+            "même rue. Un marché qui absorbe normalement l'offre ne laisse pas s'accumuler les annonces sans "
+            "fin — leur multiplication dans un même secteur est souvent le signe le plus visible, et le plus "
+            "facile à repérer en simple balade, d'un marché local qui se grippe.",
       ),
     ],
     quiz: [
@@ -903,7 +1097,12 @@ const List<FormationModule> formationModules = [
             "bien plus réaliste. La rentabilité nette-nette (ou nette d'impôt) déduit en plus la fiscalité "
             "réellement payée selon ton régime — c'est elle qui détermine ce qu'il te reste vraiment en poche. "
             "Trois biens avec la même rentabilité brute peuvent avoir des rentabilités nette-nette très "
-            "différentes selon leur fiscalité.",
+            "différentes selon leur fiscalité.\n\n"
+            "Un biais fréquent : comparer la rentabilité brute de deux biens situés dans des villes "
+            "différentes, aux charges de copropriété et à la fiscalité locale très différentes, et en tirer "
+            "une conclusion sur lequel est « le plus rentable ». La rentabilité brute ignore justement tout "
+            "ce qui varie d'un bien à l'autre au-delà du loyer et du prix — elle sert à une présélection "
+            "rapide, jamais à un arbitrage final entre deux biens concurrents.",
       ),
       FormationLesson(
         "Le cash-flow : l'indicateur qui compte au quotidien",
@@ -912,7 +1111,13 @@ const List<FormationModule> formationModules = [
             "cash-flow positif signifie que le bien s'autofinance, voire te rapporte, dès le premier mois. Un "
             "cash-flow négatif signifie que tu dois compléter de ta poche chaque mois — ce qui peut rester un "
             "choix assumé pour un projet patrimonial long terme, mais ne doit jamais être une découverte après "
-            "signature. C'est exactement le chiffre mis en avant en haut de l'onglet « Bien » de Didou-Immo.",
+            "signature. C'est exactement le chiffre mis en avant en haut de l'onglet « Bien » de Didou-Immo.\n\n"
+            "Le calcul complet s'écrit simplement : cash-flow = loyers encaissés moins (mensualité de crédit "
+            "+ charges de copropriété + taxe foncière + assurances + frais de gestion éventuels + impôt sur "
+            "les loyers). Beaucoup de simulations s'arrêtent au cash-flow avant impôt, plus simple à calculer "
+            "mais trompeur si le régime fiscal choisi pèse lourd (voir le module Fiscalité) — toujours "
+            "vérifier si un chiffre de cash-flow annoncé est avant ou après impôt avant de le comparer à un "
+            "autre projet.",
       ),
       FormationLesson(
         "Les hypothèses qu'on a tendance à survendre",
@@ -922,7 +1127,13 @@ const List<FormationModule> formationModules = [
             "temps. Aucun budget travaux imprévus sur la durée de détention. Un prix de revente qui suppose une "
             "hausse continue du marché. Un prévisionnel honnête teste systématiquement un scénario dégradé avant "
             "de signer — c'est le rôle du stress-test « Et si...? » de l'app : si le projet encaisse encore un "
-            "taux plus élevé, une occupation plus faible et des travaux imprévus, c'est un bon signal.",
+            "taux plus élevé, une occupation plus faible et des travaux imprévus, c'est un bon signal.\n\n"
+            "Deux autres hypothèses à ne jamais survendre : le coût de remise en état entre deux locataires "
+            "(petite peinture, nettoyage, parfois un équipement à remplacer), rarement nul même avec un état "
+            "des lieux soigné, et un taux d'emprunt supposé figé pour toujours alors qu'un refinancement ou "
+            "une renégociation pourra un jour le faire varier (voir le module Penser sur le long terme) — "
+            "dans un sens comme dans l'autre. Un prévisionnel réaliste prévoit une petite ligne « imprévus et "
+            "remise en état » chaque année, même quand tout se passe bien les premières années.",
       ),
       FormationLesson(
         "Exemple concret — le même bien, trois façons de le regarder",
@@ -947,7 +1158,13 @@ const List<FormationModule> formationModules = [
             "où chaque euro entre et sort. Deux projets très différents (l'un avec un cash-flow confortable "
             "mais peu de plus-value attendue, l'autre avec un cash-flow serré mais une forte revalorisation "
             "espérée) deviennent alors directement comparables sur un seul chiffre, calculé automatiquement "
-            "par l'onglet « Projection » de l'app pour n'importe quelle durée simulée.",
+            "par l'onglet « Projection » de l'app pour n'importe quelle durée simulée.\n\n"
+            "Concrètement, le TRI répond à la question « si je plaçais mon apport initial à un taux "
+            "d'intérêt composé fixe pendant toute la durée du projet, quel taux donnerait exactement le même "
+            "résultat final, loyers cumulés et revente comprises ? ». C'est ce qui le rend comparable à "
+            "d'autres placements (actions, assurance-vie) sur un pied d'égalité, malgré des flux de "
+            "trésorerie très différents d'une année à l'autre — un avantage qu'aucun des trois niveaux de "
+            "rentabilité du début de ce module n'offre.",
       ),
       FormationLesson(
         "La rentabilité évolue dans le temps, pas seulement à l'achat",
@@ -958,7 +1175,11 @@ const List<FormationModule> formationModules = [
             "loyers du secteur ont bien progressé — ou au contraire se dégrader si le quartier décroche. "
             "Réévaluer sa rentabilité réelle une fois par an (pas seulement au moment de l'achat) permet de "
             "détecter tôt un problème — ou une opportunité de refinancement (voir le module Penser sur le "
-            "long terme) — plutôt que de le découvrir des années plus tard.",
+            "long terme) — plutôt que de le découvrir des années plus tard.\n\n"
+            "En pratique, consacrer dix minutes une fois par an (à la date anniversaire de l'achat, par "
+            "exemple) à remettre à jour le loyer réellement perçu, les charges réellement payées et une "
+            "estimation de la valeur actuelle du bien suffit à garder une vision juste — bien plus fiable "
+            "qu'un chiffre figé à l'achat et jamais revisité pendant dix ou quinze ans.",
       ),
     ],
     quiz: [
@@ -1098,7 +1319,13 @@ const List<FormationModule> formationModules = [
             "crédit ajouté, une épargne de précaution qui subsiste après l'apport, et une gestion de comptes "
             "sans incident (découverts à répétition, par exemple) sur les derniers relevés. Un projet "
             "d'investissement locatif bien chiffré (avec une vraie simulation de rentabilité à présenter) "
-            "rassure davantage qu'un projet présenté uniquement à l'oral.",
+            "rassure davantage qu'un projet présenté uniquement à l'oral.\n\n"
+            "Au-delà de ces critères généraux, chaque banque applique aussi sa propre grille de notation "
+            "interne, qui pondère différemment la stabilité professionnelle, l'ancienneté bancaire dans "
+            "l'établissement, ou encore la nature du contrat de travail — deux banques peuvent donc accepter "
+            "ou refuser le même dossier pour des raisons différentes, ce qui justifie de ne jamais s'arrêter "
+            "à un seul refus avant de consulter une autre enseigne ou un courtier (voir la leçon dédiée plus "
+            "loin dans ce module).",
       ),
       FormationLesson(
         "Taux fixe, durée, assurance emprunteur",
@@ -1107,7 +1334,14 @@ const List<FormationModule> formationModules = [
             "l'octroi et améliore le cash-flow immédiat) mais augmente le coût total des intérêts — un arbitrage "
             "à faire les yeux ouverts, pas par défaut. L'assurance emprunteur peut être souscrite auprès d'un "
             "assureur externe plutôt que celui proposé par la banque (délégation d'assurance) : l'écart de prix "
-            "est souvent significatif pour une couverture équivalente, à vérifier systématiquement.",
+            "est souvent significatif pour une couverture équivalente, à vérifier systématiquement.\n\n"
+            "Le taux variable, très répandu dans d'autres pays, reste marginal en France et généralement "
+            "déconseillé pour un investissement locatif : il fait porter le risque de hausse des taux "
+            "directement sur le cash-flow du projet, difficile à anticiper sur 15 ou 20 ans. Pour un achat à "
+            "deux, la quotité d'assurance (la part du capital couverte par chaque emprunteur, par exemple "
+            "50/50 ou 100/100) mérite aussi d'être réfléchie : une quotité à 100 % sur chaque tête coûte plus "
+            "cher mais protège mieux en cas de décès ou d'invalidité d'un seul des deux emprunteurs, l'autre "
+            "n'ayant alors plus rien à rembourser.",
       ),
       FormationLesson(
         "Courtier : utile ou pas ?",
@@ -1117,7 +1351,12 @@ const List<FormationModule> formationModules = [
             "encore les usages du secteur. Il est rémunéré par une commission (souvent prise en charge par la "
             "banque, parfois en partie par l'emprunteur selon les offres) : à clarifier avant de signer un mandat. "
             "Pour un dossier déjà solide et un emprunteur à l'aise avec la négociation, passer directement par sa "
-            "propre banque et une ou deux concurrentes reste tout à fait possible.",
+            "propre banque et une ou deux concurrentes reste tout à fait possible.\n\n"
+            "Avant de signer un mandat, vérifie s'il est exclusif ou non : un mandat non exclusif te laisse "
+            "la liberté de démarcher toi-même une banque en parallèle, ce qu'un mandat exclusif interdit "
+            "pendant sa durée. Solliciter un courtier tôt dans la recherche, avant même d'avoir trouvé un "
+            "bien précis, permet aussi d'obtenir une estimation réaliste de ta capacité d'emprunt en amont — "
+            "plutôt que de découvrir après une offre acceptée que le financement ne suit pas.",
       ),
       FormationLesson(
         "Alternatives de montage à connaître",
@@ -1126,7 +1365,12 @@ const List<FormationModule> formationModules = [
             "réservé à des profils avertis. L'achat à plusieurs (indivision ou SCI) permet de mutualiser l'apport "
             "et la capacité d'emprunt, mais demande un cadre juridique clair dès le départ (répartition, sortie "
             "d'un associé, désaccords) pour éviter les conflits plus tard. Pour un premier achat, un prêt "
-            "amortissable classique, seul ou en couple, reste le montage le plus simple à maîtriser.",
+            "amortissable classique, seul ou en couple, reste le montage le plus simple à maîtriser.\n\n"
+            "Un prêt familial (entre proches, avec reconnaissance de dette enregistrée pour rester opposable "
+            "en cas de contrôle fiscal) peut aussi compléter un financement bancaire classique, en réduisant "
+            "le montant emprunté auprès de la banque et donc le taux d'endettement calculé — une option à "
+            "formaliser correctement par écrit, même entre proches, pour éviter tout malentendu ou "
+            "requalification fiscale ultérieure.",
       ),
       FormationLesson(
         "Exemple concret — déléguer son assurance emprunteur",
@@ -1148,7 +1392,12 @@ const List<FormationModule> formationModules = [
             "d'épargne), le compromis de vente ou l'annonce du bien visé, et surtout une simulation de "
             "rentabilité chiffrée du projet (loyer attendu, charges, cash-flow prévisionnel) — c'est ce "
             "dernier document, souvent absent des dossiers de primo-investisseurs, qui différencie un projet "
-            "pris au sérieux par la banque d'un projet présenté uniquement à l'oral.",
+            "pris au sérieux par la banque d'un projet présenté uniquement à l'oral.\n\n"
+            "Préparer ce dossier en amont, avant même d'avoir trouvé le bien, fait gagner un temps précieux "
+            "une fois une offre acceptée — le délai pour obtenir une réponse de principe peut alors se "
+            "compter en jours plutôt qu'en semaines. Scanner et organiser ces documents dans un dossier "
+            "numérique unique, prêt à être transmis en un seul envoi, évite aussi les allers-retours qui "
+            "ralentissent souvent l'instruction d'un dossier incomplet envoyé pièce par pièce.",
       ),
       FormationLesson(
         "Les leviers qui marchent vraiment pour négocier son prêt",
@@ -1159,7 +1408,12 @@ const List<FormationModule> formationModules = [
             "encadrée dans le temps (plafonnée à quelques années). Un apport plus confortable que le minimum "
             "demandé, ou une épargne résiduelle visible après l'achat, rassure et peut aussi se négocier. En "
             "revanche, négocier uniquement sur le taux nominal sans regarder l'assurance emprunteur (souvent "
-            "le vrai poste d'économie, voir l'exemple de ce module) laisse de l'argent sur la table.",
+            "le vrai poste d'économie, voir l'exemple de ce module) laisse de l'argent sur la table.\n\n"
+            "Les frais de dossier bancaire eux-mêmes restent négociables, surtout en cas de mise en "
+            "concurrence active — certaines banques les réduisent ou les suppriment totalement pour emporter "
+            "un dossier qui les intéresse. Solliciter les banques en fin de trimestre ou de semestre peut "
+            "aussi jouer en ta faveur : les conseillers ont parfois des objectifs commerciaux à atteindre sur "
+            "cette période, ce qui les rend plus disposés à faire un geste sur le taux ou les frais.",
       ),
     ],
     quiz: [
@@ -1293,7 +1547,14 @@ const List<FormationModule> formationModules = [
             "négociables avec le temps. D'autres sont des choix de valorisation (cuisine, salle de bain, "
             "peintures) qui augmentent le loyer potentiel et l'attractivité, mais restent un arbitrage "
             "coût/bénéfice à chiffrer précisément plutôt qu'une évidence. Distinguer les deux catégories dès le "
-            "devis évite de tout mélanger dans un seul budget flou.",
+            "devis évite de tout mélanger dans un seul budget flou.\n\n"
+            "Certains constats se situent entre les deux catégories et méritent un traitement à part : la "
+            "présence d'amiante ou de plomb, détectée par les diagnostics obligatoires, n'impose pas toujours "
+            "des travaux immédiats (tant que le matériau reste en bon état et non friable), mais engage une "
+            "surveillance régulière et peut faire grimper le coût de travaux futurs touchant ces matériaux. "
+            "Un diagnostic positif ne signifie donc pas automatiquement « travaux obligatoires tout de "
+            "suite » — mais il doit être lu avec attention avant de sous-estimer son impact sur un chantier "
+            "futur.",
       ),
       FormationLesson(
         "Le DPE : enjeu réglementaire autant que commercial",
@@ -1303,7 +1564,14 @@ const List<FormationModule> formationModules = [
             "devenir invendable en l'état, ou nécessiter des travaux de rénovation énergétique obligatoires avant "
             "de pouvoir être reloué. C'est à la fois un risque à anticiper et un levier de négociation à l'achat "
             "— un bien F ou G se négocie en intégrant le coût réel des travaux de mise aux normes à venir, pas "
-            "seulement son prix affiché.",
+            "seulement son prix affiché.\n\n"
+            "Depuis 2022 (étendu progressivement aux autres classes), la vente d'un bien classé F ou G impose "
+            "en plus la réalisation d'un audit énergétique, document plus détaillé que le DPE qui propose un "
+            "scénario de travaux chiffré pour sortir le bien de cette classe — un document à demander "
+            "systématiquement au vendeur avant une offre sur ce type de bien, puisqu'il donne déjà une bonne "
+            "base de chiffrage pour ta négociation. Dans un immeuble en copropriété, distingue aussi le DPE "
+            "individuel du logement et, le cas échéant, un DPE collectif de l'immeuble entier : les deux "
+            "peuvent diverger, et c'est bien le DPE individuel qui détermine si TON logement est louable.",
       ),
       FormationLesson(
         "Obtenir des devis fiables",
@@ -1312,7 +1580,14 @@ const List<FormationModule> formationModules = [
             "et la main d'œuvre séparément, précise un délai de réalisation, et porte les mentions légales de "
             "l'entreprise (SIRET, assurance décennale pour le gros œuvre). Méfie-toi d'un devis anormalement bas "
             "sans visite préalable du chantier, ou d'un artisan qui demande un acompte très élevé avant tout "
-            "début de travaux.",
+            "début de travaux.\n\n"
+            "Vérifie aussi que l'assurance décennale de l'artisan, obligatoire pour tout travaux de gros "
+            "œuvre, est bien en cours de validité — une simple attestation ne suffit pas, un appel rapide à "
+            "l'assureur mentionné permet de confirmer qu'elle n'a pas été résiliée depuis son émission. Un "
+            "échéancier de paiement classique prévoit un acompte raisonnable à la commande (souvent 30 %), "
+            "puis des paiements au fur et à mesure de l'avancement, le solde réglé à la réception des travaux "
+            "— exiger la totalité du règlement avant le début du chantier reste un signal d'alerte à ne pas "
+            "ignorer.",
       ),
       FormationLesson(
         "Phaser les travaux pour limiter la vacance locative",
@@ -1321,7 +1596,12 @@ const List<FormationModule> formationModules = [
             "conditionnent la mise en location (sécurité, DPE, salle de bain/cuisine fonctionnelles) avant les "
             "finitions esthétiques permet de relouer plus vite et de financer les finitions restantes avec les "
             "premiers loyers encaissés, plutôt que d'immobiliser le bien plusieurs mois pour un chantier complet "
-            "d'un coup.",
+            "d'un coup.\n\n"
+            "Pendant la phase de travaux non finis, être transparent avec le nouveau locataire sur un "
+            "éventuel chantier résiduel (finitions à venir, accès ponctuel nécessaire) évite les conflits — "
+            "certains propriétaires proposent même une franchise de loyer limitée en échange d'un accès "
+            "facilité pour terminer les finitions une fois le locataire installé, un compromis parfois plus "
+            "rapide qu'attendre la fin complète du chantier pour mettre en location.",
       ),
       FormationLesson(
         "Les aides disponibles, à vérifier avant de démarrer",
@@ -1330,7 +1610,13 @@ const List<FormationModule> formationModules = [
             "site officiel avant tout devis, les critères et montants évoluant régulièrement. Certaines "
             "collectivités locales proposent des aides complémentaires, propres à leur territoire. Ces aides "
             "demandent presque toujours de passer par un artisan certifié RGE (Reconnu Garant de "
-            "l'Environnement) et de monter le dossier avant le démarrage des travaux, jamais après.",
+            "l'Environnement) et de monter le dossier avant le démarrage des travaux, jamais après.\n\n"
+            "Certaines aides sont cumulables entre elles (MaPrimeRénov' avec une aide locale, par exemple), "
+            "dans la limite d'un plafond global qui dépend du montant des travaux et du gain énergétique "
+            "attendu — un point que l'artisan RGE ou un conseiller France Rénov' (service public gratuit) "
+            "peut aider à calculer précisément avant de t'engager. Monter ce dossier prend du temps (plusieurs "
+            "semaines), un délai à intégrer dans ton calendrier de travaux plutôt qu'à découvrir une fois le "
+            "chantier déjà commencé.",
       ),
       FormationLesson(
         "Exemple concret — anticiper un DPE pénalisant plutôt que le subir",
@@ -1354,7 +1640,14 @@ const List<FormationModule> formationModules = [
             "sur l'assurance en cas de sinistre lié à des travaux non réalisés dans les règles. Le vrai coût "
             "à comparer n'est pas seulement le prix du devis contre le prix des matériaux seuls, c'est aussi "
             "le temps que tu immobilises (et donc le loyer non perçu pendant que le chantier traîne) et le "
-            "risque si le résultat n'est pas à la hauteur.",
+            "risque si le résultat n'est pas à la hauteur.\n\n"
+            "Déclarer à ton assureur les travaux réalisés toi-même, même mineurs, évite une mauvaise surprise "
+            "en cas de sinistre : certains contrats excluent ou limitent la couverture pour des dégâts liés à "
+            "des travaux non réalisés par un professionnel qualifié, selon leur nature. Pour trancher "
+            "objectivement, compare le coût horaire implicite de ton propre temps (économie réalisée divisée "
+            "par les heures réellement passées) à ce que tu gagnerais à consacrer ce même temps à ta "
+            "recherche de bien suivant ou à ton activité professionnelle — un calcul qui, pour des travaux "
+            "techniques, penche presque toujours en faveur du professionnel.",
       ),
       FormationLesson(
         "Le calendrier réaliste d'un chantier de rénovation",
@@ -1366,7 +1659,13 @@ const List<FormationModule> formationModules = [
             "plutôt 2 à 4 mois, avec un risque de délai supplémentaire si des aides type MaPrimeRénov' "
             "rallongent l'instruction du dossier. Intégrer ce délai réaliste dans ton calendrier (et ton "
             "budget de mensualité pendant la vacance) évite la mauvaise surprise d'un bien qui reste vide "
-            "plus longtemps que prévu avant son premier loyer.",
+            "plus longtemps que prévu avant son premier loyer.\n\n"
+            "Certains travaux touchant à l'aspect extérieur du bâtiment (fenêtres, volets, façade) ou aux "
+            "parties communes nécessitent l'accord préalable de la copropriété, voté en assemblée générale — "
+            "un délai supplémentaire à anticiper si l'AG annuelle vient juste de se tenir, repoussant le "
+            "prochain vote de plusieurs mois. Vérifie ce point dès la phase d'achat si le bien nécessite ce "
+            "type de travaux, pour ne pas découvrir après coup que le chantier prévu devra attendre la "
+            "prochaine assemblée générale.",
       ),
     ],
     quiz: [
@@ -1504,7 +1803,14 @@ const List<FormationModule> formationModules = [
             "payées, souvent plus avantageux dès qu'il y a un crédit en cours (les intérêts sont déductibles) ou "
             "des travaux significatifs. Le régime réel peut même générer un déficit foncier imputable sur le "
             "revenu global, dans une certaine limite — un vrai levier fiscal, mais qui demande une vraie tenue de "
-            "comptabilité, même simplifiée.",
+            "comptabilité, même simplifiée.\n\n"
+            "Le micro-foncier n'est d'ailleurs accessible que sous un plafond de loyers annuels (environ "
+            "15 000 € toutes locations nues confondues) — au-delà, le régime réel devient automatique, que tu "
+            "le souhaites ou non. Le déficit foncier généré au régime réel (quand les charges dépassent les "
+            "loyers) est imputable sur ton revenu global dans la limite de 10 700 € par an, le surplus "
+            "éventuel restant reportable sur les revenus fonciers des dix années suivantes — un mécanisme "
+            "puissant l'année de gros travaux, mais qui impose en contrepartie de conserver le bien en "
+            "location pendant au moins trois ans après l'imputation.",
       ),
       FormationLesson(
         "Location meublée (LMNP) : l'arme fiscale du débutant",
@@ -1513,7 +1819,16 @@ const List<FormationModule> formationModules = [
             "années, parfois une décennie ou plus, sans aucun impôt sur les loyers perçus, alors que le cash-flow "
             "réel, lui, reste positif. Le régime micro-BIC (abattement forfaitaire de 50 %) reste plus simple "
             "mais, comme pour le micro-foncier, moins avantageux dès que les charges réelles et l'amortissement "
-            "dépassent ce forfait — ce qui est très souvent le cas en LMNP.",
+            "dépassent ce forfait — ce qui est très souvent le cas en LMNP.\n\n"
+            "Attention à la frontière entre LMNP (Loueur en Meublé Non Professionnel) et LMP (Loueur en "
+            "Meublé Professionnel) : au-delà d'environ 23 000 € de recettes annuelles ET si ces recettes "
+            "dépassent tes autres revenus d'activité, le statut bascule automatiquement en LMP, avec un "
+            "régime social et fiscal différent (affiliation aux cotisations sociales des indépendants "
+            "notamment). Un autre point à connaître avant de choisir ce régime : la réglementation a évolué "
+            "pour réintégrer une partie des amortissements déduits dans le calcul de la plus-value au moment "
+            "de la revente — l'avantage fiscal du LMNP reste réel pendant la détention, mais il ne doit plus "
+            "être vu comme totalement neutre à la sortie, un point à vérifier avec un comptable au moment de "
+            "structurer un projet sur le long terme.",
       ),
       FormationLesson(
         "SCI à l'IR ou à l'IS : à ne pas choisir à la légère",
@@ -1524,7 +1839,14 @@ const List<FormationModule> formationModules = [
             "d'imposition sur les bénéfices souvent plus bas que la tranche marginale d'un particulier, mais la "
             "plus-value à la revente y est calculée très différemment (et souvent plus lourdement taxée) qu'en "
             "nom propre. Ce choix se décide avant l'achat, avec un professionnel — en changer après coup est "
-            "complexe et coûteux.",
+            "complexe et coûteux.\n\n"
+            "Créer une SCI a aussi un coût et une contrainte de gestion à ne pas négliger : frais de "
+            "rédaction des statuts, immatriculation, et tenue d'une comptabilité (obligatoire et plus "
+            "exigeante encore à l'IS), souvent plusieurs centaines d'euros par an rien que pour les "
+            "obligations administratives. Certaines banques sont aussi plus prudentes pour financer un achat "
+            "via une SCI débutante, sans historique, qu'un achat en nom propre — un point à vérifier avant de "
+            "choisir cette structure uniquement pour organiser une détention à plusieurs, si un simple achat "
+            "en indivision avec convention pourrait suffire.",
       ),
       FormationLesson(
         "La fiscalité à la revente",
@@ -1534,7 +1856,12 @@ const List<FormationModule> formationModules = [
             "l'exonération devient totale au bout de 22 ans pour l'impôt sur le revenu, et de 30 ans pour les "
             "prélèvements sociaux. Un bien gardé longtemps n'est donc pas seulement plus rentable en loyers "
             "cumulés, il l'est aussi fiscalement à la sortie. Ce calcul est fait automatiquement par l'onglet "
-            "« Projection » de Didou-Immo pour n'importe quelle durée de détention simulée.",
+            "« Projection » de Didou-Immo pour n'importe quelle durée de détention simulée.\n\n"
+            "Au-delà de 50 000 € de plus-value imposable, une taxe additionnelle progressive s'applique en "
+            "plus de l'imposition classique — un point à intégrer dans la simulation d'un bien à forte "
+            "revalorisation attendue, en particulier en grande métropole. Et comme en LMNP (voir plus haut), "
+            "un bien détenu en SCI à l'IS suit un régime de calcul de la plus-value différent et souvent plus "
+            "lourd — encore une raison de trancher la structure de détention avant l'achat plutôt qu'après.",
       ),
       FormationLesson(
         "Exemple concret — LMNP au réel contre micro-BIC, l'écart réel en euros",
@@ -1558,7 +1885,14 @@ const List<FormationModule> formationModules = [
             "— en pratique, quasiment jamais rempli sans l'aide d'un comptable une fois en LMNP réel, tant le "
             "calcul des amortissements est technique. Au-delà de l'impôt sur le revenu, ne pas oublier la "
             "Cotisation Foncière des Entreprises (CFE), due chaque année en LMNP même si l'activité reste "
-            "modeste, avec une exonération possible la première année selon les communes.",
+            "modeste, avec une exonération possible la première année selon les communes.\n\n"
+            "Ces déclarations suivent un calendrier fixe chaque année (généralement entre fin avril et début "
+            "juin selon le mode de déclaration), avec des pénalités de retard qui s'appliquent même en "
+            "l'absence de tout impôt dû — un oubli n'est donc jamais sans conséquence, même quand le résultat "
+            "fiscal est nul. Garder une trace de toutes les factures et justificatifs de charges au fil de "
+            "l'année (plutôt que de tout rassembler dans l'urgence juste avant l'échéance) simplifie "
+            "considérablement cette déclaration, surtout au régime réel où chaque charge déduite doit pouvoir "
+            "être justifiée en cas de contrôle.",
       ),
       FormationLesson(
         "Faut-il un expert-comptable, et pour quel coût",
@@ -1569,7 +1903,13 @@ const List<FormationModule> formationModules = [
             "permet de sécuriser (voir l'exemple chiffré de ce module), sans compter le temps que tu "
             "économises et la tranquillité d'un dossier fiscal conforme en cas de contrôle. Un bon réflexe : "
             "comparer le coût du comptable à l'économie d'impôt estimée AVANT de choisir un régime, pas après "
-            "— c'est souvent ce calcul qui tranche entre micro et réel pour un investisseur hésitant.",
+            "— c'est souvent ce calcul qui tranche entre micro et réel pour un investisseur hésitant.\n\n"
+            "Tous les comptables ne se valent pas sur ce type de dossier : privilégie un cabinet qui traite "
+            "régulièrement des dossiers LMNP ou foncier réel plutôt qu'un généraliste peu familier de ces "
+            "spécificités — demande, avant de signer, combien de dossiers similaires au tien il suit déjà. "
+            "Compare aussi plusieurs devis : les forfaits varient sensiblement d'un cabinet à l'autre pour "
+            "une prestation équivalente, et certains proposent un accompagnement en ligne, moins cher qu'un "
+            "suivi en cabinet traditionnel, parfaitement adapté à un dossier d'un ou deux biens.",
       ),
     ],
     quiz: [
@@ -1697,7 +2037,13 @@ const List<FormationModule> formationModules = [
             "lieux, être disponible en cas d'incident. Passer par une agence coûte ces frais en continu, mais "
             "délègue tout ce processus et peut rassurer un propriétaire éloigné géographiquement du bien ou peu "
             "disponible. Un compromis existe : confier uniquement la mise en location initiale (recherche de "
-            "locataire) à une agence, puis gérer soi-même le quotidien une fois le bail signé.",
+            "locataire) à une agence, puis gérer soi-même le quotidien une fois le bail signé.\n\n"
+            "Des services de gestion locative en ligne, moins chers qu'une agence traditionnelle (souvent 3 à "
+            "5 % des loyers contre 7 à 10 %), se sont aussi développés ces dernières années : ils "
+            "automatisent une partie du suivi (quittances, relances, documents) tout en laissant la "
+            "sélection du locataire et les décisions importantes au propriétaire — une option intermédiaire "
+            "entre gestion 100 % manuelle et délégation complète à une agence physique, à comparer selon ton "
+            "niveau de disponibilité réel.",
       ),
       FormationLesson(
         "Trouver et choisir un bon locataire",
@@ -1707,7 +2053,15 @@ const List<FormationModule> formationModules = [
             "La loi encadre strictement les pièces qu'un propriétaire peut demander — se renseigner sur cette "
             "liste évite à la fois un refus illégal et un dossier insuffisant. Une assurance loyers impayés (GLI) "
             "ou la caution Visale pour les profils éligibles (notamment les jeunes actifs) sécurisent le loyer "
-            "même en cas d'incident, moyennant un coût ou des critères d'éligibilité à vérifier en amont.",
+            "même en cas d'incident, moyennant un coût ou des critères d'éligibilité à vérifier en amont.\n\n"
+            "Vérifier la cohérence des documents présentés prend quelques minutes et évite le risque de "
+            "dossier falsifié : le nom sur le contrat de travail doit correspondre à celui des bulletins de "
+            "salaire, les montants des bulletins doivent être cohérents entre eux d'un mois à l'autre, et un "
+            "avis d'imposition peut être vérifié directement en ligne sur le site des impôts via son numéro "
+            "fiscal. Un garant physique (souvent un parent), avec ses propres justificatifs de revenus à "
+            "l'appui, reste une alternative classique à une assurance loyers impayés — les deux solutions ne "
+            "sont généralement pas cumulables pour un même bail, le choix se fait donc en amont selon le "
+            "profil du candidat.",
       ),
       FormationLesson(
         "Bail, état des lieux, dépôt de garantie : les bases",
@@ -1717,7 +2071,15 @@ const List<FormationModule> formationModules = [
             "seule preuve opposable en cas de litige sur les dégradations à la sortie — un état des lieux bâclé "
             "coûte cher au moment de restituer (ou non) le dépôt de garantie. Celui-ci (un mois de loyer hors "
             "charges en location nue, jusqu'à deux en meublé) doit être restitué dans des délais légaux précis, "
-            "déductions faites des réparations justifiées par l'état des lieux de sortie.",
+            "déductions faites des réparations justifiées par l'état des lieux de sortie.\n\n"
+            "Le délai de restitution du dépôt de garantie est précisément encadré : un mois si l'état des "
+            "lieux de sortie ne révèle aucune différence avec celui d'entrée, deux mois si des retenues sont "
+            "justifiées — au-delà, des pénalités de retard s'appliquent automatiquement au bénéfice du "
+            "locataire. Certaines clauses, parfois ajoutées de bonne foi dans un bail rédigé soi-même "
+            "(interdiction totale d'animaux, renouvellement automatique à des conditions différentes...), "
+            "sont considérées comme abusives et donc non applicables même si le locataire les a signées — une "
+            "raison de plus de partir d'un modèle de bail conforme plutôt que d'un document rédigé de "
+            "mémoire.",
       ),
       FormationLesson(
         "Gérer les imprévus",
@@ -1727,7 +2089,13 @@ const List<FormationModule> formationModules = [
             "la responsabilité du propriétaire pour les réparations qui relèvent de la structure du logement, "
             "pas de l'usage courant par le locataire — distinguer les deux évite des conflits inutiles. Garder "
             "une petite réserve de trésorerie dédiée à chaque bien (quelques centaines d'euros) absorbe ces "
-            "imprévus sans déséquilibrer ton budget personnel.",
+            "imprévus sans déséquilibrer ton budget personnel.\n\n"
+            "Si l'impayé persiste malgré la relance et l'activation de la garantie, la procédure légale de "
+            "recouvrement (commandement de payer, puis éventuelle procédure judiciaire) prend du temps — "
+            "souvent plusieurs mois, parfois plus d'un an dans les cas les plus complexes — ce qui renforce "
+            "l'intérêt d'agir vite dès les premiers signes de retard plutôt que d'attendre. Une assurance "
+            "loyers impayés bien choisie couvre généralement aussi les frais de cette procédure, un point à "
+            "vérifier précisément dans les conditions du contrat avant de le souscrire.",
       ),
       FormationLesson(
         "Exemple concret — un impayé bien géré contre un impayé ignoré",
@@ -1750,7 +2118,14 @@ const List<FormationModule> formationModules = [
             "commune par commune. La bonne méthode reste de comparer ton bien à plusieurs annonces "
             "comparables récentes du même secteur (surface, standing, année de rénovation) plutôt que de se "
             "fier à une seule référence ou à une estimation approximative — l'onglet « Marché » de l'app "
-            "donne un premier repère de loyer moyen au m² du secteur pour cadrer cette comparaison.",
+            "donne un premier repère de loyer moyen au m² du secteur pour cadrer cette comparaison.\n\n"
+            "Pour comparer objectivement, rassemble au moins 5 à 10 annonces de biens réellement comparables "
+            "(même secteur, surface proche, standing similaire, meublé ou nu selon ton propre bien) plutôt "
+            "que de te fier à une seule annonce de référence, qui peut elle-même être mal positionnée. Un "
+            "bien meublé se loue légitimement plus cher qu'un bien nu équivalent (la différence reflète le "
+            "mobilier fourni), mais cet écart doit rester cohérent avec le marché local — un loyer meublé "
+            "artificiellement gonflé sous prétexte du mobilier se repère vite par les candidats, et rallonge "
+            "la vacance au lieu de la justifier.",
       ),
       FormationLesson(
         "Faire évoluer le loyer dans le temps",
@@ -1761,7 +2136,14 @@ const List<FormationModule> formationModules = [
             "marché actuel (sous réserve, en zone tendue, du plafond légal applicable au relogement). "
             "Beaucoup de propriétaires oublient d'appliquer la révision annuelle IRL par simple oubli "
             "administratif — sur plusieurs années, ce sont plusieurs centaines d'euros de loyer cumulés "
-            "jamais perçus, pour une démarche qui ne prend que quelques minutes.",
+            "jamais perçus, pour une démarche qui ne prend que quelques minutes.\n\n"
+            "À la reconduction tacite du bail (le locataire reste en place sans qu'un nouveau contrat soit "
+            "signé), le loyer suit la même règle que pendant le bail initial — seule la clause de révision "
+            "annuelle s'applique, pas une renégociation libre. C'est uniquement au moment d'un nouveau bail, "
+            "avec un nouveau locataire, que la liberté de fixer un loyer plus proche du marché actuel revient, "
+            "sous réserve, en zone tendue, du plafond légal de réévaluation entre deux locataires — qui "
+            "limite généralement la hausse à l'IRL sauf travaux significatifs réalisés entre-temps ou loyer "
+            "manifestement sous-évalué.",
       ),
     ],
     quiz: [
@@ -1887,7 +2269,13 @@ const List<FormationModule> formationModules = [
             "existants, pas seulement tes revenus du travail. Le refinancement (renégocier ou racheter un crédit "
             "une fois le bien revalorisé) permet parfois de dégager un nouvel apport sans vendre le bien "
             "d'origine. C'est ce mécanisme, répété, qui transforme un premier investissement modeste en un vrai "
-            "patrimoine au fil des années — rarement un seul « coup » spectaculaire.",
+            "patrimoine au fil des années — rarement un seul « coup » spectaculaire.\n\n"
+            "En pratique, ce rythme reste progressif : la plupart des investisseurs qui construisent un vrai "
+            "patrimoine locatif enchaînent un nouveau projet tous les 2 à 5 ans, le temps que le bien "
+            "précédent se stabilise (locataire en place, trésorerie reconstituée) et qu'une nouvelle capacité "
+            "d'emprunt ou de refinancement se dégage. Vouloir accélérer ce rythme sans que les fondamentaux "
+            "(cash-flow positif, gestion maîtrisée) soient réellement en place expose à fragiliser l'ensemble "
+            "du patrimoine plutôt qu'à le faire grossir plus vite.",
       ),
       FormationLesson(
         "Quand et comment revendre",
@@ -1897,7 +2285,13 @@ const List<FormationModule> formationModules = [
             "projet). À l'inverse, revendre trop tôt (avant 22 ans de détention) sacrifie une partie de "
             "l'abattement fiscal pour rien si aucune raison concrète ne pousse à la vente. Simule toujours la "
             "revente à plusieurs horizons (5, 10, 15 ans) plutôt qu'à une seule date arbitraire — c'est "
-            "exactement ce que permet l'onglet « Projection » de l'app.",
+            "exactement ce que permet l'onglet « Projection » de l'app.\n\n"
+            "N'oublie pas non plus les frais liés à la revente elle-même dans ton calcul : frais d'agence si "
+            "tu en mandates une (généralement à la charge du vendeur, mais toujours négociable), diagnostics "
+            "obligatoires à refaire avant la vente, et éventuellement un dernier geste de rafraîchissement "
+            "pour faciliter la transaction. Ces frais, souvent oubliés dans une simulation de plus-value trop "
+            "optimiste, réduisent concrètement le montant net que tu récupères — à intégrer dès la simulation "
+            "plutôt qu'à découvrir au moment de signer chez le notaire.",
       ),
       FormationLesson(
         "Les erreurs qui coûtent cher sur 10 à 20 ans",
@@ -1908,7 +2302,13 @@ const List<FormationModule> formationModules = [
             "tout son patrimoine sur une seule ville ou un seul type de bien, sans aucune diversification "
             "géographique une fois plusieurs projets réalisés. Et surtout : arrêter de se former une fois le "
             "premier bien acheté, alors que la réglementation (fiscale, énergétique, locative) continue de "
-            "changer après.",
+            "changer après.\n\n"
+            "Deux erreurs supplémentaires, plus discrètes mais tout aussi coûteuses sur la durée : ne jamais "
+            "réévaluer le montant assuré de son bien (une sous-assurance progressive expose à une "
+            "indemnisation insuffisante en cas de sinistre majeur, le coût de reconstruction évoluant avec le "
+            "temps), et laisser dormir une trésorerie excédentaire sur un compte courant plutôt que de la "
+            "faire travailler — que ce soit pour accélérer un remboursement de crédit coûteux ou préparer "
+            "l'apport du projet suivant.",
       ),
       FormationLesson(
         "Exemple concret — refinancer plutôt que stagner",
@@ -1931,7 +2331,13 @@ const List<FormationModule> formationModules = [
             "foncier nu) — répartit ce risque sans nécessairement complexifier la gestion si chaque bien "
             "reste individuellement simple à suivre. Cette diversification n'a pas besoin d'être planifiée "
             "dès le premier achat — elle se construit naturellement, projet après projet, à mesure que "
-            "l'expérience et la capacité d'emprunt augmentent.",
+            "l'expérience et la capacité d'emprunt augmentent.\n\n"
+            "À l'inverse, une diversification excessive et trop rapide a aussi un coût caché : gérer des "
+            "biens dispersés dans des villes très différentes, avec des marchés locatifs et des "
+            "réglementations locales propres à chacune, demande plus de temps et de vigilance qu'un "
+            "portefeuille plus concentré mais bien maîtrisé. Le bon rythme de diversification reste celui qui "
+            "laisse le temps de bien connaître chaque nouvelle zone avant d'y investir, plutôt qu'une "
+            "dispersion motivée uniquement par la recherche du meilleur rendement affiché du moment.",
       ),
       FormationLesson(
         "Les bases de la transmission de patrimoine",
@@ -1943,7 +2349,14 @@ const List<FormationModule> formationModules = [
             "sur un bien physique difficile à diviser équitablement. Ce sujet, souvent repoussé « à plus "
             "tard » par de jeunes investisseurs, mérite d'être anticipé dès que le patrimoine commence à "
             "prendre de la valeur — un notaire ou un conseiller en gestion de patrimoine reste le bon "
-            "interlocuteur pour structurer cette réflexion, bien avant qu'elle devienne urgente.",
+            "interlocuteur pour structurer cette réflexion, bien avant qu'elle devienne urgente.\n\n"
+            "Le démembrement de propriété (séparer l'usufruit, qui donne droit aux loyers, de la "
+            "nue-propriété, qui donne la propriété sans les revenus) est une autre technique fréquemment "
+            "utilisée en gestion de patrimoine : transmettre la nue-propriété à ses enfants de son vivant, "
+            "tout en conservant l'usufruit (et donc les loyers) jusqu'à son décès, permet de réduire la base "
+            "taxable de la donation tout en gardant un revenu locatif. Comme pour la SCI, c'est une technique "
+            "à mettre en place avec un professionnel, suffisamment en amont pour en tirer tous les bénéfices "
+            "fiscaux.",
       ),
     ],
     quiz: [
