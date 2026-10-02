@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 import 'formation_content.dart';
+import 'formation_module_screen.dart';
 
 /// Formation payante "Réussir son premier investissement locatif" — 59 €,
 /// paiement unique (pas un abonnement, voir la discussion produit).
@@ -13,6 +14,12 @@ import 'formation_content.dart';
 /// paywall. Une fois le contenu validé, ce sera soit un paywall Stripe
 /// dédié (one-shot, pas un abonnement), soit un déblocage manuel via un
 /// code, selon ce que l'utilisateur choisira à ce moment-là.
+///
+/// Cet écran ne sert plus que de sommaire — une carte par module, qui ouvre
+/// la lecture leçon par leçon ([FormationModuleScreen]). Avant, tout le
+/// contenu (12 modules, 42 leçons) tenait empilé dans des accordéons sur
+/// cette seule page : jugé pas assez agréable à lire malgré un contenu
+/// pourtant complet.
 class FormationScreen extends StatelessWidget {
   const FormationScreen({super.key});
 
@@ -28,8 +35,18 @@ class FormationScreen extends StatelessWidget {
           _buildAdminNotice(),
           const SizedBox(height: 16),
           _buildHero(),
-          const SizedBox(height: 28),
-          for (int i = 0; i < formationModules.length; i++) _ModuleCard(module: formationModules[i], index: i),
+          const SizedBox(height: 24),
+          Text(
+            'Sommaire',
+            style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Touche un module pour le lire, une leçon à la fois.',
+            style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.55)),
+          ),
+          const SizedBox(height: 16),
+          for (int i = 0; i < formationModules.length; i++) _ModuleSummaryCard(module: formationModules[i], index: i),
         ],
       ),
     );
@@ -85,7 +102,8 @@ class FormationScreen extends StatelessWidget {
         Text(
           "Du tout premier réflexe jusqu'à la revente : trouver le bon bien, choisir sa zone, chiffrer sa "
           "rentabilité, le financer, gérer les travaux, comprendre la fiscalité, gérer le quotidien, et "
-          "construire un vrai patrimoine sur le temps long.",
+          "construire un vrai patrimoine — avec 3 études de cas chiffrées pour voir la méthode appliquée de "
+          "bout en bout.",
           style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.75)).copyWith(height: 1.5),
         ),
         const SizedBox(height: 14),
@@ -109,80 +127,56 @@ class FormationScreen extends StatelessWidget {
   }
 }
 
-class _ModuleCard extends StatelessWidget {
+class _ModuleSummaryCard extends StatelessWidget {
   final FormationModule module;
   final int index;
-  const _ModuleCard({required this.module, required this.index});
+  const _ModuleSummaryCard({required this.module, required this.index});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-          expandedCrossAxisAlignment: CrossAxisAlignment.start,
-          iconColor: module.color,
-          collapsedIconColor: AppColors.ink.withValues(alpha: 0.4),
-          leading: Container(
-            width: 36,
-            height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: module.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-            child: Icon(module.icon, size: 18, color: module.color),
-          ),
-          title: Text('${index + 1}. ${module.title}',
-              style: AppTextStyles.serif(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink)),
-          subtitle: Text(module.subtitle, style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55))),
-          children: [
-            for (final lesson in module.lessons) _LessonBlock(lesson: lesson, color: module.color),
-          ],
+    return InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => FormationModuleScreen(moduleIndex: index))),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
         ),
-      ),
-    );
-  }
-}
-
-class _LessonBlock extends StatelessWidget {
-  final FormationLesson lesson;
-  final Color color;
-  const _LessonBlock({required this.lesson, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 5,
-              height: 5,
-              margin: const EdgeInsets.only(top: 7, right: 10),
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            Expanded(
-              child: Text(lesson.title, style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.ink)),
-            ),
-          ]),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 15),
-            child: Text(
-              lesson.body,
-              style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.78)).copyWith(height: 1.55),
-            ),
+        child: Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(color: module.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+            child: Icon(module.icon, size: 21, color: module.color),
           ),
-        ],
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(
+                '${index + 1}. ${module.title}',
+                style: AppTextStyles.serif(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.ink),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                module.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.55)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${module.lessons.length} leçon${module.lessons.length > 1 ? 's' : ''}',
+                style: AppTextStyles.sans(fontSize: 11, fontWeight: FontWeight.w600, color: module.color),
+              ),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.ink.withValues(alpha: 0.35)),
+        ]),
       ),
     );
   }

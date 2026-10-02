@@ -15,20 +15,29 @@ class FormationModule {
   final IconData icon;
   final Color color;
   final List<FormationLesson> lessons;
+  /// "L'essentiel à retenir" — un court récapitulatif à puces affiché à la
+  /// fin du module, dans la lecture leçon par leçon (voir
+  /// `FormationModuleScreen`). Sert de synthèse mémorisable plutôt que de
+  /// laisser le module se terminer sur une dernière leçon comme les autres
+  /// — plus agréable à boucler, et ça donne un repère clair de ce qu'il
+  /// faut retenir avant de passer au module suivant.
+  final List<String> takeaways;
   const FormationModule({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.color,
     required this.lessons,
+    required this.takeaways,
   });
 }
 
 /// Contenu complet de la formation "Réussir son premier investissement
-/// locatif" — 12 modules, du tout premier réflexe jusqu'à la revente.
-/// Rédigé pour un débutant complet : chaque module renvoie, quand c'est
-/// pertinent, vers l'onglet de l'app qui permet de mettre la notion en
-/// pratique immédiatement (Didou-Immo n'est pas juste évoqué en intro,
+/// locatif" — 13 modules, du tout premier réflexe jusqu'à la revente, avec
+/// 3 études de cas chiffrées pour voir la méthode appliquée de bout en
+/// bout. Rédigé pour un débutant complet : chaque module renvoie, quand
+/// c'est pertinent, vers l'onglet de l'app qui permet de mettre la notion
+/// en pratique immédiatement (Didou-Immo n'est pas juste évoqué en intro,
 /// il est le fil rouge de toute la formation).
 const List<FormationModule> formationModules = [
   FormationModule(
@@ -36,6 +45,11 @@ const List<FormationModule> formationModules = [
     subtitle: "Ce que cette formation couvre, et comment t'en servir",
     icon: Icons.flag_outlined,
     color: Color(0xFF7C6FE0),
+    takeaways: [
+      "Suis les modules dans l'ordre pour ton premier projet.",
+      "Garde Didou-Immo ouvert à côté pour chiffrer en même temps que tu apprends.",
+      "Reviens sur un module précis plus tard, au moment où tu en as vraiment besoin.",
+    ],
     lessons: [
       FormationLesson(
         'Ce que tu vas trouver ici',
@@ -62,6 +76,12 @@ const List<FormationModule> formationModules = [
     subtitle: "Pourquoi investir, et dans quoi exactement",
     icon: Icons.foundation_outlined,
     color: Color(0xFF7C6FE0),
+    takeaways: [
+      "L'effet de levier du crédit est le vrai moteur de l'investissement locatif.",
+      "Choisis ta stratégie (nue, LMNP, colocation, courte durée) selon le temps que tu peux y consacrer, pas "
+          "seulement le rendement affiché.",
+      "Décide cash-flow immédiat ou patrimoine long terme AVANT de chercher un bien, pas après.",
+    ],
     lessons: [
       FormationLesson(
         "Pourquoi l'immobilier locatif plutôt qu'autre chose",
@@ -105,6 +125,13 @@ const List<FormationModule> formationModules = [
     subtitle: "Combien emprunter, combien apporter, quels frais anticiper",
     icon: Icons.account_balance_wallet_outlined,
     color: Color(0xFF2FA39B),
+    takeaways: [
+      "La règle des 35 % d'endettement : vérifie ta capacité d'emprunt avant de chercher, pas après le coup de "
+          "cœur.",
+      "Un apport d'environ 10 % est souvent le minimum demandé pour un investissement locatif.",
+      "Budgète TOUJOURS les frais annexes (notaire, dossier, travaux, ameublement) — jamais seulement le prix "
+          "d'achat affiché.",
+    ],
     lessons: [
       FormationLesson(
         "Combien peux-tu réellement emprunter",
@@ -139,6 +166,13 @@ const List<FormationModule> formationModules = [
     subtitle: "Chercher, visiter, négocier — sans tomber dans les pièges classiques",
     icon: Icons.search,
     color: Color(0xFF3B82C4),
+    takeaways: [
+      "Combine plusieurs canaux de recherche, ne te limite jamais à un seul portail.",
+      "Une annonce ne ment pas, mais elle ne dit jamais ce qui dessert la vente — pose les questions qui "
+          "manquent.",
+      "Demande toujours les 3 derniers procès-verbaux d'assemblée générale avant de t'engager.",
+      "Négocie avec un chiffre et sa justification, jamais juste « je propose moins ».",
+    ],
     lessons: [
       FormationLesson(
         "Où chercher",
@@ -197,6 +231,12 @@ const List<FormationModule> formationModules = [
     subtitle: "Les critères objectifs, au-delà du coup de cœur",
     icon: Icons.location_on_outlined,
     color: Color(0xFF3B82C4),
+    takeaways: [
+      "Démographie, emploi, projets d'aménagement : des critères objectifs, pas un ressenti.",
+      "Le meilleur choix n'est ni le rendement affiché le plus haut, ni la ville la plus connue — c'est le "
+          "meilleur compromis entre les deux.",
+      "Vérifie la tension locative réelle du secteur, pas seulement le prix au m².",
+    ],
     lessons: [
       FormationLesson(
         "Les critères qui comptent vraiment",
@@ -244,6 +284,11 @@ const List<FormationModule> formationModules = [
     subtitle: "Les bons chiffres, et les hypothèses à ne pas survendre",
     icon: Icons.calculate_outlined,
     color: Color(0xFF4A9B6E),
+    takeaways: [
+      "La rentabilité brute sert à comparer vite entre biens — jamais à décider seule.",
+      "Le cash-flow est le chiffre qui compte réellement, chaque mois, dans ton compte en banque.",
+      "Teste toujours un scénario dégradé (stress-test) avant de signer quoi que ce soit.",
+    ],
     lessons: [
       FormationLesson(
         "Rentabilité brute, nette, nette-nette : trois chiffres, trois usages",
@@ -281,6 +326,12 @@ const List<FormationModule> formationModules = [
     subtitle: "Dossier bancaire, taux, assurance, courtier",
     icon: Icons.account_balance_outlined,
     color: Color(0xFF5B6FD8),
+    takeaways: [
+      "Un dossier chiffré (vraie simulation de rentabilité) rassure plus qu'un projet présenté à l'oral.",
+      "Compare toujours l'assurance emprunteur externe à celle de la banque — l'écart de prix est souvent "
+          "significatif.",
+      "Un courtier fait gagner du temps, surtout pour un premier projet où tu ne connais pas encore les usages.",
+    ],
     lessons: [
       FormationLesson(
         "Ce qui rassure vraiment une banque",
@@ -326,6 +377,12 @@ const List<FormationModule> formationModules = [
     subtitle: "DPE, devis, phasage — ce qu'il faut vraiment anticiper",
     icon: Icons.construction_outlined,
     color: Color(0xFFE0705C),
+    takeaways: [
+      "Distingue toujours travaux obligatoires et travaux de valorisation dans ton budget.",
+      "Le DPE est un enjeu réglementaire (interdictions progressives de location) autant que commercial.",
+      "Au moins 2 à 3 devis avant de lancer un chantier significatif.",
+      "Priorise les travaux qui conditionnent la mise en location pour limiter la vacance locative.",
+    ],
     lessons: [
       FormationLesson(
         "Travaux obligatoires vs travaux de valorisation",
@@ -380,6 +437,12 @@ const List<FormationModule> formationModules = [
     subtitle: "Les régimes expliqués simplement, pour choisir en connaissance de cause",
     icon: Icons.description_outlined,
     color: Color(0xFFD4A72C),
+    takeaways: [
+      "Le régime réel devient presque toujours plus avantageux que le micro dès qu'il y a un crédit en cours.",
+      "Le LMNP au réel permet d'amortir — souvent 0 € d'impôt sur les loyers pendant plusieurs années.",
+      "Le choix de la structure (nom propre, SCI à l'IR ou à l'IS) se décide AVANT l'achat, pas après.",
+      "Garder un bien longtemps réduit aussi la fiscalité à la revente, jusqu'à l'exonération totale.",
+    ],
     lessons: [
       FormationLesson(
         "Location nue : micro-foncier ou régime réel ?",
@@ -428,6 +491,12 @@ const List<FormationModule> formationModules = [
     subtitle: "De la mise en location à la relation avec le locataire",
     icon: Icons.vpn_key_outlined,
     color: Color(0xFF2FA39B),
+    takeaways: [
+      "Un dossier de locataire solide se vérifie sur des critères factuels, pas une impression.",
+      "Un état des lieux précis et photographié est ta seule protection en cas de litige à la sortie.",
+      "Un loyer impayé se traite tout de suite — relance, mise en demeure, garantie — jamais en espérant que ça "
+          "s'arrange.",
+    ],
     lessons: [
       FormationLesson(
         "Gestion directe ou agence ?",
@@ -475,6 +544,12 @@ const List<FormationModule> formationModules = [
     subtitle: "Faire grossir son patrimoine, et savoir quand revendre",
     icon: Icons.trending_up,
     color: Color(0xFF4A9B6E),
+    takeaways: [
+      "Chaque bien remboursé augmente ta capacité à en financer un nouveau — c'est l'effet boule de neige.",
+      "Simule la revente à plusieurs horizons (5, 10, 15 ans), jamais à une seule date arbitraire.",
+      "Continue à te former après le premier achat : la réglementation (fiscale, énergétique) change en "
+          "continu.",
+    ],
     lessons: [
       FormationLesson(
         "Faire grossir son patrimoine : l'effet boule de neige",
@@ -509,10 +584,80 @@ const List<FormationModule> formationModules = [
     ],
   ),
   FormationModule(
+    title: 'Études de cas chiffrées',
+    subtitle: "La méthode appliquée de bout en bout, sur 3 profils différents",
+    icon: Icons.insights_outlined,
+    color: Color(0xFFD4A72C),
+    takeaways: [
+      "Le même raisonnement s'applique à chaque bien : décrire, chiffrer, vérifier le marché, stress-tester, "
+          "lire le verdict.",
+      "Un rendement affiché élevé ne garantit rien si le cash-flow réel est négatif ou le DPE bloquant.",
+      "Reproduis ces simulations toi-même dans Didou-Immo avant de les croire sur parole — c'est un exemple "
+          "pédagogique, pas une offre réelle.",
+    ],
+    lessons: [
+      FormationLesson(
+        "Cas n°1 — Le T2 pensé pour le cash-flow (ville moyenne)",
+        "Exemple fictif, construit pour illustrer la méthode. T2 de 60 m² dans une ville moyenne dynamique, "
+            "acheté 98 000 €, 6 000 € de travaux de rafraîchissement, environ 7 800 € de frais de notaire (8 % "
+            "dans l'ancien). Coût total du projet : environ 112 000 €.\n\n"
+            "Financement : 12 000 € d'apport, le reste emprunté sur 20 ans à un taux illustratif de 3,9 %, soit "
+            "une mensualité (assurance comprise) d'environ 580 €/mois.\n\n"
+            "Revenus : loyer attendu 540 €/mois, vacance locative comptée à 5 % par sécurité, charges de "
+            "copropriété 600 €/an, taxe foncière 700 €/an, assurance PNO 150 €/an.\n\n"
+            "Une fois toutes les charges et le crédit déduits, le cash-flow ressort proche de l'équilibre, "
+            "légèrement négatif avant impôt. En LMNP au régime réel, l'amortissement du bien et du mobilier "
+            "ramène l'impôt sur les loyers à 0 € les premières années — le cash-flow réel redevient positif. "
+            "Rentabilité brute : environ 6,6 %, dans la moyenne haute pour ce type de ville.\n\n"
+            "Verdict : un projet solide pour du cash-flow raisonnable, à condition de bien suivre la fiscalité "
+            "LMNP dès le départ (voir module Fiscalité) plutôt que de la découvrir après coup.",
+      ),
+      FormationLesson(
+        "Cas n°2 — Le studio meublé en grande ville (stratégie patrimoniale)",
+        "Exemple fictif. Studio de 20 m² à proximité immédiate d'une université dans une grande ville, acheté "
+            "140 000 € frais compris, aucun travaux nécessaire. Loyer meublé attendu : 520 €/mois, tension "
+            "locative très forte (quasiment aucune vacance attendue grâce à la demande étudiante).\n\n"
+            "Financement à 90 % sur 25 ans : la mensualité absorbe la quasi-totalité du loyer, laissant un "
+            "cash-flow neutre à légèrement négatif chaque mois. Rentabilité brute modeste, autour de 4,5 % — "
+            "nettement moins attractive que le cas n°1 sur ce seul critère.\n\n"
+            "Pourtant, ce projet peut avoir du sens : en LMNP réel, l'amortissement annule l'impôt sur des "
+            "loyers déjà quasi intégralement absorbés par le crédit, et la zone, très demandée, limite "
+            "fortement le risque de vacance et soutient la revalorisation du bien dans le temps.\n\n"
+            "Verdict : un projet cohérent pour quelqu'un qui vise la plus-value et la constitution de "
+            "patrimoine sur 15-20 ans (objectif défini au module 1), pas pour quelqu'un qui cherche un "
+            "complément de revenu immédiat. Le même bien serait un mauvais choix pour l'objectif inverse — ce "
+            "n'est pas le bien qui est bon ou mauvais dans l'absolu, c'est son adéquation avec ton objectif.",
+      ),
+      FormationLesson(
+        "Cas n°3 — Le bien à éviter, malgré un rendement affiché très attractif",
+        "Exemple fictif. T3 dans une ville en déclin démographique, affiché à 60 000 €, loyer annoncé 550 "
+            "€/mois — soit une rentabilité brute affichée de 11 %, largement au-dessus des deux cas précédents. "
+            "Sur le seul critère du rendement affiché, ce bien semble imbattable.\n\n"
+            "En creusant : le DPE est classé F, ce qui impose des travaux de rénovation énergétique avant de "
+            "pouvoir continuer à le louer légalement dans les prochaines années — un budget travaux non prévu "
+            "d'environ 15 000 €, absent du calcul initial. La commune perd des habitants depuis plusieurs "
+            "années, ce qui se traduit en pratique par une vacance locative réelle bien plus élevée que la "
+            "moyenne (observée autour de 15 à 20 % par les investisseurs déjà présents sur place, contre 4 à 8 "
+            "% ailleurs). La copropriété, ancienne, vote des charges en hausse régulière.\n\n"
+            "Une fois le budget travaux et la vacance réelle intégrés, le cash-flow devient nettement négatif, "
+            "et la rentabilité réelle tombe largement sous celle des deux cas précédents.\n\n"
+            "Verdict : risqué. C'est exactement le type de biens évoqué au module « Trouver le bon bien » — un "
+            "rendement affiché élevé qui cache des problèmes structurels (DPE, démographie, copropriété) "
+            "invisibles tant qu'on ne regarde que le loyer et le prix. Un simple chiffrage dans Didou-Immo, DPE "
+            "et vacance réaliste inclus, aurait suffi à voir le problème avant de visiter.",
+      ),
+    ],
+  ),
+  FormationModule(
     title: 'Checklist finale et glossaire',
     subtitle: "Avant de signer, et les mots qu'il faut connaître",
     icon: Icons.fact_check_outlined,
     color: Color(0xFF2F5D50),
+    takeaways: [
+      "Si une seule case de la checklist n'est pas cochée, ce n'est pas encore le moment de signer.",
+      "Garde le glossaire sous la main pour tes premiers rendez-vous (banque, notaire, agence).",
+      "Relis le module qui te concerne juste avant d'en avoir besoin, plutôt que de tout retenir d'un coup.",
+    ],
     lessons: [
       FormationLesson(
         "Checklist avant de signer",
