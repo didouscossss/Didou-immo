@@ -6,7 +6,6 @@ import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/arrival_bounce.dart';
 import '../admin/admin_screen.dart';
-import '../formation/formation_screen.dart';
 import '../legal/legal_screens.dart';
 import '../paywall/paywall_screen.dart';
 import '../referral/referral_screen.dart';
@@ -96,24 +95,6 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
-          // Visible par tout le monde (plus réservée aux admins) : incluse
-          // avec l'abonnement annuel (voir UserAccountState.hasFormationAccess
-          // et FormationScreen, qui affiche lui-même l'argumentaire de vente
-          // si le compte n'a pas (encore) cet accès).
-          OutlinedButton.icon(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FormationScreen())),
-            icon: Icon(account.hasFormationAccess ? Icons.school_outlined : Icons.lock_outline),
-            label: Text(account.hasFormationAccess
-                ? 'Formation complète'
-                : 'Formation complète (incluse avec l\'annuel)'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.gold,
-              side: BorderSide(color: AppColors.gold),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LegalHubScreen())),

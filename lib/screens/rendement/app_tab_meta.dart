@@ -20,4 +20,5 @@ const Map<AppTab, AppTabMeta> kTabMeta = {
   AppTab.proj: AppTabMeta('Projection', Icons.trending_up),
   AppTab.biens: AppTabMeta('Comparer', Icons.layers_outlined),
   AppTab.patrimoine: AppTabMeta('Patrimoine', Icons.insights_outlined),
+  AppTab.formation: AppTabMeta('Formation', Icons.school_outlined),
 };

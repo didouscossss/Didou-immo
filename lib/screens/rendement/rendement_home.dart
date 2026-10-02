@@ -9,6 +9,7 @@ import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/niveau_toggle.dart';
 import '../account/account_screen.dart';
+import '../formation/formation_screen.dart';
 import '../paywall/paywall_screen.dart';
 import 'app_tab_meta.dart';
 import 'biens_screen.dart';
@@ -474,6 +475,8 @@ class _RendementHomeState extends State<RendementHome> {
         return BiensScreen(key: themeKey, onEdit: () => _setActive(AppTab.calc));
       case AppTab.patrimoine:
         return PatrimoineScreen(key: themeKey);
+      case AppTab.formation:
+        return FormationScreen(key: themeKey);
     }
   }
 

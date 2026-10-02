@@ -22,6 +22,12 @@ import 'formation_module_screen.dart';
 /// Cet écran ne sert que de sommaire — une carte par module, qui ouvre la
 /// lecture leçon par leçon ([FormationModuleScreen]), quiz de fin de module
 /// compris.
+///
+/// Onglet principal à part entière (`AppTab.formation`, en dernier dans
+/// `kDefaultTabOrder`), pas un écran poussé en navigation — voir
+/// `RendementHome._buildActiveScreen`. N'a donc pas son propre
+/// Scaffold/AppBar (voir `build` ci-dessous), comme les autres contenus
+/// d'onglet (ex. `GuideCompletScreen`).
 class FormationScreen extends StatelessWidget {
   const FormationScreen({super.key});
 
@@ -32,31 +38,32 @@ class FormationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final account = context.watch<UserAccountState>();
     final hasAccess = account.hasFormationAccess;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Formation complète')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildAccessNotice(context, account),
-          const SizedBox(height: 16),
-          _buildHero(),
-          const SizedBox(height: 24),
-          Text(
-            'Sommaire',
-            style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            hasAccess
-                ? 'Touche un module pour le lire, une leçon à la fois.'
-                : "Débloque l'abonnement annuel pour lire les modules ci-dessous.",
-            style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.55)),
-          ),
-          const SizedBox(height: 16),
-          for (int i = 0; i < formationModules.length; i++)
-            _ModuleSummaryCard(module: formationModules[i], index: i, locked: !hasAccess),
-        ],
-      ),
+    // Pas de Scaffold/AppBar ici : affiché comme le contenu d'un onglet
+    // principal (voir RendementHome._buildActiveScreen), qui fournit déjà sa
+    // propre bande du haut et sa barre d'onglets — même principe que
+    // GuideCompletScreen ou les autres écrans d'onglet.
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: [
+        _buildAccessNotice(context, account),
+        const SizedBox(height: 16),
+        _buildHero(),
+        const SizedBox(height: 24),
+        Text(
+          'Sommaire',
+          style: AppTextStyles.serif(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.ink),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          hasAccess
+              ? 'Touche un module pour le lire, une leçon à la fois.'
+              : "Débloque l'abonnement annuel pour lire les modules ci-dessous.",
+          style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.55)),
+        ),
+        const SizedBox(height: 16),
+        for (int i = 0; i < formationModules.length; i++)
+          _ModuleSummaryCard(module: formationModules[i], index: i, locked: !hasAccess),
+      ],
     );
   }
 
