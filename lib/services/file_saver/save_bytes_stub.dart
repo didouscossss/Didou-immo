@@ -15,14 +15,19 @@ import 'package:file_picker/file_picker.dart';
 /// sans réécrire le contrat de retour de cette fonction partagée avec le
 /// web ; les deux cas sont donc traités pareil (retour `false`), comme une
 /// annulation silencieuse plutôt qu'une erreur alarmante.
+///
+/// [mimeType] n'est pas utilisé ici : la version de `file_picker` installée
+/// (11.0.3) n'accepte pas ce paramètre sur `saveFile` (contrairement à des
+/// versions plus récentes du package) — gardé dans la signature uniquement
+/// pour correspondre au contrat partagé avec `save_bytes_web.dart`.
 Future<bool> saveBytes({
   required Uint8List bytes,
   required String filename,
   required String mimeType,
 }) async {
   try {
-    final uri = await FilePicker.saveFile(fileName: filename, bytes: bytes, mimeType: mimeType);
-    return uri != null;
+    final path = await FilePicker.saveFile(fileName: filename, bytes: bytes);
+    return path != null;
   } catch (_) {
     return false;
   }
