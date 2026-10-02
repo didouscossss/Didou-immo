@@ -1,13 +1,29 @@
 import 'dart:typed_data';
 
-/// Plateforme sans mécanisme de téléchargement implémenté (voir
-/// `save_bytes_web.dart` pour le web, seule plateforme réellement déployée
-/// par cette app) — renvoie `false` plutôt que de planter, l'appelant
-/// affiche alors un message adapté.
+import 'package:file_picker/file_picker.dart';
+
+/// Enregistre le fichier via le sélecteur natif `file_picker` — Android (et
+/// toute autre plateforme non-web) n'a pas de dossier "Téléchargements"
+/// accessible par un chemin de fichier classique depuis Android 10 (accès
+/// au stockage restreint) : passer `bytes` à `saveFile` laisse le système
+/// écrire lui-même le fichier à l'endroit choisi par l'utilisateur, sans
+/// jamais manipuler de chemin brut (même mécanisme que `FilePicker.pickFiles`
+/// déjà utilisé pour l'import, voir `admin_screen.dart`).
+///
+/// `saveFile` renvoie `null` aussi bien sur une vraie erreur que si
+/// l'utilisateur annule simplement la boîte de dialogue — indistinguable
+/// sans réécrire le contrat de retour de cette fonction partagée avec le
+/// web ; les deux cas sont donc traités pareil (retour `false`), comme une
+/// annulation silencieuse plutôt qu'une erreur alarmante.
 Future<bool> saveBytes({
   required Uint8List bytes,
   required String filename,
   required String mimeType,
 }) async {
-  return false;
+  try {
+    final uri = await FilePicker.saveFile(fileName: filename, bytes: bytes, mimeType: mimeType);
+    return uri != null;
+  } catch (_) {
+    return false;
+  }
 }
