@@ -93,7 +93,15 @@ class UserAccountState extends ChangeNotifier {
           status = await _firestore.getUserStatus(u.uid).timeout(const Duration(seconds: 12));
         }
         userDoc = status;
-      } on TimeoutException {
+      } catch (_) {
+        // Pas seulement `TimeoutException` : signalé par l'utilisateur,
+        // l'écran restait bloqué indéfiniment précisément à la toute
+        // première connexion après une création de compte — un refus
+        // transitoire de Firestore (le temps que le token d'authentification
+        // tout juste émis se propage) lève une vraie exception, pas un
+        // timeout, qui n'était donc jamais rattrapée : `loading` ne
+        // repassait jamais à `false`. Même filet de secours que pour le
+        // timeout, pour toute erreur plutôt qu'un seul type précis.
         userDoc = null;
       }
       loading = false;
