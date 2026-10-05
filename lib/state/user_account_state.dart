@@ -38,8 +38,11 @@ class UserAccountState extends ChangeNotifier {
   /// La formation complète est incluse avec l'offre annuelle (pas la
   /// mensuelle) — voir la discussion avec l'utilisateur. Les comptes admin y
   /// ont aussi accès, pour pouvoir relire/mettre à jour le contenu sans
-  /// payer.
-  bool get hasFormationAccess => isAdmin || (isSubscribed && subscriptionPlan == 'yearly');
+  /// payer — tout comme un compte à accès gratuit à vie (`grantedFree` :
+  /// code cadeau ou palier de parrainage, voir [grantedFree]), qui a déjà un
+  /// accès complet au reste de l'app et n'aurait aucun sens à voir la
+  /// formation restée verrouillée derrière lui.
+  bool get hasFormationAccess => isAdmin || grantedFree || (isSubscribed && subscriptionPlan == 'yearly');
 
   /// `true` si CE compte a lui-même été parrainé (a saisi un code) — sert à
   /// déterminer son propre seuil de palier (voir [referralMilestoneThreshold]).
