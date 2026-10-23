@@ -371,7 +371,11 @@ void main() {
     expect(pdfButton().onPressed, isNull);
     expect(find.text('Modifications non enregistrées'), findsNothing);
 
-    // Enregistrer le bien débloque l'export PDF.
+    // Enregistrer le bien débloque l'export PDF. Le bouton est plus haut
+    // dans la liste que "Générer le PDF" (déjà scrollée en bas ci-dessus) —
+    // `_scrollToAndTap` ne scrolle que vers le bas, donc il faut remonter
+    // d'abord pour pouvoir le retrouver.
+    await _scrollTabListToTop(tester);
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
