@@ -54,6 +54,8 @@ Future<void> showPropertySavedDialog(
             const SizedBox(height: 6),
             Text(
               form.nom.isEmpty ? 'Bien sans nom' : form.nom,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.6)),
             ),
             const SizedBox(height: 18),
@@ -67,7 +69,12 @@ Future<void> showPropertySavedDialog(
                 Row(children: [
                   const Icon(Icons.trending_up, size: 14, color: Colors.white70),
                   const SizedBox(width: 6),
-                  Text('RENTABILITÉ NETTE', style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1.2)),
+                  Text(
+                    'RENTABILITÉ NETTE',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.sans(fontSize: 11, color: Colors.white70, letterSpacing: 1.2),
+                  ),
                 ]),
                 const SizedBox(height: 10),
                 DigitReadout(value: core.net, accent: const Color(0xFFEDE6D2)),
@@ -79,7 +86,7 @@ Future<void> showPropertySavedDialog(
                   const SizedBox(width: 14),
                   Expanded(
                     child: _stat(
-                      'Cash-flow /mois',
+                      'Cash-flow',
                       '${core.cashflowMensuel >= 0 ? '+' : ''}${fmt(core.cashflowMensuel)} €',
                       color: core.cashflowMensuel < 0 ? const Color(0xFFE8B4A4) : const Color(0xFFEDE6D2),
                     ),
@@ -107,10 +114,16 @@ Future<void> showPropertySavedDialog(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
                   Text(
                     "Score d'investissement",
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
                   ),
-                  Text(score.label, overflow: TextOverflow.ellipsis, style: AppTextStyles.sans(fontSize: 11, color: scoreColor)),
+                  Text(
+                    score.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.sans(fontSize: 11, color: scoreColor),
+                  ),
                 ]),
               ),
             ]),
@@ -141,6 +154,7 @@ Future<void> showPropertySavedDialog(
                 Expanded(
                   child: Text(
                     'Pistes pour améliorer la rentabilité',
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
                   ),
@@ -181,19 +195,49 @@ Future<void> showPropertySavedDialog(
   );
 }
 
+/// `softWrap: false` + `maxLines: 1` empêchent ces libellés/valeurs étroits
+/// de passer à la ligne — signalé par l'utilisateur : sans ça, un mot trop
+/// long pour la colonne se coupait en plein milieu plutôt que de rester
+/// entier (Flutter ne retourne à la ligne qu'entre les mots, mais tronque un
+/// mot isolé trop large). `TextOverflow.ellipsis` tronque proprement avec
+/// "…" plutôt que de couper le mot si la colonne est vraiment trop étroite.
 Widget _stat(String label, String value, {Color color = const Color(0xFFEDE6D2)}) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 10, color: Colors.white54, letterSpacing: 0.4)),
+    Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.sans(fontSize: 10, color: Colors.white54, letterSpacing: 0.4),
+    ),
     const SizedBox(height: 5),
-    Text(value, style: AppTextStyles.mono(fontSize: 15, color: color, letterSpacing: 0.3)),
+    Text(
+      value,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.mono(fontSize: 15, color: color, letterSpacing: 0.3),
+    ),
   ]);
 }
 
 Widget _miniStat(String label, String value) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label.toUpperCase(), style: AppTextStyles.sans(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.45), letterSpacing: 0.4)),
+    Text(
+      label.toUpperCase(),
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.sans(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.45), letterSpacing: 0.4),
+    ),
     const SizedBox(height: 5),
-    Text(value, style: AppTextStyles.mono(fontSize: 13, color: AppColors.ink, letterSpacing: 0.3)),
+    Text(
+      value,
+      maxLines: 1,
+      softWrap: false,
+      overflow: TextOverflow.ellipsis,
+      style: AppTextStyles.mono(fontSize: 13, color: AppColors.ink, letterSpacing: 0.3),
+    ),
   ]);
 }
 
@@ -206,7 +250,12 @@ Widget _suggestionCard(ImprovementSuggestion s) {
       border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(s.title, style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
+      Text(
+        s.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
+      ),
       const SizedBox(height: 5),
       Text(
         s.description,
