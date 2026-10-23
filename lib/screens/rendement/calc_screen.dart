@@ -62,27 +62,57 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   /// Une fois un bien enregistré, sa localisation/son prix/sa surface/son
-  /// type sont verrouillés (voir `_sectionBien`) — seul "+ Nouveau bien"
-  /// permet d'en évaluer un autre, pour qu'analyser un bien différent
+  /// type sont verrouillés (voir `_sectionBien`) — seul "Étudier un nouveau
+  /// bien" permet d'en évaluer un autre, pour qu'analyser un bien différent
   /// consomme bien un nouvel essai gratuit plutôt que de détourner
   /// discrètement le même bien enregistré.
+  ///
+  /// Rendu volontairement très visible (fond/bordure teintés, titre en
+  /// gras, bouton pleine largeur) — signalé par l'utilisateur : l'ancien
+  /// bandeau discret ne distinguait pas assez ce bouton de "Mettre à jour
+  /// ce bien" tout en bas de la page, deux actions aux effets opposés
+  /// (créer un AUTRE bien vs modifier CELUI-CI) trop faciles à confondre.
   Widget _newPropertyBanner(RendementState state) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
-      child: Row(children: [
-        Icon(Icons.lock_outline, size: 15, color: AppColors.ink.withValues(alpha: 0.5)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            'Localisation, prix, surface et type verrouillés sur ce bien enregistré.',
-            style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.6)),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.45), width: 1.5),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.lock_outline, size: 18, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Tu modifies un bien déjà enregistré',
+              style: AppTextStyles.sans(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.ink),
+            ),
           ),
+        ]),
+        const SizedBox(height: 8),
+        Text(
+          "Pour enregistrer tes changements SUR CE bien : utilise \"Mettre à jour ce bien\" tout en bas de la page.\n"
+          "Pour étudier un AUTRE bien sans toucher à celui-ci : utilise le bouton ci-dessous — localisation, prix, "
+          "surface et type se déverrouillent pour un nouveau calcul.",
+          style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.7)).copyWith(height: 1.45),
         ),
-        TextButton(
-          onPressed: () => _confirmNewProperty(context, state),
-          child: Text('+ Nouveau bien', style: AppTextStyles.sans(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _confirmNewProperty(context, state),
+            icon: const Icon(Icons.add, size: 17),
+            label: const Text('Étudier un nouveau bien'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.accent,
+              side: BorderSide(color: AppColors.accent, width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
         ),
       ]),
     );
@@ -998,32 +1028,39 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ]),
       ),
-      ArrivalBounce(
-        // Attire l'œil tant qu'il y a quelque chose à enregistrer (nouveau
-        // bien jamais sauvegardé, ou modifications en attente) — inutile de
-        // continuer à pulser une fois que tout est déjà à jour.
-        active: state.editingId == null || state.formDirty,
-        child: ElevatedButton.icon(
-          onPressed: widget.onSave,
-          icon: Icon(state.editingId == null ? Icons.add : Icons.save_outlined),
-          label: Text(state.editingId == null ? 'Enregistrer ce bien' : 'Mettre à jour ce bien'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      // Avant le tout premier enregistrement (`editingId == null`), ce
+      // bouton ferait strictement doublon avec celui de
+      // `_sectionResultatsLocked` juste au-dessus ("Enregistrer pour voir
+      // la rentabilité") — signalé par l'utilisateur : deux boutons
+      // "Enregistrer" visibles en même temps sur la page. Une fois le bien
+      // enregistré une première fois, ce bouton devient le seul moyen de
+      // mettre à jour CE bien (voir aussi `_newPropertyBanner`), donc utile
+      // à nouveau.
+      if (state.editingId != null) ...[
+        ArrivalBounce(
+          active: state.formDirty,
+          child: ElevatedButton.icon(
+            onPressed: widget.onSave,
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('Mettre à jour ce bien'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
           ),
         ),
-      ),
-      if (state.formDirty) ...[
-        const SizedBox(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.circle, size: 6, color: AppColors.alert),
-          const SizedBox(width: 6),
-          Text('Modifications non enregistrées', style: AppTextStyles.sans(fontSize: 11, color: AppColors.alert)),
-        ]),
+        if (state.formDirty) ...[
+          const SizedBox(height: 8),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.circle, size: 6, color: AppColors.alert),
+            const SizedBox(width: 6),
+            Text('Modifications non enregistrées', style: AppTextStyles.sans(fontSize: 11, color: AppColors.alert)),
+          ]),
+        ],
+        const SizedBox(height: 16),
       ],
-      const SizedBox(height: 16),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
         const SizedBox(width: 8),
