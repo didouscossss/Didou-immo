@@ -100,7 +100,20 @@ Future<void> showPropertySavedDialog(
               ]),
             ),
             const SizedBox(height: 16),
-            ScoreBadge(score: score.score, label: score.label, color: scoreColor),
+            Row(children: [
+              ScoreBadge(score: score.score, label: score.label, color: scoreColor, size: BadgeSize.sm),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                  Text(
+                    "Score d'investissement",
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.ink),
+                  ),
+                  Text(score.label, overflow: TextOverflow.ellipsis, style: AppTextStyles.sans(fontSize: 11, color: scoreColor)),
+                ]),
+              ),
+            ]),
             if (showCapacite) ...[
               const SizedBox(height: 10),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -125,9 +138,12 @@ Future<void> showPropertySavedDialog(
               Row(children: [
                 Icon(Icons.lightbulb_outline, size: 15, color: AppColors.gold),
                 const SizedBox(width: 8),
-                Text(
-                  'Pistes pour améliorer la rentabilité',
-                  style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
+                Expanded(
+                  child: Text(
+                    'Pistes pour améliorer la rentabilité',
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink),
+                  ),
                 ),
               ]),
               const SizedBox(height: 10),
