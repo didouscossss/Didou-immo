@@ -110,7 +110,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     // La pop-up de résultats s'affiche d'abord — on la referme avant de
-    // vérifier la navigation vers "Comparer".
+    // vérifier la navigation vers "Comparer". Elle peut être plus haute que
+    // l'écran (chiffres clés + pistes d'amélioration) : il faut parfois la
+    // faire défiler pour atteindre ce bouton, comme un utilisateur le ferait.
+    await tester.ensureVisible(find.text('Voir mes biens'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens'));
     await tester.pumpAndSettle();
     expect(find.text('Comparatif'), findsOneWidget);
@@ -130,6 +134,11 @@ void main() {
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    // La pop-up peut être plus haute que l'écran (chiffres clés + pistes
+    // d'amélioration) : il faut parfois la faire défiler pour atteindre ce
+    // bouton, comme un utilisateur le ferait.
+    await tester.ensureVisible(find.text('Voir mes biens'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens'));
     await tester.pumpAndSettle();
 
@@ -378,6 +387,8 @@ void main() {
     await _scrollTabListToTop(tester);
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Voir mes biens')); // peut être hors écran
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();
     expect(find.text('Comparatif'), findsOneWidget); // navigué vers "Comparer"
@@ -448,6 +459,8 @@ void main() {
     // Enregistrer débloque la rentabilité et verrouille l'identité du bien.
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Voir mes biens')); // peut être hors écran
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bien'));
@@ -478,6 +491,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Voir mes biens')); // peut être hors écran
     await tester.pumpAndSettle();
     await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();

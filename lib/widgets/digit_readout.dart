@@ -34,8 +34,8 @@ class DigitReadout extends StatelessWidget {
       textBaseline: TextBaseline.alphabetic,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(display, style: AppTextStyles.mono(fontSize: fontSize, fontWeight: FontWeight.w400, color: color)),
-        const SizedBox(width: 4),
+        Text(display, style: AppTextStyles.mono(fontSize: fontSize, fontWeight: FontWeight.w400, color: color, letterSpacing: 1)),
+        const SizedBox(width: 6),
         Text(suffix, style: AppTextStyles.mono(fontSize: 13, color: color.withValues(alpha: 0.7))),
       ],
     );
