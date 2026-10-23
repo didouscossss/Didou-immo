@@ -8,6 +8,7 @@ import '../../state/rendement_state.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/niveau_toggle.dart';
+import '../../widgets/property_saved_dialog.dart';
 import '../account/account_screen.dart';
 import '../formation/formation_screen.dart';
 import '../paywall/paywall_screen.dart';
@@ -414,6 +415,13 @@ class _RendementHomeState extends State<RendementHome> {
   /// une écriture Firestore qui échoue (réseau, règles) passait inaperçue —
   /// l'écran basculait sur "Mes projets" alors que rien n'avait été
   /// enregistré.
+  ///
+  /// Affiche `showPropertySavedDialog` juste avant de basculer sur
+  /// "Comparer" — signalé par l'utilisateur : enregistrer faisait changer
+  /// d'onglet instantanément sans jamais montrer la rentabilité calculée,
+  /// obligeant à rouvrir le bien pour la voir. Le pop-up montre les
+  /// chiffres clés tout de suite ET rappelle où les retrouver ensuite,
+  /// avant le changement d'onglet habituel.
   Future<void> _handleSave(RendementState state) async {
     // Modifier un bien déjà enregistré (voir `loadPropertyForEditing`) ne
     // doit ni consommer un essai gratuit, ni être bloqué par le paywall —
@@ -424,6 +432,8 @@ class _RendementHomeState extends State<RendementHome> {
     final isNewProperty = state.editingId == null;
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
+      if (!mounted) return;
+      await showPropertySavedDialog(context, state: state, isNewProperty: isNewProperty);
       if (!mounted) return;
       _setActive(AppTab.biens);
       return;
@@ -445,6 +455,8 @@ class _RendementHomeState extends State<RendementHome> {
       return;
     }
     if (isNewProperty) await account.recordFreeSave();
+    if (!mounted) return;
+    await showPropertySavedDialog(context, state: state, isNewProperty: isNewProperty);
     if (!mounted) return;
     _setActive(AppTab.biens);
   }
