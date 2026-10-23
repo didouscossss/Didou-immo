@@ -126,7 +126,7 @@ class _OnboardingSheetState extends State<OnboardingSheet> with SingleTickerProv
       caption: 'Une fois enregistrés',
       icon: kTabMeta[AppTab.biens]!.icon,
       points: const [
-        '"Enregistrer ce bien" l\'ajoute à "Comparer" et "Patrimoine"',
+        '"Enregistrer pour voir la rentabilité" l\'ajoute à "Comparer" et "Patrimoine"',
         'Modifie-le à tout moment, compare plusieurs biens entre eux',
         'Exporte tes données en PDF ou CSV',
       ],

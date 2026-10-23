@@ -125,9 +125,9 @@ const List<_JourneyStep> _journeySteps = [
     title: 'Enregistre et compare',
     icon: Icons.layers_outlined,
     color: Color(0xFFD4A72C),
-    body: "Convaincu, ou pas encore ? « Enregistrer ce bien » l'ajoute à Comparer et Patrimoine : tu peux alors le "
-        "mettre face à d'autres projets, suivre l'ensemble de ton patrimoine, et exporter tes données en PDF ou "
-        "CSV.",
+    body: "Convaincu, ou pas encore ? « Enregistrer pour voir la rentabilité » l'ajoute à Comparer et Patrimoine : "
+        "tu peux alors le mettre face à d'autres projets, suivre l'ensemble de ton patrimoine, et exporter tes "
+        "données en PDF ou CSV.",
     targets: [_TabTarget('Onglet Comparer', AppTab.biens), _TabTarget('Onglet Patrimoine', AppTab.patrimoine)],
   ),
 ];

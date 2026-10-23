@@ -106,25 +106,32 @@ void main() {
 
     // Bien 1 (longue durée, par défaut) — enregistré tel quel. Le bouton est
     // en bas d'une longue liste : on scrolle jusqu'à ce qu'il soit construit.
-    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    // La pop-up de résultats s'affiche d'abord — on la referme avant de
+    // vérifier la navigation vers "Comparer".
+    await tester.tap(find.text('Voir mes biens'));
+    await tester.pumpAndSettle();
     expect(find.text('Comparatif'), findsOneWidget);
 
     // Retour sur "Bien" : la localisation/le prix/la surface/le type du
-    // bien 1 sont maintenant verrouillés — "+ Nouveau bien" repart d'un
-    // formulaire vierge pour en créer un second, distinct, en courte durée.
+    // bien 1 sont maintenant verrouillés — "Étudier un nouveau bien" repart
+    // d'un formulaire vierge pour en créer un second, distinct, en courte
+    // durée.
     await tester.tap(find.text('Bien'));
     await tester.pumpAndSettle();
-    await _scrollToAndTap(tester, find.text('+ Nouveau bien'));
+    await _scrollToAndTap(tester, find.text('Étudier un nouveau bien'));
     await tester.pumpAndSettle();
     await _scrollToAndTap(tester, find.text('Courte durée'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
+    await tester.tap(find.text('Voir mes biens'));
+    await tester.pumpAndSettle();
 
     // Mode avancé : les barres de comparatif (2 biens) doivent s'afficher.
     // Le bloc "Comparatif" est plus bas que "Patrimoine acquis" et "Liste
@@ -365,7 +372,9 @@ void main() {
     expect(find.text('Modifications non enregistrées'), findsNothing);
 
     // Enregistrer le bien débloque l'export PDF.
-    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();
     expect(find.text('Comparatif'), findsOneWidget); // navigué vers "Comparer"
 
@@ -425,29 +434,32 @@ void main() {
     await tester.pumpAndSettle();
 
     // Avant tout enregistrement : la rentabilité reste verrouillée, pas de
-    // bandeau "+ Nouveau bien" (rien à réinitialiser sur un bien vierge).
+    // bandeau "Étudier un nouveau bien" (rien à réinitialiser sur un bien
+    // vierge).
     await tester.dragUntilVisible(find.text('Rentabilité verrouillée'), find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pumpAndSettle();
     expect(find.text('RENTABILITÉ NETTE'), findsNothing);
-    expect(find.text('+ Nouveau bien'), findsNothing);
+    expect(find.text('Étudier un nouveau bien'), findsNothing);
 
     // Enregistrer débloque la rentabilité et verrouille l'identité du bien.
-    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bien'));
     await tester.pumpAndSettle();
-    expect(find.text('+ Nouveau bien'), findsOneWidget);
+    expect(find.text('Étudier un nouveau bien'), findsOneWidget);
     await tester.dragUntilVisible(find.text('RENTABILITÉ NETTE'), find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pumpAndSettle();
     expect(find.text('Rentabilité verrouillée'), findsNothing);
     expect(tester.takeException(), isNull);
 
-    // "+ Nouveau bien" repart d'un formulaire vierge : la rentabilité se
-    // reverrouille, le bandeau disparaît.
+    // "Étudier un nouveau bien" repart d'un formulaire vierge : la
+    // rentabilité se reverrouille, le bandeau disparaît.
     await _scrollTabListToTop(tester);
-    await _scrollToAndTap(tester, find.text('+ Nouveau bien'));
+    await _scrollToAndTap(tester, find.text('Étudier un nouveau bien'));
     await tester.pumpAndSettle();
-    expect(find.text('+ Nouveau bien'), findsNothing);
+    expect(find.text('Étudier un nouveau bien'), findsNothing);
     await tester.dragUntilVisible(find.text('Rentabilité verrouillée'), find.byType(Scrollable).first, const Offset(0, -100));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
@@ -461,7 +473,9 @@ void main() {
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
-    await _scrollToAndTap(tester, find.text('Enregistrer ce bien'));
+    await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Voir mes biens')); // referme la pop-up de résultats
     await tester.pumpAndSettle();
 
     // Marque le bien "acquis" (date du jour) pour le faire apparaître dans
