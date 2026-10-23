@@ -123,7 +123,7 @@ Future<void> showPropertySavedDialog(
             if (suggestions.isNotEmpty) ...[
               const SizedBox(height: 20),
               Row(children: [
-                const Icon(Icons.lightbulb_outline, size: 15, color: AppColors.gold),
+                Icon(Icons.lightbulb_outline, size: 15, color: AppColors.gold),
                 const SizedBox(width: 8),
                 Text(
                   'Pistes pour améliorer la rentabilité',
