@@ -195,49 +195,36 @@ Future<void> showPropertySavedDialog(
   );
 }
 
-/// `softWrap: false` + `maxLines: 1` empêchent ces libellés/valeurs étroits
-/// de passer à la ligne — signalé par l'utilisateur : sans ça, un mot trop
-/// long pour la colonne se coupait en plein milieu plutôt que de rester
-/// entier (Flutter ne retourne à la ligne qu'entre les mots, mais tronque un
-/// mot isolé trop large). `TextOverflow.ellipsis` tronque proprement avec
-/// "…" plutôt que de couper le mot si la colonne est vraiment trop étroite.
+/// Garantit qu'un libellé/valeur reste toujours lisible EN ENTIER dans une
+/// colonne étroite — signalé par l'utilisateur : ni une troncature "…", ni
+/// (pire) un mot coupé en plein milieu ne convenaient. `FittedBox` réduit le
+/// texte à l'échelle (en entier, jamais tronqué ni coupé) seulement si la
+/// colonne est trop étroite pour sa taille normale ; sinon il garde sa
+/// taille d'origine.
+Widget _tightText(String text, TextStyle style, {required double lineHeight}) {
+  return SizedBox(
+    height: lineHeight,
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Text(text, maxLines: 1, softWrap: false, style: style),
+    ),
+  );
+}
+
 Widget _stat(String label, String value, {Color color = const Color(0xFFEDE6D2)}) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(
-      label.toUpperCase(),
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.ellipsis,
-      style: AppTextStyles.sans(fontSize: 10, color: Colors.white54, letterSpacing: 0.4),
-    ),
+    _tightText(label.toUpperCase(), AppTextStyles.sans(fontSize: 10, color: Colors.white54), lineHeight: 13),
     const SizedBox(height: 5),
-    Text(
-      value,
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.ellipsis,
-      style: AppTextStyles.mono(fontSize: 15, color: color, letterSpacing: 0.3),
-    ),
+    _tightText(value, AppTextStyles.mono(fontSize: 15, color: color), lineHeight: 19),
   ]);
 }
 
 Widget _miniStat(String label, String value) {
   return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(
-      label.toUpperCase(),
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.ellipsis,
-      style: AppTextStyles.sans(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.45), letterSpacing: 0.4),
-    ),
+    _tightText(label.toUpperCase(), AppTextStyles.sans(fontSize: 9.5, color: AppColors.ink.withValues(alpha: 0.45)), lineHeight: 12),
     const SizedBox(height: 5),
-    Text(
-      value,
-      maxLines: 1,
-      softWrap: false,
-      overflow: TextOverflow.ellipsis,
-      style: AppTextStyles.mono(fontSize: 13, color: AppColors.ink, letterSpacing: 0.3),
-    ),
+    _tightText(value, AppTextStyles.mono(fontSize: 13, color: AppColors.ink), lineHeight: 17),
   ]);
 }
 
