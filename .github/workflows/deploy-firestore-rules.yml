@@ -1,0 +1,37 @@
+name: Déployer les règles Firestore
+
+# Ne se déclenche que si firestore.rules change — réutilise le même secret
+# de compte de service que deploy-functions.yml (déjà configuré dans ce
+# dépôt), donc aucune configuration supplémentaire à faire pour que ce
+# déploiement fonctionne.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firestore.rules'
+      - '.github/workflows/deploy-firestore-rules.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Écrire la clé de compte de service
+        run: echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Déployer les règles Firestore
+        run: npx firebase-tools deploy --only firestore:rules --project didou-immo --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json

@@ -1,0 +1,45 @@
+name: Publier le numéro de mise à jour Android
+
+# Déclenchement manuel uniquement, une fois qu'une nouvelle version Android
+# est VRAIMENT disponible sur le Play Store (après la revue de Google) —
+# jamais juste après la build, pour ne pas dire aux utilisateurs de
+# mettre à jour vers une version qu'ils ne peuvent pas encore installer.
+# Écrit `latestVersionCode` dans Firestore (`appConfig/android`), comparé
+# au lancement par `AppUpdateService` (voir lib/services/app_update_service.dart)
+# pour proposer la pop-up de mise à jour. Réutilise le secret de compte de
+# service déjà configuré pour déployer les Cloud Functions.
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "Numéro de build Android (le nombre après le + dans pubspec.yaml) — laisser vide pour le lire automatiquement dans pubspec.yaml"
+        required: false
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Publie le numéro de version dans Firestore
+        run: |
+          VERSION_CODE="${{ inputs.version_code }}"
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE=$(grep '^version:' pubspec.yaml | sed -E 's/.*\+([0-9]+)/\1/')
+          fi
+          echo "appConfig/android.latestVersionCode -> $VERSION_CODE"
+          mkdir -p "$RUNNER_TEMP/set-version" && cd "$RUNNER_TEMP/set-version"
+          npm install firebase-admin@^12 --no-audit --no-fund
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > "$RUNNER_TEMP/firebase-service-account.json"
+          GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json" node -e "
+            const admin = require('firebase-admin');
+            admin.initializeApp();
+            admin.firestore().doc('appConfig/android').set({ latestVersionCode: ${VERSION_CODE} }, { merge: true })
+              .then(() => { console.log('OK : latestVersionCode =', ${VERSION_CODE}); process.exit(0); })
+              .catch((e) => { console.error(e); process.exit(1); });
+          "
