@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/app_tab.dart';
+import '../../services/app_update_service.dart';
 import '../../state/rendement_state.dart';
 import '../../state/user_account_state.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/niveau_toggle.dart';
 import '../../widgets/property_saved_dialog.dart';
+import '../../widgets/update_available_dialog.dart';
 import '../account/account_screen.dart';
 import '../formation/formation_screen.dart';
 import '../paywall/paywall_screen.dart';
@@ -57,7 +59,21 @@ class _RendementHomeState extends State<RendementHome> {
     super.initState();
     final tabs = context.read<RendementState>().visibleTabOrder;
     _pageController = PageController(initialPage: tabs.indexOf(_active).clamp(0, tabs.length - 1));
-    WidgetsBinding.instance.addPostFrameCallback((_) => context.read<RendementState>().load());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
+  }
+
+  /// Charge l'état du bien en cours, puis propose une mise à jour si une
+  /// version plus récente a été publiée — demandé par l'utilisateur, voir
+  /// `AppUpdateService`. Jamais pendant l'onboarding (un nouvel utilisateur
+  /// vient d'installer la dernière version, la question ne se pose pas, et
+  /// deux pop-up superposées seraient confuses).
+  Future<void> _bootstrap() async {
+    final state = context.read<RendementState>();
+    await state.load();
+    if (!mounted || !widget.firebaseReady || state.showOnboarding) return;
+    final info = await AppUpdateService().checkForUpdate();
+    if (!mounted || info == null) return;
+    await showUpdateAvailableDialog(context, info: info);
   }
 
   @override

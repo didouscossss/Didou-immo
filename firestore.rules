@@ -104,6 +104,16 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usesRemaining']);
     }
 
+    // Numéro de la dernière version Android publiée (`latestVersionCode`),
+    // comparé au build installé pour proposer une mise à jour au lancement
+    // — voir `AppUpdateService`. Lisible par tous (y compris en mode local
+    // sans compte) ; mis à jour à la main depuis la console Firebase (les
+    // écritures console contournent ces règles), jamais depuis l'app.
+    match /appConfig/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /suggestions/{suggestionId} {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       // Consultées et supprimées depuis l'écran Administration de l'app —
