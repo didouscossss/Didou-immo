@@ -47,7 +47,7 @@ Future<void> _scrollTabListToTop(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('Les 6 onglets se construisent sans erreur, en novice et en avancé',
+  testWidgets('Les 6 onglets se construisent sans erreur, en débutant et en intermédiaire',
       (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
@@ -55,9 +55,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Didou-Immo'), findsOneWidget);
-    // "Le bien" n'est plus un titre unique affiché à l'écran : la section
-    // est désormais scindée en 3 groupes (voir calc_screen.dart), dont
-    // "Informations générales" est le premier visible au chargement.
+    // Mode Débutant par défaut : l'onglet "Bien" affiche l'assistant pas-à-
+    // pas (voir calc_screen.dart `_buildWizard`), dont la première étape
+    // reprend "Informations générales" en haut.
     expect(find.text('Informations générales'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -65,19 +65,20 @@ void main() {
     for (final label in tabs) {
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: 'onglet "$label" (novice)');
+      expect(tester.takeException(), isNull, reason: 'onglet "$label" (débutant)');
     }
 
-    // Bascule en mode avancé et revérifie chaque onglet (affiche des blocs
-    // supplémentaires : offres de prêt, détail des régimes, structures...).
-    await tester.tap(find.text('Avancé'));
+    // Bascule en mode intermédiaire et revérifie chaque onglet (affiche des
+    // blocs supplémentaires : offres de prêt, détail des régimes,
+    // structures..., et la liste classique plutôt que l'assistant).
+    await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
     for (final label in tabs) {
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: 'onglet "$label" (avancé)');
+      expect(tester.takeException(), isNull, reason: 'onglet "$label" (intermédiaire)');
     }
   });
 
@@ -102,6 +103,13 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
+    // liste classique défilante (l'assistant pas-à-pas du mode Débutant a sa
+    // propre navigation, voir calc_screen.dart `_buildWizard`) — ce test
+    // vise le comportement de la liste, pas celui de l'assistant.
+    await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
 
     // Bien 1 (longue durée, par défaut) — enregistré tel quel. Le bouton est
@@ -142,13 +150,12 @@ void main() {
     await tester.tap(find.text('Voir mes biens'));
     await tester.pumpAndSettle();
 
-    // Mode avancé : les barres de comparatif (2 biens) doivent s'afficher.
-    // Le bloc "Comparatif" est plus bas que "Patrimoine acquis" et "Liste
-    // des biens" dans cet onglet — on scrolle jusqu'à ce qu'il soit
-    // construit avant de vérifier son contenu, puis on remonte pour
-    // retrouver "À l'étude" (dans la liste, plus haut) juste après.
-    await tester.tap(find.text('Avancé'));
-    await tester.pumpAndSettle();
+    // Déjà en mode Intermédiaire depuis le début du test : les barres de
+    // comparatif (2 biens) doivent s'afficher. Le bloc "Comparatif" est
+    // plus bas que "Patrimoine acquis" et "Liste des biens" dans cet
+    // onglet — on scrolle jusqu'à ce qu'il soit construit avant de
+    // vérifier son contenu, puis on remonte pour retrouver "À l'étude"
+    // (dans la liste, plus haut) juste après.
     await _scrollTabListToBottom(tester);
     expect(find.text('Rentabilité nette (%)'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -266,6 +273,13 @@ void main() {
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
+    // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
+    // liste classique défilante de l'onglet "Bien" (ce test vérifie la
+    // personnalisation de cette liste, pas l'assistant pas-à-pas du mode
+    // Débutant — voir calc_screen.dart `_buildWizard`).
+    await tester.tap(find.text('Intermédiaire'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
     await tester.pumpAndSettle();
     expect(find.text('Personnaliser mon affichage'), findsOneWidget);
@@ -371,6 +385,11 @@ void main() {
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
+    // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
+    // liste classique défilante (voir calc_screen.dart `_buildWizard`).
+    await tester.tap(find.text('Intermédiaire'));
+    await tester.pumpAndSettle();
+
     // Avant tout enregistrement, le bouton d'export PDF reste désactivé
     // (calcul en cours, pas encore un bien enregistré) et aucune
     // modification "non enregistrée" n'est signalée (rien n'a encore été
@@ -448,6 +467,11 @@ void main() {
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
     await tester.pumpAndSettle();
 
+    // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
+    // liste classique défilante (voir calc_screen.dart `_buildWizard`).
+    await tester.tap(find.text('Intermédiaire'));
+    await tester.pumpAndSettle();
+
     // Avant tout enregistrement : la rentabilité reste verrouillée, pas de
     // bandeau "Étudier un nouveau bien" (rien à réinitialiser sur un bien
     // vierge).
@@ -488,6 +512,11 @@ void main() {
     SharedPreferences.setMockInitialValues({'onboarding-done': true});
 
     await tester.pumpWidget(const DidouImmoApp(firebaseReady: false));
+    await tester.pumpAndSettle();
+
+    // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
+    // liste classique défilante (voir calc_screen.dart `_buildWizard`).
+    await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
 
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));

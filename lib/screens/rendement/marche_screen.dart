@@ -280,7 +280,7 @@ class MarcheScreen extends StatelessWidget {
 
   Widget _sectionScore(RendementState state) {
     final score = state.score;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(

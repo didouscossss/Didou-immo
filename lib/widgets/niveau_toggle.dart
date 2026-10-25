@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../state/rendement_state.dart';
 import '../theme/app_theme.dart';
 
-/// Sélecteur novice / avancé — équivalent de `NiveauToggle`.
+/// Sélecteur des 3 profils — équivalent de `NiveauToggle`.
 class NiveauToggle extends StatelessWidget {
   final NiveauMode niveau;
   final ValueChanged<NiveauMode> onChanged;
@@ -11,8 +11,9 @@ class NiveauToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = [
-      (mode: NiveauMode.novice, label: 'Novice', icon: Icons.auto_awesome_outlined),
-      (mode: NiveauMode.avance, label: 'Avancé', icon: Icons.tune),
+      (mode: NiveauMode.debutant, label: 'Débutant', icon: Icons.auto_awesome_outlined),
+      (mode: NiveauMode.intermediaire, label: 'Intermédiaire', icon: Icons.tune),
+      (mode: NiveauMode.experimente, label: 'Expérimenté', icon: Icons.workspace_premium_outlined),
     ];
     return Container(
       padding: const EdgeInsets.all(2),
@@ -30,7 +31,7 @@ class NiveauToggle extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
               decoration: BoxDecoration(
                 color: active ? AppColors.accent : Colors.transparent,
                 borderRadius: BorderRadius.circular(999),

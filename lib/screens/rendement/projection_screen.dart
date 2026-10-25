@@ -26,7 +26,7 @@ class _ProjectionScreenState extends State<ProjectionScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RendementState>();
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),

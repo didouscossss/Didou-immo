@@ -48,7 +48,7 @@ class FiscaliteScreen extends StatelessWidget {
   Widget _sectionRegimes(RendementState state) {
     final form = state.form;
     final regimes = state.regimes;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
     final sorted = [...regimes]..sort((a, b) => b.netNetPct.compareTo(a.netNetPct));
     final top = sorted.firstWhere((r) => r.eligible, orElse: () => sorted.first);
 
@@ -247,7 +247,7 @@ class FiscaliteScreen extends StatelessWidget {
   }
 
   Widget _sectionStructure(RendementState state) {
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       SectionCard(children: [
