@@ -282,7 +282,7 @@ class _RendementHomeState extends State<RendementHome> {
   /// Bande du haut — [showTitle] à `false` sur la mise en page PC, où le
   /// titre vit déjà dans le menu latéral (voir [_buildSidebar]) ; les
   /// icônes y vivent aussi, donc la bande ne garde alors que le sélecteur
-  /// Novice/Avancé, aligné à droite.
+  /// de profil (Débutant/Intermédiaire/Expérimenté), aligné à droite.
   Widget _buildHeader(RendementState state, {required bool showTitle}) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),

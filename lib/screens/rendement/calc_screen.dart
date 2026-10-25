@@ -45,18 +45,32 @@ class _CalcScreenState extends State<CalcScreen> {
   bool _showFraisAnnexes = false;
   final Set<int> _visiteChecked = {};
 
+  // Étape courante de l'assistant pas-à-pas (mode Débutant uniquement — voir
+  // `_buildWizard`). Jamais persistée : revenir sur l'onglet "Bien" repart
+  // de la première étape, ce qui reste le comportement le plus simple à
+  // comprendre pour quelqu'un qui découvre l'outil.
+  int _wizardStep = 0;
+
   bool get _anyStress => _stressTaux || _stressOccupation || _stressTravaux;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RendementState>();
-    final isNovice = state.niveau == NiveauMode.novice;
+    // Mode Débutant : assistant pas-à-pas dédié (voir `_buildWizard`), pas
+    // la longue liste classique — demandé par l'utilisateur, pour une vraie
+    // différence d'expérience entre les 3 profils plutôt que juste masquer
+    // quelques champs. Intermédiaire et Expérimenté partagent aujourd'hui
+    // la même liste complète (ce qui distinguera vraiment "Expérimenté"
+    // viendra dans un second temps).
+    if (state.niveau == NiveauMode.debutant) {
+      return _buildWizard(state);
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       children: [
         if (state.identityLocked) _newPropertyBanner(state),
-        for (final id in state.visibleSections(AppTab.calc)) ..._buildSection(id, state, isNovice),
+        for (final id in state.visibleSections(AppTab.calc)) ..._buildSection(id, state, false),
       ],
     );
   }
@@ -178,7 +192,7 @@ class _CalcScreenState extends State<CalcScreen> {
 
   Widget _sectionBien(RendementState state) {
     final form = state.form;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     // "Le bien" reste 3 groupes distincts (Informations générales /
@@ -550,7 +564,7 @@ class _CalcScreenState extends State<CalcScreen> {
   Widget _sectionRevenus(RendementState state) {
     final form = state.form;
     final core = state.core;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -743,7 +757,7 @@ class _CalcScreenState extends State<CalcScreen> {
         "Avant de signer, vérifie que le TAEG proposé reste sous le taux d'usure en vigueur (plafond légal, publié chaque trimestre par la Banque de France) — une banque n'a pas le droit de prêter au-dessus, même si l'offre te semble avantageuse.",
       ),
       const SizedBox(height: 12),
-      if (state.niveau == NiveauMode.avance) ...[
+      if (state.niveau != NiveauMode.debutant) ...[
         const SectionTitle('Comparer des offres de prêt', icon: Icons.compare_arrows, color: Color(0xFFD4A72C)),
         ..._buildOffres(state, core),
       ],
@@ -755,7 +769,7 @@ class _CalcScreenState extends State<CalcScreen> {
   Widget _sectionCapacite(RendementState state) {
     final form = state.form;
     final core = state.core;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
     void set(PropertyInput Function(PropertyInput f) updater) => state.updateForm(updater);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -818,7 +832,7 @@ class _CalcScreenState extends State<CalcScreen> {
   Widget _sectionResultats(RendementState state) {
     final form = state.form;
     final core = state.core;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     if (!state.identityLocked) return _sectionResultatsLocked();
 
@@ -895,7 +909,7 @@ class _CalcScreenState extends State<CalcScreen> {
 
   Widget _sectionComparatif(RendementState state) {
     final comparaison = state.comparaison;
-    final isNovice = state.niveau == NiveauMode.novice;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1367,5 +1381,218 @@ class _CalcScreenState extends State<CalcScreen> {
       ));
     }
     return widgets;
+  }
+
+  // ---------------------------------------------------------------------
+  // Mode Débutant — assistant pas-à-pas
+  // ---------------------------------------------------------------------
+
+  /// Assistant pas-à-pas du mode Débutant — demandé par l'utilisateur :
+  /// une vraie différence avec les deux autres profils, pas juste quelques
+  /// champs masqués. Reprend EXACTEMENT les mêmes blocs de saisie que la
+  /// liste classique (`_sectionBien`, `_sectionRevenus`...), un seul à la
+  /// fois, avec une courte explication de l'étape en plus des conseils
+  /// ("Tip") déjà prévus pour ce niveau (voir leurs `if (isNovice) ...`,
+  /// désormais vrais tant que `niveau == debutant`). Le calcul et
+  /// l'enregistrement restent strictement identiques aux autres profils —
+  /// seule la présentation change.
+  Widget _buildWizard(RendementState state) {
+    // Les titres d'étape sont volontairement différents des titres de
+    // section affichés juste en dessous (ex. "Financement" existe déjà
+    // comme SectionTitle dans `_sectionFinancement`) — pas de doublon de
+    // texte à l'écran.
+    final steps = <({String title, String intro, Widget Function() build})>[
+      (
+        title: 'Le bien que tu étudies',
+        intro: "Commence par décrire le bien que tu étudies : où il se trouve, son type, son prix. "
+            "Tu pourras toujours revenir modifier cette étape avant d'enregistrer.",
+        build: () => _sectionBien(state),
+      ),
+      (
+        title: 'Ce que ça rapporte, ce que ça coûte',
+        intro: "Combien ce bien peut rapporter chaque mois, et ce qu'il coûte à faire tourner "
+            "(copropriété, taxe foncière, assurance...).",
+        build: () => _sectionRevenus(state),
+      ),
+      (
+        title: 'Comment tu le finances',
+        intro: "Comment tu comptes financer l'achat — apport, prêt — et si la mensualité reste dans "
+            "ce que les banques acceptent généralement de t'accorder.",
+        build: () => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          _sectionFinancement(state),
+          _sectionCapacite(state),
+        ]),
+      ),
+      (
+        title: 'Le verdict',
+        intro: "Voici ce que ce bien donnerait, chiffres à l'appui — et ce qu'il faudrait surveiller "
+            "avant de te décider.",
+        build: () => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          _sectionResultats(state),
+          if (state.identityLocked) _resultsExplainer(state.core),
+          _sectionSave(state),
+        ]),
+      ),
+    ];
+    final step = _wizardStep.clamp(0, steps.length - 1);
+
+    return Column(children: [
+      _wizardProgress(steps.length, step),
+      Expanded(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          children: [
+            if (state.identityLocked) _newPropertyBanner(state),
+            Text(steps[step].title, style: AppTextStyles.serif(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            const SizedBox(height: 6),
+            Text(
+              steps[step].intro,
+              style: AppTextStyles.sans(fontSize: 13.5, color: AppColors.ink.withValues(alpha: 0.65)).copyWith(height: 1.45),
+            ),
+            const SizedBox(height: 20),
+            steps[step].build(),
+          ],
+        ),
+      ),
+      _wizardNav(step, steps.length),
+    ]);
+  }
+
+  /// Fil de progression en haut de l'assistant — chaque pastille est
+  /// cliquable pour revenir en arrière sans perdre ce qui est déjà saisi
+  /// (rien n'est jamais perdu en changeant d'étape, seul "Enregistrer"
+  /// compte vraiment).
+  Widget _wizardProgress(int total, int step) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      decoration: BoxDecoration(color: AppColors.paper, border: Border(bottom: BorderSide(color: AppColors.border))),
+      child: Row(children: [
+        for (var i = 0; i < total; i++) ...[
+          if (i > 0)
+            Expanded(
+              child: Container(
+                height: 2,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: i <= step ? AppColors.accent : AppColors.border,
+              ),
+            ),
+          GestureDetector(
+            onTap: () => setState(() => _wizardStep = i),
+            child: Container(
+              width: 28,
+              height: 28,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: i <= step ? AppColors.accent : AppColors.surface,
+                border: Border.all(color: i <= step ? AppColors.accent : AppColors.border, width: 1.5),
+              ),
+              child: i < step
+                  ? const Icon(Icons.check, size: 15, color: Colors.white)
+                  : Text(
+                      '${i + 1}',
+                      style: AppTextStyles.mono(fontSize: 12, fontWeight: FontWeight.w600, color: i == step ? Colors.white : AppColors.textMuted),
+                    ),
+            ),
+          ),
+        ],
+      ]),
+    );
+  }
+
+  /// Navigation bas de page — "Suivant" disparaît à la dernière étape : le
+  /// bouton d'enregistrement de `_sectionResultats`/`_sectionSave` prend
+  /// le relais, pas de doublon d'action.
+  Widget _wizardNav(int step, int total) {
+    final isLast = step == total - 1;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      decoration: BoxDecoration(color: AppColors.paper, border: Border(top: BorderSide(color: AppColors.border))),
+      child: Row(children: [
+        if (step > 0)
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => setState(() => _wizardStep--),
+              icon: const Icon(Icons.arrow_back, size: 16),
+              label: const Text('Précédent'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.ink,
+                side: BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        if (step > 0 && !isLast) const SizedBox(width: 12),
+        if (!isLast)
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: () => setState(() => _wizardStep++),
+              icon: const Icon(Icons.arrow_forward, size: 16),
+              label: const Text('Suivant'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+      ]),
+    );
+  }
+
+  /// Explique les 3 chiffres clés en mots simples, avec les montants réels
+  /// de CE bien — demandé par l'utilisateur : la rentabilité/le cash-flow
+  /// ne doivent pas rester une boîte noire pour un premier investisseur.
+  /// Uniquement une fois le bien enregistré (`state.identityLocked`) : tant
+  /// qu'il ne l'est pas, `_sectionResultats` masque déjà ces chiffres
+  /// derrière `_sectionResultatsLocked`, pas la peine de les détailler.
+  Widget _resultsExplainer(CoreResult core) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.calculate_outlined, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Text('Comment ces chiffres sont calculés', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.ink)),
+        ]),
+        const SizedBox(height: 12),
+        _explainRow(
+          'Rentabilité brute',
+          '${fmt(core.brut, 2)} %',
+          'Les loyers que tu encaisserais sur une année (${eur(core.loyerAnnuelBrut)}), divisés par le prix total du '
+              'projet (${eur(core.prixTotal)}) — sans compter les charges.',
+        ),
+        const SizedBox(height: 12),
+        _explainRow(
+          'Rentabilité nette',
+          '${fmt(core.net, 2)} %',
+          'Pareil, mais après avoir retiré les charges annuelles (${eur(core.chargesAnnuelles)}) — c\'est le chiffre '
+              'le plus honnête pour comparer deux biens entre eux.',
+        ),
+        const SizedBox(height: 12),
+        _explainRow(
+          'Cash-flow mensuel',
+          '${core.cashflowMensuel >= 0 ? '+' : ''}${fmt(core.cashflowMensuel)} €',
+          core.cashflowMensuel >= 0
+              ? 'Ce qu\'il te reste chaque mois une fois le crédit (${eur(core.mensualite)}) et les charges payés avec le loyer.'
+              : 'Ce que tu devras ajouter de ta poche chaque mois une fois le crédit (${eur(core.mensualite)}) et les charges payés.',
+        ),
+      ]),
+    );
+  }
+
+  Widget _explainRow(String label, String value, String explanation) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(child: Text(label, style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink))),
+        Text(value, style: AppTextStyles.mono(fontSize: 13, color: AppColors.accent)),
+      ]),
+      const SizedBox(height: 3),
+      Text(explanation, style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.6)).copyWith(height: 1.4)),
+    ]);
   }
 }

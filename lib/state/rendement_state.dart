@@ -13,7 +13,17 @@ import '../services/valoris_service.dart';
 import '../utils/calculations.dart';
 import '../utils/property_input_codec.dart';
 
-enum NiveauMode { novice, avance }
+/// Trois profils, avec une vraie différence de contenu entre chacun (pas
+/// juste "moins de champs") — voir la discussion avec l'utilisateur :
+/// [debutant] remplace l'écran de saisie classique par un assistant pas à
+/// pas avec explications sur chaque chiffre (voir `BienWizardScreen`,
+/// branché dans `RendementHome` dès que `niveau == debutant`) ;
+/// [intermediaire] correspond à l'ancien mode "avancé" — l'écran de saisie
+/// complet, sans accompagnement superflu, qui reste l'expérience par
+/// défaut une fois les bases acquises ; [experimente] reprend tout
+/// `intermediaire` et y ajoute les options pensées pour un investisseur
+/// aguerri (voir les écrans concernés).
+enum NiveauMode { debutant, intermediaire, experimente }
 
 const _biensKey = 'biens-list';
 const _onboardingKey = 'onboarding-done';
@@ -37,7 +47,7 @@ class RendementState extends ChangeNotifier {
   final ValorisService _valoris = ValorisService();
 
   PropertyInput form = PropertyInput.defaultForm();
-  NiveauMode niveau = NiveauMode.novice;
+  NiveauMode niveau = NiveauMode.debutant;
   List<SavedProperty> biens = [];
   bool loaded = false;
   bool showOnboarding = false;

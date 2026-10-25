@@ -75,7 +75,7 @@ class _BiensScreenState extends State<BiensScreen> {
       case 'liste':
         return [_sectionListe(state)];
       case 'comparatif':
-        return state.niveau == NiveauMode.avance && state.biens.length > 1 ? [_sectionComparatif(state)] : const [];
+        return state.niveau != NiveauMode.debutant && state.biens.length > 1 ? [_sectionComparatif(state)] : const [];
       case 'historique':
         final vendus = state.biens.where((b) => b.form.vendu).toList();
         return vendus.isEmpty ? const [] : [_sectionHistorique(vendus)];
