@@ -46,6 +46,7 @@ const Map<NiveauMode, _NiveauInfo> _niveauInfo = {
       "Tout ce qu'offre le mode Intermédiaire",
       "Pondère toi-même le score (priorise cash-flow, rendement, marché...)",
       "Charges annexes avancées : assurance loyers impayés, provision gros travaux, CFE",
+      "Seuils de rentabilité calculés automatiquement : jusqu'où le prix, le taux, le loyer ou l'occupation peuvent se dégrader avant un cash-flow négatif",
     ],
   ),
 };

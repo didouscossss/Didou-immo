@@ -687,6 +687,114 @@ CoreResult computeCore(PropertyInput f) {
 }
 
 // ---------------------------------------------------------------------------
+// Seuils de rentabilité (mode Expérimenté)
+// ---------------------------------------------------------------------------
+
+/// Jusqu'où le montage encaisse une dégradation, toutes choses égales par
+/// ailleurs, avant que le cash-flow mensuel passe sous zéro — complète le
+/// stress-test manuel (`calc_screen.dart` `_sectionStressTest`, disponible
+/// dès l'Intermédiaire) par une lecture automatique des marges de sécurité
+/// du dossier. `null` signifie qu'aucun seuil n'a été trouvé dans la plage
+/// testée : soit le cash-flow est déjà négatif avant même d'appliquer le
+/// choc, soit il reste positif jusqu'au bout de la plage (marge très large).
+class BreakevenResult {
+  final double? prixMax;
+  final double? tauxMax;
+  final double? baisseLoyerMaxPct;
+  final double? baisseOccupationMaxPct;
+
+  const BreakevenResult({
+    required this.prixMax,
+    required this.tauxMax,
+    required this.baisseLoyerMaxPct,
+    required this.baisseOccupationMaxPct,
+  });
+}
+
+/// Recherche binaire du seuil où `cashflowAt` passe de positif à négatif sur
+/// `[lo, hi]`, en supposant `cashflowAt` monotone sur cet intervalle.
+/// `increasingBad` indique si augmenter la variable dégrade le cash-flow
+/// (prix, taux, baisse de loyer/occupation) — c'est toujours le cas pour
+/// les quatre seuils calculés par [computeBreakeven], mais le paramètre
+/// garde la fonction réutilisable si un futur seuil allait dans l'autre
+/// sens.
+double? _breakevenSearch(double lo, double hi, double Function(double) cashflowAt, {required bool increasingBad}) {
+  final cfLo = cashflowAt(lo);
+  final cfHi = cashflowAt(hi);
+  double a, b;
+  if (increasingBad) {
+    if (cfLo < 0 || cfHi >= 0) return null;
+    a = lo;
+    b = hi; // cashflowAt(a) >= 0, cashflowAt(b) < 0
+    for (var i = 0; i < 30; i++) {
+      final mid = (a + b) / 2;
+      if (cashflowAt(mid) >= 0) {
+        a = mid;
+      } else {
+        b = mid;
+      }
+    }
+  } else {
+    if (cfHi < 0 || cfLo >= 0) return null;
+    a = lo;
+    b = hi; // cashflowAt(a) < 0, cashflowAt(b) >= 0
+    for (var i = 0; i < 30; i++) {
+      final mid = (a + b) / 2;
+      if (cashflowAt(mid) >= 0) {
+        b = mid;
+      } else {
+        a = mid;
+      }
+    }
+  }
+  return (a + b) / 2;
+}
+
+BreakevenResult computeBreakeven(PropertyInput f) {
+  double cf(PropertyInput g) => computeCore(g).cashflowMensuel;
+
+  final prixMax = _breakevenSearch(
+    0,
+    max(f.prix * 4, f.prix + 500000),
+    (p) => cf(f.copyWith(prix: p)),
+    increasingBad: true,
+  );
+
+  final tauxMax = _breakevenSearch(0, 20, (t) => cf(f.copyWith(tauxPct: t)), increasingBad: true);
+
+  final baisseLoyerMaxPct = _breakevenSearch(
+    0,
+    100,
+    (pct) => cf(f.mode == RentalMode.longue
+        ? f.copyWith(loyer: f.loyer * (1 - pct / 100))
+        : f.copyWith(
+            prixNuitBasse: f.prixNuitBasse * (1 - pct / 100),
+            prixNuitHaute: f.prixNuitHaute * (1 - pct / 100),
+          )),
+    increasingBad: true,
+  );
+
+  final baisseOccupationMaxPct = _breakevenSearch(
+    0,
+    100,
+    (pct) => cf(f.mode == RentalMode.longue
+        ? f.copyWith(vacancePct: (100 - (100 - f.vacancePct) * (1 - pct / 100)).clamp(0, 100).toDouble())
+        : f.copyWith(
+            nuitsBasseSaison: (f.nuitsBasseSaison * (1 - pct / 100)).round(),
+            nuitsHauteSaison: (f.nuitsHauteSaison * (1 - pct / 100)).round(),
+          )),
+    increasingBad: true,
+  );
+
+  return BreakevenResult(
+    prixMax: prixMax,
+    tauxMax: tauxMax,
+    baisseLoyerMaxPct: baisseLoyerMaxPct,
+    baisseOccupationMaxPct: baisseOccupationMaxPct,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Régimes fiscaux
 // ---------------------------------------------------------------------------
 

@@ -160,11 +160,12 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   /// Blocs de l'onglet "Bien" — voir `kTabSections[AppTab.calc]` et
-  /// `SectionCustomizationScreen`. 'stress_test' reste filtré par niveau
-  /// ici, quel que soit l'ordre/la visibilité choisis par l'utilisateur
-  /// (voir `tab_sections.dart`) ; 'resultats'/'comparatif'/'stress_test'
-  /// restent verrouillés (voir `_sectionResultats`) tant que ce bien n'a
-  /// jamais été enregistré.
+  /// `SectionCustomizationScreen`. 'stress_test' et 'seuils_rentabilite'
+  /// restent filtrés par niveau ici, quel que soit l'ordre/la visibilité
+  /// choisis par l'utilisateur (voir `tab_sections.dart`) ;
+  /// 'resultats'/'comparatif'/'stress_test'/'seuils_rentabilite' restent
+  /// verrouillés (voir `_sectionResultats`) tant que ce bien n'a jamais été
+  /// enregistré.
   List<Widget> _buildSection(String id, RendementState state, bool isNovice) {
     switch (id) {
       case 'bien':
@@ -181,6 +182,8 @@ class _CalcScreenState extends State<CalcScreen> {
         return state.identityLocked ? [_sectionComparatif(state)] : const [];
       case 'stress_test':
         return isNovice || !state.identityLocked ? const [] : [_sectionStressTest(state)];
+      case 'seuils_rentabilite':
+        return state.niveau != NiveauMode.experimente || !state.identityLocked ? const [] : [_sectionSeuils(state)];
       case 'save':
         return [_sectionSave(state)];
       case 'export':
@@ -1067,6 +1070,67 @@ class _CalcScreenState extends State<CalcScreen> {
               ),
             ]),
           ),
+      ]),
+    );
+  }
+
+  // Exclusif au mode Expérimenté : complète le stress-test manuel
+  // ci-dessus (où l'utilisateur choisit lui-même l'ampleur du choc) par une
+  // lecture automatique des marges de sécurité du dossier — jusqu'où
+  // chaque paramètre peut se dégrader avant que le cash-flow passe sous
+  // zéro, calculé par recherche binaire (voir `computeBreakeven`).
+  Widget _sectionSeuils(RendementState state) {
+    final form = state.form;
+    final breakeven = computeBreakeven(form);
+    final seuils = [breakeven.prixMax, breakeven.tauxMax, breakeven.baisseLoyerMaxPct, breakeven.baisseOccupationMaxPct];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.shield_outlined, size: 15, color: AppColors.accent),
+          const SizedBox(width: 8),
+          Text('Seuils de rentabilité', style: AppTextStyles.sans(fontSize: 13.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+        ]),
+        const SizedBox(height: 4),
+        Text(
+          "Jusqu'où chaque paramètre peut se dégrader, toutes choses égales par ailleurs, avant que le cash-flow mensuel passe sous zéro.",
+          style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5)),
+        ),
+        const SizedBox(height: 12),
+        _seuilRow("Prix d'achat maximum", breakeven.prixMax == null ? null : eur(breakeven.prixMax!), current: 'actuellement ${eur(form.prix)}'),
+        _seuilRow("Taux d'emprunt maximum", breakeven.tauxMax == null ? null : '${fmt(breakeven.tauxMax!, 2)} %', current: 'actuellement ${fmt(form.tauxPct, 2)} %'),
+        _seuilRow('Baisse de loyer supportable', breakeven.baisseLoyerMaxPct == null ? null : '-${fmt(breakeven.baisseLoyerMaxPct!, 0)} %'),
+        _seuilRow("Baisse d'occupation supportable", breakeven.baisseOccupationMaxPct == null ? null : '-${fmt(breakeven.baisseOccupationMaxPct!, 0)} %'),
+        if (seuils.contains(null))
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              '— : déjà négatif à ce niveau, ou marge trop large pour être atteinte dans la plage testée.',
+              style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.45)),
+            ),
+          ),
+      ]),
+    );
+  }
+
+  Widget _seuilRow(String label, String? value, {String? current}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: AppTextStyles.sans(fontSize: 12.5, color: AppColors.ink.withValues(alpha: 0.7))),
+            if (current != null)
+              Text(current, style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.4))),
+          ]),
+        ),
+        Text(
+          value ?? '—',
+          style: AppTextStyles.mono(fontSize: 13.5, color: value == null ? AppColors.ink.withValues(alpha: 0.35) : AppColors.accent),
+        ),
       ]),
     );
   }
