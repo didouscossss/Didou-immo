@@ -451,7 +451,11 @@ class _RendementHomeState extends State<RendementHome> {
       if (!mounted) return;
       await showPropertySavedDialog(context, state: state, isNewProperty: isNewProperty);
       if (!mounted) return;
-      _setActive(AppTab.biens);
+      // Le bouton "Faire le stress-test" de la pop-up (voir
+      // `property_saved_dialog.dart`) pose ce signal avant de se fermer —
+      // dans ce cas, rouvrir "Bien" (où `CalcScreen` le lira à son tour)
+      // plutôt que "Comparer" comme d'habitude.
+      _setActive(state.focusStressTest ? AppTab.calc : AppTab.biens);
       return;
     }
     final account = context.read<UserAccountState>();
@@ -474,7 +478,7 @@ class _RendementHomeState extends State<RendementHome> {
     if (!mounted) return;
     await showPropertySavedDialog(context, state: state, isNewProperty: isNewProperty);
     if (!mounted) return;
-    _setActive(AppTab.biens);
+    _setActive(state.focusStressTest ? AppTab.calc : AppTab.biens);
   }
 
   // Chaque écran est reconstruit entièrement (clé sur darkMode + niveau,

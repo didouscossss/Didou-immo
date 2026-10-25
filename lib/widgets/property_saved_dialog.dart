@@ -168,20 +168,24 @@ Future<void> showPropertySavedDialog(
             ],
             // Demandé par l'utilisateur : le message d'info en bas de
             // l'onglet "Bien" (voir `calc_screen.dart` `_sectionSave`) se
-            // "fondait dans la masse" — un bloc à part, ici, dans la pop-up
-            // que tout le monde voit juste après avoir enregistré, pour
-            // être sûr que l'existence du stress-test/des seuils de
-            // rentabilité ne passe pas inaperçue.
-            if (state.niveau != NiveauMode.debutant) ...[
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-                ),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // "fondait dans la masse" — sans un bouton qui y mène
+            // directement, personne ne savait que le stress-test existait
+            // sans aller modifier le bien et défiler jusqu'en bas. Présent
+            // dans les trois profils désormais (le stress-test lui-même
+            // est accessible dès le Débutant — voir `_sectionStressTest`).
+            // `state.focusStressTest` est lu par `RendementHome._handleSave`
+            // (pour rouvrir "Bien" plutôt que "Comparer") puis par
+            // `CalcScreen` (pour s'ouvrir directement sur le stress-test).
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Icon(Icons.bolt, size: 16, color: AppColors.accent),
                   const SizedBox(width: 10),
                   Expanded(
@@ -189,16 +193,39 @@ Future<void> showPropertySavedDialog(
                       Text('Pour aller plus loin', style: AppTextStyles.sans(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.ink)),
                       const SizedBox(height: 4),
                       Text(
-                        state.niveau == NiveauMode.experimente
-                            ? 'Ce bien peut maintenant être stress-testé et ses seuils de rentabilité calculés automatiquement — tout en bas de cet onglet "Bien".'
-                            : 'Ce bien peut maintenant être stress-testé (scénarios dégradés : taux, vacance, travaux imprévus) — tout en bas de cet onglet "Bien".',
+                        switch (state.niveau) {
+                          NiveauMode.debutant =>
+                            "Teste comment ce bien réagirait à un imprévu — taux qui monte, locataire qui part, travaux — avant de te décider. Didou t'explique chaque scénario en même temps.",
+                          NiveauMode.intermediaire =>
+                            'Teste comment ce bien réagirait à un imprévu (taux, vacance, travaux imprévus) avant de te décider.',
+                          NiveauMode.experimente =>
+                            'Teste comment ce bien réagirait à un imprévu (taux, vacance, travaux imprévus), et retrouve ses seuils de rentabilité calculés automatiquement.',
+                        },
                         style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.75)).copyWith(height: 1.4),
                       ),
                     ]),
                   ),
                 ]),
-              ),
-            ],
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      state.requestStressTestFocus();
+                      Navigator.of(context).pop();
+                    },
+                    icon: const Icon(Icons.bolt, size: 16),
+                    label: const Text('Faire le stress-test'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: BorderSide(color: AppColors.accent.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
             const SizedBox(height: 18),
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Icon(Icons.info_outline, size: 14, color: AppColors.ink.withValues(alpha: 0.5)),
