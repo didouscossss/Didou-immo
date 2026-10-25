@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../state/rendement_state.dart';
+
 /// Jetons de design — refonte visuelle complète (voir la maquette/charte
 /// détaillée fournie par l'utilisateur : 4 variantes Novice/Avancé ×
-/// Jour/Nuit, avec codes hex précis pour chacune).
+/// Jour/Nuit, avec codes hex précis pour chacune), puis étendue à un
+/// troisième jeu de couleurs pour le mode Expérimenté (demandé par
+/// l'utilisateur : qu'il se distingue visuellement de l'Intermédiaire, pas
+/// seulement par son contenu) — vert/Débutant, violet/Intermédiaire,
+/// sarcelle/Expérimenté.
 ///
 /// Champs calculés (pas `const`) plutôt que fixes, pour pouvoir s'adapter au
 /// mode nuit (voir [setDark], piloté par `RendementState.darkMode`) et au
-/// niveau (voir [setNovice], piloté par `RendementState.niveau`) sans avoir
+/// niveau (voir [setNiveau], piloté par `RendementState.niveau`) sans avoir
 /// à passer le thème explicitement à chaque écran — tout le reste de l'app
 /// lit ces jetons directement (`AppColors.ink`, etc.), l'équivalent Dart des
 /// variables CSS `--color-*` d'un design system web.
@@ -16,13 +22,16 @@ class AppColors {
   static void setDark(bool value) => _dark = value;
   static bool get isDark => _dark;
 
-  static bool _novice = false;
-  static void setNovice(bool value) => _novice = value;
-  static bool get isNovice => _novice;
+  static NiveauMode _niveau = NiveauMode.debutant;
+  static void setNiveau(NiveauMode value) => _niveau = value;
+  static NiveauMode get niveau => _niveau;
+  static bool get _isDebutant => _niveau == NiveauMode.debutant;
+  static bool get _isExperimente => _niveau == NiveauMode.experimente;
 
   /// Texte principal.
   static Color get ink {
-    if (_novice) return _dark ? const Color(0xFFF1F9F5) : const Color(0xFF10251A);
+    if (_isDebutant) return _dark ? const Color(0xFFF1F9F5) : const Color(0xFF10251A);
+    if (_isExperimente) return _dark ? const Color(0xFFECFDF9) : const Color(0xFF0F3B33);
     return _dark ? const Color(0xFFF8FAFC) : const Color(0xFF1E1B4B);
   }
 
@@ -31,22 +40,26 @@ class AppColors {
   /// pour ce rôle. Les écrans pas encore retouchés continuent d'utiliser
   /// `ink.withValues(alpha: ...)`, remplacé progressivement page par page.
   static Color get textMuted {
-    if (_novice) return _dark ? const Color(0xFF9EB7AB) : const Color(0xFF66756C);
+    if (_isDebutant) return _dark ? const Color(0xFF9EB7AB) : const Color(0xFF66756C);
+    if (_isExperimente) return _dark ? const Color(0xFF8FBDB5) : const Color(0xFF5A776F);
     return _dark ? const Color(0xFF94A3B8) : const Color(0xFF687280);
   }
 
   /// Couleur d'accent principale (CTA, éléments actifs, chiffres clés
-  /// positifs) — vert en mode novice, violet en mode avancé ; plus clair en
-  /// mode nuit pour rester lisible sur fond sombre.
+  /// positifs) — vert en Débutant, violet en Intermédiaire, sarcelle en
+  /// Expérimenté ; plus clair en mode nuit pour rester lisible sur fond
+  /// sombre.
   static Color get accent {
-    if (_novice) return _dark ? const Color(0xFF34D399) : const Color(0xFF1F8A5B);
+    if (_isDebutant) return _dark ? const Color(0xFF34D399) : const Color(0xFF1F8A5B);
+    if (_isExperimente) return _dark ? const Color(0xFF2DD4BF) : const Color(0xFF0D9488);
     return _dark ? const Color(0xFFA78BFA) : const Color(0xFF7C3AED);
   }
 
   /// Accent secondaire — un cran plus doux que [accent], pour varier sans
   /// sortir de la famille de teinte (ex. icônes secondaires, dégradés).
   static Color get accentSecondary {
-    if (_novice) return _dark ? const Color(0xFF10B981) : const Color(0xFF49B97A);
+    if (_isDebutant) return _dark ? const Color(0xFF10B981) : const Color(0xFF49B97A);
+    if (_isExperimente) return const Color(0xFF14B8A6);
     return _dark ? const Color(0xFF8B5CF6) : const Color(0xFF8B5CF6);
   }
 
@@ -54,51 +67,56 @@ class AppColors {
   /// contrasté pour du texte, seulement pour un aplat derrière une icône ou
   /// un petit texte déjà coloré par ailleurs.
   static Color get accentSoft {
-    if (_novice) return _dark ? const Color(0xFF8CF0C3) : const Color(0xFFDDF4E7);
+    if (_isDebutant) return _dark ? const Color(0xFF8CF0C3) : const Color(0xFFDDF4E7);
+    if (_isExperimente) return _dark ? const Color(0xFF0D9488) : const Color(0xFFCCFBF1);
     return _dark ? const Color(0xFF7C3AED) : const Color(0xFFEDE9FE);
   }
 
-  /// Couleur "attention" (avertissement) — commune aux deux modes, pilotée
-  /// par le mode nuit.
+  /// Couleur "attention" (avertissement) — commune aux trois niveaux,
+  /// pilotée par le mode nuit.
   static Color get gold => _dark ? const Color(0xFFFBBF24) : const Color(0xFFF59E0B);
 
-  /// Couleur "erreur" — commune aux deux modes, pilotée par le mode nuit et
-  /// (légèrement) par le niveau, comme spécifié par la charte.
+  /// Couleur "erreur" — commune à Intermédiaire/Expérimenté, pilotée par le
+  /// mode nuit et (légèrement) par le niveau, comme spécifié par la charte.
   static Color get alert {
-    if (_dark) return _novice ? const Color(0xFFF87171) : const Color(0xFFFB7185);
+    if (_dark) return _isDebutant ? const Color(0xFFF87171) : const Color(0xFFFB7185);
     return const Color(0xFFEF4444);
   }
 
-  /// Vert "succès" — jeton à part entière, commun aux deux modes (distinct
-  /// de [accent] en novice : la charte traite les accents sémantiques
-  /// succès/attention/erreur comme une palette partagée, séparée de la
-  /// couleur de marque de chaque mode).
+  /// Vert "succès" — jeton à part entière, commun aux trois niveaux
+  /// (distinct de [accent] en Débutant : la charte traite les accents
+  /// sémantiques succès/attention/erreur comme une palette partagée,
+  /// séparée de la couleur de marque de chaque mode).
   static Color get good {
     if (_dark) return const Color(0xFF34D399);
-    return _novice ? const Color(0xFF109B81) : const Color(0xFF10B981);
+    return _isDebutant ? const Color(0xFF109B81) : const Color(0xFF10B981);
   }
 
   static Color get border {
-    if (_novice) return _dark ? const Color(0xFF2D5C49) : const Color(0xFFDCE8E0);
+    if (_isDebutant) return _dark ? const Color(0xFF2D5C49) : const Color(0xFFDCE8E0);
+    if (_isExperimente) return _dark ? const Color(0xFF1F544C) : const Color(0xFFD9EDE9);
     return _dark ? const Color(0xFF3F3A78) : const Color(0xFFE2E0F0);
   }
 
   /// Fond principal de l'app (Scaffold).
   static Color get paper {
-    if (_novice) return _dark ? const Color(0xFF0B1F18) : const Color(0xFFF7FBF8);
+    if (_isDebutant) return _dark ? const Color(0xFF0B1F18) : const Color(0xFFF7FBF8);
+    if (_isExperimente) return _dark ? const Color(0xFF07211D) : const Color(0xFFF6FBFA);
     return _dark ? const Color(0xFF0F172A) : const Color(0xFFF8F7FC);
   }
 
   /// Fond secondaire — pour distinguer une section du fond principal sans
   /// passer par une carte à part entière (ex. bandeau, zone groupée).
   static Color get paperSecondary {
-    if (_novice) return _dark ? const Color(0xFF10271F) : const Color(0xFFEEF8F1);
+    if (_isDebutant) return _dark ? const Color(0xFF10271F) : const Color(0xFFEEF8F1);
+    if (_isExperimente) return _dark ? const Color(0xFF0D2B26) : const Color(0xFFEAF7F4);
     return _dark ? const Color(0xFF15162E) : const Color(0xFFF1EEFB);
   }
 
   /// Fond des cartes/encadrés.
   static Color get surface {
-    if (_novice) return _dark ? const Color(0xFF143429) : const Color(0xFFFFFFFF);
+    if (_isDebutant) return _dark ? const Color(0xFF143429) : const Color(0xFFFFFFFF);
+    if (_isExperimente) return _dark ? const Color(0xFF113B34) : const Color(0xFFFFFFFF);
     return _dark ? const Color(0xFF1E1B4B) : const Color(0xFFFFFFFF);
   }
 
@@ -106,30 +124,42 @@ class AppColors {
   /// sombre, pour empiler des niveaux de profondeur (carte dans une carte,
   /// zone mise en avant) sans jamais toucher au noir pur.
   static Color get surfaceElevated {
-    if (_novice) return _dark ? const Color(0xFF1B4033) : const Color(0xFFEEF9F3);
+    if (_isDebutant) return _dark ? const Color(0xFF1B4033) : const Color(0xFFEEF9F3);
+    if (_isExperimente) return _dark ? const Color(0xFF16483F) : const Color(0xFFE7F7F3);
     return _dark ? const Color(0xFF26205A) : const Color(0xFFF5F1FF);
   }
 
   /// Dégradé des cartes "chiffres clés" (patrimoine, cash-flow...) — vert
-  /// doux en novice (identique jour/nuit), violet clair→principal en avancé
-  /// de jour, violet profond→principal en avancé de nuit. Volontairement
-  /// resserré sur une seule famille de teinte (pas de rose/orange mêlés)
-  /// pour que les courbes tracées par-dessus (ex. cash-flow du portefeuille)
-  /// restent lisibles.
+  /// doux en Débutant (identique jour/nuit), violet en Intermédiaire,
+  /// sarcelle en Expérimenté (clair→principal de jour, profond→principal→
+  /// clair de nuit). Volontairement resserré sur une seule famille de
+  /// teinte par niveau (pas de couleurs mêlées) pour que les courbes
+  /// tracées par-dessus (ex. cash-flow du portefeuille) restent lisibles.
   static List<Color> get heroGradient {
-    if (_novice) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
+    if (_isDebutant) return const [Color(0xFF6FA97F), Color(0xFF3D6B4A)];
+    if (_isExperimente) {
+      return _dark
+          ? const [Color(0xFF134E4A), Color(0xFF0D9488), Color(0xFF2DD4BF)]
+          : const [Color(0xFF5EEAD4), Color(0xFF0D9488)];
+    }
     return _dark
         ? const [Color(0xFF312E81), Color(0xFF7C3AED), Color(0xFFA78BFA)]
         : const [Color(0xFFA78BFA), Color(0xFF7C3AED)];
   }
 
   /// Bande dégradée derrière le titre de chaque section (voir
-  /// `SectionTitle`) — terre cuite en mode novice, violet en mode avancé.
+  /// `SectionTitle`) — terre cuite en Débutant, violet en Intermédiaire,
+  /// sarcelle en Expérimenté.
   static List<Color> get sectionBandGradient {
-    if (_novice) {
+    if (_isDebutant) {
       return _dark
           ? const [Color(0xFF8B4226), Color(0xFFC97B4E)]
           : const [Color(0xFFE8956B), Color(0xFFF6D9BE)];
+    }
+    if (_isExperimente) {
+      return _dark
+          ? const [Color(0xFF134E4A), Color(0xFF0D9488)]
+          : const [Color(0xFF5EEAD4), Color(0xFFCCFBF1)];
     }
     return _dark
         ? const [Color(0xFF312E81), Color(0xFF7C3AED)]
@@ -139,10 +169,15 @@ class AppColors {
   /// Dégradé de fond de l'app (écran principal à onglets) — un voile doux,
   /// haut→bas, dans la même famille de teinte que [paper].
   static List<Color> get backgroundGradient {
-    if (_novice) {
+    if (_isDebutant) {
       return _dark
           ? const [Color(0xFF123B27), Color(0xFF07160F)]
           : const [Color(0xFFF7FBF8), Color(0xFFEEF8F1)];
+    }
+    if (_isExperimente) {
+      return _dark
+          ? const [Color(0xFF113B34), Color(0xFF07211D)]
+          : const [Color(0xFFF6FBFA), Color(0xFFEAF7F4)];
     }
     return _dark
         ? const [Color(0xFF0F172A), Color(0xFF1E1B4B)]
@@ -202,14 +237,14 @@ class AppTextStyles {
   static TextStyle label({Color? color}) => sans(fontSize: 15, fontWeight: FontWeight.w600, color: color ?? AppColors.ink);
 }
 
-/// [dark] doit refléter `RendementState.darkMode`, [novice]
-/// `RendementState.niveau` — appelés à chaque changement (voir `main.dart`),
-/// pour que le thème Material lui-même (fond de Scaffold, AppBar...) suive
-/// le mode nuit et le niveau, pas seulement les widgets qui lisent
-/// `AppColors.xxx` directement à chaque rebuild.
-ThemeData buildAppTheme({required bool dark, required bool novice}) {
+/// [dark] et [niveau] doivent refléter `RendementState.darkMode`/`.niveau`
+/// — appelés à chaque changement (voir `main.dart`), pour que le thème
+/// Material lui-même (fond de Scaffold, AppBar...) suive le mode nuit et le
+/// niveau, pas seulement les widgets qui lisent `AppColors.xxx` directement
+/// à chaque rebuild.
+ThemeData buildAppTheme({required bool dark, required NiveauMode niveau}) {
   AppColors.setDark(dark);
-  AppColors.setNovice(novice);
+  AppColors.setNiveau(niveau);
   final base = ThemeData(
     useMaterial3: true,
     brightness: dark ? Brightness.dark : Brightness.light,
