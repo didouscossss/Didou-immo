@@ -986,12 +986,18 @@ class _CalcScreenState extends State<CalcScreen> {
     );
   }
 
-  // Réservé au mode Avancé : le VerdictCard (novice, section "resultats")
-  // donne déjà une lecture qualitative du risque sans avoir à manier des
-  // scénarios chiffrés.
+  // Accessible dès le mode Débutant (voir `_buildWizard`, étape "Le
+  // verdict") — demandé par l'utilisateur : utile pour comprendre ce qui
+  // peut arriver même sans maîtriser les chiffres, à condition de garder
+  // l'esprit du mode Débutant (expliquer pourquoi et à quoi ça sert, pas
+  // juste poser des curseurs). Le `Tip` d'introduction ci-dessous ne
+  // s'affiche donc qu'en Débutant ; Intermédiaire/Expérimenté gardent le
+  // même outil sans ce préambule, qu'ils n'ont plus besoin de lire à
+  // chaque fois.
   Widget _sectionStressTest(RendementState state) {
     final form = state.form;
     final core = state.core;
+    final isNovice = state.niveau == NiveauMode.debutant;
 
     final tauxDelta = _stressTaux ? _stressTauxPts : 0.0;
     final occDelta = _stressOccupation ? _stressOccupationPct : 0.0;
@@ -1019,6 +1025,11 @@ class _CalcScreenState extends State<CalcScreen> {
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (isNovice)
+          const Tip(
+            "Personne ne peut prédire l'avenir : les taux peuvent monter, un locataire partir, des travaux imprévus arriver. "
+            'Coche un ou plusieurs scénarios ci-dessous pour voir si ce bien resterait viable même dans ces cas-là, avant de te décider.',
+          ),
         Row(children: [
           Icon(Icons.bolt, size: 15, color: AppColors.accent),
           const SizedBox(width: 8),
@@ -1552,6 +1563,7 @@ class _CalcScreenState extends State<CalcScreen> {
         build: () => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           _sectionResultats(state),
           if (state.identityLocked) _resultsExplainer(state.core),
+          if (state.identityLocked) _sectionStressTest(state),
           _sectionSave(state),
         ]),
       ),

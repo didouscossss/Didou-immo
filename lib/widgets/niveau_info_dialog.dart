@@ -25,6 +25,7 @@ const Map<NiveauMode, _NiveauInfo> _niveauInfo = {
       "Une explication sur chaque champ et chaque chiffre clé",
       "Des conseils contextuels de Didou au fil de la saisie",
       "Un verdict en langage clair à la fin : ce bien a l'air solide, ou à surveiller",
+      "Un simulateur \"Et si...?\" pour voir si ce bien resterait viable face à un imprévu (taux qui monte, locataire qui part, travaux)",
     ],
   ),
   NiveauMode.intermediaire: _NiveauInfo(
