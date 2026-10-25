@@ -48,14 +48,44 @@ class _CalcScreenState extends State<CalcScreen> {
   // Étape courante de l'assistant pas-à-pas (mode Débutant uniquement — voir
   // `_buildWizard`). Jamais persistée : revenir sur l'onglet "Bien" repart
   // de la première étape, ce qui reste le comportement le plus simple à
-  // comprendre pour quelqu'un qui découvre l'outil.
+  // comprendre pour quelqu'un qui découvre l'outil — sauf si on y revient
+  // via `RendementState.focusStressTest` (voir plus bas), qui saute
+  // directement à la dernière étape.
   int _wizardStep = 0;
+
+  // Repère le widget du stress-test (voir `_sectionStressTest`), construit
+  // soit dans la liste classique soit dans l'assistant selon le profil —
+  // jamais les deux en même temps (une seule `_CalcScreenState` à la fois
+  // suit la branche Débutant OU la branche classique). Permet d'y scroller
+  // directement sans connaître sa position dans la liste.
+  final GlobalKey _stressTestKey = GlobalKey();
 
   bool get _anyStress => _stressTaux || _stressOccupation || _stressTravaux;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<RendementState>();
+    // Demandé par l'utilisateur : le bouton "Faire le stress-test" de la
+    // pop-up de sauvegarde (voir `property_saved_dialog.dart`,
+    // `RendementState.requestStressTestFocus`) doit ouvrir directement sur
+    // le stress-test, pas juste sur l'onglet "Bien" tel quel. En Débutant,
+    // ça veut dire sauter à la dernière étape de l'assistant (où vit le
+    // stress-test, voir `_buildWizard`) ; dans tous les cas, y scroller une
+    // fois le cadre construit (voir `_stressTestKey`). La remise à `false`
+    // ci-dessous n'a pas besoin de notifier : rien d'autre n'en dépend.
+    if (state.focusStressTest) {
+      state.focusStressTest = false;
+      // Grande valeur plutôt que l'index exact de "Le verdict" : `_buildWizard`
+      // la ramène de toute façon à la dernière étape valide via `.clamp`,
+      // sans dépendre ici du nombre d'étapes de l'assistant.
+      if (state.niveau == NiveauMode.debutant) _wizardStep = 999;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _stressTestKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(ctx, duration: const Duration(milliseconds: 400), curve: Curves.easeOutCubic, alignment: 0.1);
+        }
+      });
+    }
     // Mode Débutant : assistant pas-à-pas dédié (voir `_buildWizard`), pas
     // la longue liste classique — demandé par l'utilisateur, pour une vraie
     // différence d'expérience entre les 3 profils plutôt que juste masquer
@@ -181,7 +211,7 @@ class _CalcScreenState extends State<CalcScreen> {
       case 'comparatif':
         return state.identityLocked ? [_sectionComparatif(state)] : const [];
       case 'stress_test':
-        return isNovice || !state.identityLocked ? const [] : [_sectionStressTest(state)];
+        return isNovice || !state.identityLocked ? const [] : [KeyedSubtree(key: _stressTestKey, child: _sectionStressTest(state))];
       case 'seuils_rentabilite':
         return state.niveau != NiveauMode.experimente || !state.identityLocked ? const [] : [_sectionSeuils(state)];
       case 'save':
@@ -1563,7 +1593,7 @@ class _CalcScreenState extends State<CalcScreen> {
         build: () => Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           _sectionResultats(state),
           if (state.identityLocked) _resultsExplainer(state.core),
-          if (state.identityLocked) _sectionStressTest(state),
+          if (state.identityLocked) KeyedSubtree(key: _stressTestKey, child: _sectionStressTest(state)),
           _sectionSave(state),
         ]),
       ),

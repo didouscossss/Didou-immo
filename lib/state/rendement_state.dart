@@ -49,6 +49,29 @@ class RendementState extends ChangeNotifier {
   PropertyInput form = PropertyInput.defaultForm();
   NiveauMode niveau = NiveauMode.debutant;
 
+  /// Signal ponctuel posé par le bouton "Faire le stress-test" de la pop-up
+  /// affichée après l'enregistrement (voir `property_saved_dialog.dart`) —
+  /// demandé par l'utilisateur : sans ce bouton, personne ne savait que le
+  /// stress-test existait sans aller modifier le bien et défiler jusqu'en
+  /// bas. `RendementHome._handleSave` le lit pour rouvrir l'onglet "Bien"
+  /// plutôt que "Comparer" ; `CalcScreen` le lit à son tour pour s'ouvrir
+  /// directement sur le stress-test (bascule l'assistant à sa dernière
+  /// étape en Débutant, ou y scrolle directement sinon), puis le remet à
+  /// `false` lui-même par simple affectation (pas besoin de notifier cette
+  /// remise à zéro, rien n'en dépend).
+  bool focusStressTest = false;
+
+  /// Pose [focusStressTest] en notifiant les écouteurs — appelé depuis la
+  /// pop-up de sauvegarde, donc jamais pendant un `build`, un
+  /// `notifyListeners` y est donc sûr : garantit que `CalcScreen`, déjà
+  /// affiché (le bouton "Enregistrer" n'existe que sur l'onglet "Bien"),
+  /// se reconstruit bien pour lire ce signal même si rien d'autre ne change
+  /// de ce côté-là de l'écran.
+  void requestStressTestFocus() {
+    focusStressTest = true;
+    notifyListeners();
+  }
+
   /// Pondération du score personnalisée (mode Expérimenté uniquement — voir
   /// `marche_screen.dart` `_sectionPonderation`). `null` tant que
   /// l'utilisateur ne l'a jamais ajustée : [effectiveScoreWeights] retombe
