@@ -327,6 +327,16 @@ class PropertyInput {
   final double taxeFonciere, assurance;
   final String dpe;
 
+  /// Charges annexes avancées — réservées au mode Expérimenté (voir
+  /// `calc_screen.dart` `_sectionChargesAvancees`) : toutes à 0 par défaut,
+  /// donc sans aucun effet sur le calcul tant qu'elles ne sont pas
+  /// explicitement renseignées. [assuranceGliPct] = garantie loyers
+  /// impayés, en % du loyer annuel réellement perçu (longue comme courte
+  /// durée) ; [provisionTravaux] = provision annuelle pour les gros
+  /// travaux (ravalement, toiture...), en €/an ; [cfe] = cotisation
+  /// foncière des entreprises (location meublée), en €/an.
+  final double assuranceGliPct, provisionTravaux, cfe;
+
   // financement
   final double apport, tauxPct;
   final int dureePretAns;
@@ -379,6 +389,9 @@ class PropertyInput {
     required this.taxeFonciere,
     required this.assurance,
     this.dpe = 'D',
+    this.assuranceGliPct = 0,
+    this.provisionTravaux = 0,
+    this.cfe = 0,
     required this.apport,
     required this.tauxPct,
     required this.dureePretAns,
@@ -477,6 +490,9 @@ class PropertyInput {
     double? taxeFonciere,
     double? assurance,
     String? dpe,
+    double? assuranceGliPct,
+    double? provisionTravaux,
+    double? cfe,
     double? apport,
     double? tauxPct,
     int? dureePretAns,
@@ -526,6 +542,9 @@ class PropertyInput {
       taxeFonciere: taxeFonciere ?? this.taxeFonciere,
       assurance: assurance ?? this.assurance,
       dpe: dpe ?? this.dpe,
+      assuranceGliPct: assuranceGliPct ?? this.assuranceGliPct,
+      provisionTravaux: provisionTravaux ?? this.provisionTravaux,
+      cfe: cfe ?? this.cfe,
       apport: apport ?? this.apport,
       tauxPct: tauxPct ?? this.tauxPct,
       dureePretAns: dureePretAns ?? this.dureePretAns,
@@ -623,7 +642,13 @@ CoreResult computeCore(PropertyInput f) {
     nuitsTotal = nuitsTotalV;
     nombreReservations = nombreReservationsV;
   }
-  final chargesAnnuelles = chargesSpecifiques + f.taxeFonciere + f.assurance;
+  // Charges annexes avancées (mode Expérimenté) — toutes à 0 par défaut,
+  // donc sans effet tant qu'elles ne sont pas explicitement renseignées
+  // (voir leur doc sur `PropertyInput`). La GLI se calcule sur le loyer
+  // annuel réellement perçu, déjà net de vacance/commission à ce stade —
+  // valable aussi bien en longue qu'en courte durée.
+  final gliAnnuelle = loyerAnnuelBrut * f.assuranceGliPct / 100;
+  final chargesAnnuelles = chargesSpecifiques + f.taxeFonciere + f.assurance + gliAnnuelle + f.provisionTravaux + f.cfe;
   final revenuNet = loyerAnnuelBrut - chargesAnnuelles;
   final brut = prixTotal > 0 ? (loyerAnnuelBrut / prixTotal) * 100 : 0.0;
   final net = prixTotal > 0 ? (revenuNet / prixTotal) * 100 : 0.0;
@@ -836,16 +861,37 @@ class ScoreParts {
   });
 }
 
+/// Poids maximum de chaque critère dans le score — [defaut] reproduit
+/// exactement l'ancien barème fixe (40/25/20/15, soit 100 au total).
+/// Personnalisable en mode Expérimenté (voir `RendementState.scoreWeights`
+/// et `marche_screen.dart` `_sectionPonderation`) : les poids n'ont pas
+/// besoin de sommer à 100, [computeScore] renormalise toujours le score
+/// final sur 100 — ça permet de régler des priorités RELATIVES ("le
+/// cash-flow compte deux fois plus que le rendement") sans calcul mental.
+class ScoreWeights {
+  final double rendement, cashflow, marche, occupation;
+  const ScoreWeights({required this.rendement, required this.cashflow, required this.marche, required this.occupation});
+
+  static const ScoreWeights defaut = ScoreWeights(rendement: 40, cashflow: 25, marche: 20, occupation: 15);
+
+  double get total => rendement + cashflow + marche + occupation;
+}
+
 class ScoreResult {
   final int score;
   final String label;
   final String colorHex;
   final ScoreParts parts;
+  /// Poids effectivement utilisés pour ce calcul — sert de dénominateur à
+  /// l'affichage du détail (`parts.rendement` sur `weights.rendement`...),
+  /// voir `marche_screen.dart`.
+  final ScoreWeights weights;
   const ScoreResult({
     required this.score,
     required this.label,
     required this.colorHex,
     required this.parts,
+    this.weights = ScoreWeights.defaut,
   });
 }
 
@@ -854,21 +900,22 @@ const String _goldHex = '#B8935A';
 const String _alertHex = '#B3452C';
 const String _goodHex = '#4A7C59';
 
-ScoreResult computeScore(PropertyInput f, CoreResult core, RefInfo? refInfo) {
-  final rendement = min(40.0, max(0.0, (core.net / 8) * 40));
-  final cashflow =
-      core.cashflowMensuel >= 0 ? 25.0 : max(0.0, 25 + core.cashflowMensuel / 8);
+ScoreResult computeScore(PropertyInput f, CoreResult core, RefInfo? refInfo, {ScoreWeights weights = ScoreWeights.defaut}) {
+  final rendement = min(weights.rendement, max(0.0, (core.net / 8) * weights.rendement));
+  final cashflow = core.cashflowMensuel >= 0 ? weights.cashflow : max(0.0, weights.cashflow + core.cashflowMensuel / 8);
   double marche;
   if (refInfo != null && f.surface > 0 && core.prixM2 > 0) {
     final ratio = refInfo.ref.prixM2 / core.prixM2;
-    marche = min(20.0, max(0.0, ratio * 15));
+    // 0.75 reproduit le rapport de l'ancien barème fixe (multiplicateur 15
+    // pour un plafond 20, soit 15/20 = 0.75).
+    marche = min(weights.marche, max(0.0, ratio * weights.marche * 0.75));
   } else {
-    marche = 10;
+    marche = weights.marche / 2;
   }
-  final occupation = min(15.0, (max(0.0, min(100.0, core.tauxOccupation)) / 100) * 15);
+  final occupation = min(weights.occupation, (max(0.0, min(100.0, core.tauxOccupation)) / 100) * weights.occupation);
 
   final total = rendement + cashflow + marche + occupation;
-  final score = min(100, max(0, total)).round();
+  final score = min(100, max(0, weights.total > 0 ? (total / weights.total) * 100 : 0)).round();
   String label = 'Risqué';
   String color = _alertHex;
   if (score >= 80) {
@@ -887,6 +934,7 @@ ScoreResult computeScore(PropertyInput f, CoreResult core, RefInfo? refInfo) {
     label: label,
     colorHex: color,
     parts: ScoreParts(rendement: rendement, cashflow: cashflow, marche: marche, occupation: occupation),
+    weights: weights,
   );
 }
 

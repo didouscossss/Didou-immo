@@ -697,8 +697,54 @@ class _CalcScreenState extends State<CalcScreen> {
           onChanged: (v) => set((f) => f.copyWith(assurance: v)),
         )),
       ]),
+      if (state.niveau == NiveauMode.experimente) _chargesAnnexesFields(form, set),
       ]),
       const SizedBox(height: 24),
+    ]);
+  }
+
+  /// Charges annexes avancées — mode Expérimenté uniquement, demandé par
+  /// l'utilisateur : « pousser le mode avancé plus loin » avec de vraies
+  /// charges qu'un investisseur aguerri budgète déjà, pas seulement plus de
+  /// champs pour la forme. Toutes à 0 par défaut (voir `PropertyInput`),
+  /// donc sans aucun effet sur le calcul tant qu'elles ne sont pas
+  /// explicitement renseignées.
+  Widget _chargesAnnexesFields(PropertyInput form, void Function(PropertyInput Function(PropertyInput f)) set) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 20),
+      Container(height: 1, color: AppColors.border),
+      const SizedBox(height: 16),
+      Row(children: [
+        Icon(Icons.workspace_premium_outlined, size: 14, color: AppColors.accent),
+        const SizedBox(width: 6),
+        Text('Charges annexes avancées', style: AppTextStyles.serif(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+      ]),
+      const SizedBox(height: 12),
+      Row(children: [
+        Expanded(child: NumberField(
+          label: 'Assurance loyers impayés (GLI)',
+          value: form.assuranceGliPct,
+          suffix: '%',
+          glossaryDefinition: 'GLI = Garantie Loyers Impayés. Couvre les loyers non payés par le locataire — calculée ici en % du loyer annuel réellement perçu. Généralement entre 2 et 4 %.',
+          onChanged: (v) => set((f) => f.copyWith(assuranceGliPct: v)),
+        )),
+        const SizedBox(width: 12),
+        Expanded(child: NumberField(
+          label: 'Provision gros travaux / an',
+          value: form.provisionTravaux,
+          suffix: '€',
+          glossaryDefinition: 'Mets de côté chaque année pour les travaux lourds à venir (ravalement, toiture, chaudière collective...) plutôt que de les découvrir le jour venu.',
+          onChanged: (v) => set((f) => f.copyWith(provisionTravaux: v)),
+        )),
+      ]),
+      const SizedBox(height: 12),
+      NumberField(
+        label: 'CFE / an',
+        value: form.cfe,
+        suffix: '€',
+        glossaryDefinition: 'Cotisation Foncière des Entreprises — due en location meublée (LMNP/LMP) dans la plupart des communes, sauf exonération la première année. Laisse à 0 si tu loues nu.',
+        onChanged: (v) => set((f) => f.copyWith(cfe: v)),
+      ),
     ]);
   }
 

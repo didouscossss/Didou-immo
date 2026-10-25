@@ -310,14 +310,15 @@ class MarcheScreen extends StatelessWidget {
           ]),
           if (!isNovice) ...[
             Container(margin: const EdgeInsets.symmetric(vertical: 14), height: 1, color: Colors.white24),
-            _scorePartRow('Rendement', score.parts.rendement, 40),
-            _scorePartRow('Cash-flow', score.parts.cashflow, 25),
-            _scorePartRow('Prix vs marché', score.parts.marche, 20),
-            _scorePartRow('Occupation', score.parts.occupation, 15),
+            _scorePartRow('Rendement', score.parts.rendement, score.weights.rendement),
+            _scorePartRow('Cash-flow', score.parts.cashflow, score.weights.cashflow),
+            _scorePartRow('Prix vs marché', score.parts.marche, score.weights.marche),
+            _scorePartRow('Occupation', score.parts.occupation, score.weights.occupation),
           ],
         ]),
       ),
       if (isNovice) const Tip("Un score au-dessus de 60 est généralement un bon signal. En dessous de 40, ce bien mérite d'être comparé avec d'autres avant de te décider."),
+      if (state.niveau == NiveauMode.experimente) _sectionPonderation(state),
       const SizedBox(height: 8),
       Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Padding(padding: const EdgeInsets.only(top: 2), child: Icon(Icons.info_outline, size: 13, color: AppColors.ink.withValues(alpha: 0.5))),
@@ -424,7 +425,10 @@ class MarcheScreen extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(999),
             child: LinearProgressIndicator(
-              value: (value / max).clamp(0.0, 1.0),
+              // `max` peut tomber à 0 si l'utilisateur met ce critère à 0 en
+              // pondération personnalisée (mode Expérimenté) — éviter la
+              // division par zéro plutôt que de passer NaN à la barre.
+              value: max > 0 ? (value / max).clamp(0.0, 1.0) : 0.0,
               backgroundColor: Colors.white.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation(AppColors.gold),
               minHeight: 6,
@@ -438,6 +442,77 @@ class MarcheScreen extends StatelessWidget {
               textAlign: TextAlign.right,
               style: AppTextStyles.mono(fontSize: 10, color: Colors.white.withValues(alpha: 0.7))),
         ),
+      ]),
+    );
+  }
+
+  /// Pondération personnalisée du score — mode Expérimenté uniquement,
+  /// demandé par l'utilisateur : « pousser le mode avancé plus loin » avec
+  /// de vrais outils, pas juste plus de champs. Les poids n'ont pas besoin
+  /// de sommer à 100 (voir `ScoreWeights`) : chaque curseur règle
+  /// l'importance RELATIVE d'un critère, le score se renormalise sur 100
+  /// tout seul.
+  Widget _sectionPonderation(RendementState state) {
+    final weights = state.scoreWeights ?? ScoreWeights.defaut;
+
+    Widget slider(String label, double value, ValueChanged<double> onChanged) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(label, style: AppTextStyles.sans(fontSize: 11.5, color: AppColors.ink.withValues(alpha: 0.8))),
+            Text(fmt(value, 0), style: AppTextStyles.mono(fontSize: 11.5, color: AppColors.accent)),
+          ]),
+          SliderTheme(
+            data: SliderThemeData(
+              trackHeight: 3,
+              thumbColor: AppColors.accent,
+              activeTrackColor: AppColors.accent,
+              inactiveTrackColor: AppColors.border,
+              overlayColor: AppColors.accent.withValues(alpha: 0.15),
+            ),
+            child: Slider(value: value, min: 0, max: 50, onChanged: onChanged),
+          ),
+        ]),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+          Row(children: [
+            Icon(Icons.tune, size: 14, color: AppColors.accent),
+            const SizedBox(width: 6),
+            Text('Pondérer le score', style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          ]),
+          if (state.scoreWeights != null)
+            TextButton(
+              onPressed: () => state.setScoreWeights(null),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 0), tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+              child: Text('Réinitialiser', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.6))),
+            ),
+        ]),
+        const SizedBox(height: 2),
+        Text(
+          'Priorise ce qui compte le plus pour toi — le score se recalcule immédiatement avec tes propres poids.',
+          style: AppTextStyles.sans(fontSize: 10.5, color: AppColors.ink.withValues(alpha: 0.55)),
+        ),
+        const SizedBox(height: 8),
+        slider('Rendement', weights.rendement,
+            (v) => state.setScoreWeights(ScoreWeights(rendement: v, cashflow: weights.cashflow, marche: weights.marche, occupation: weights.occupation))),
+        slider('Cash-flow', weights.cashflow,
+            (v) => state.setScoreWeights(ScoreWeights(rendement: weights.rendement, cashflow: v, marche: weights.marche, occupation: weights.occupation))),
+        slider('Prix vs marché', weights.marche,
+            (v) => state.setScoreWeights(ScoreWeights(rendement: weights.rendement, cashflow: weights.cashflow, marche: v, occupation: weights.occupation))),
+        slider('Occupation', weights.occupation,
+            (v) => state.setScoreWeights(ScoreWeights(rendement: weights.rendement, cashflow: weights.cashflow, marche: weights.marche, occupation: v))),
       ]),
     );
   }

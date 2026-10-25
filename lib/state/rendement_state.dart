@@ -48,6 +48,28 @@ class RendementState extends ChangeNotifier {
 
   PropertyInput form = PropertyInput.defaultForm();
   NiveauMode niveau = NiveauMode.debutant;
+
+  /// Pondération du score personnalisée (mode Expérimenté uniquement — voir
+  /// `marche_screen.dart` `_sectionPonderation`). `null` tant que
+  /// l'utilisateur ne l'a jamais ajustée : [effectiveScoreWeights] retombe
+  /// alors sur le barème par défaut. Jamais persistée : comme [niveau],
+  /// repart de zéro à chaque lancement — repère cohérent pour quelqu'un qui
+  /// revient après un moment, plutôt qu'un réglage oublié resurgissant
+  /// silencieusement.
+  ScoreWeights? scoreWeights;
+
+  /// Poids réellement appliqués au score — les poids personnalisés ne
+  /// comptent qu'en mode Expérimenté, jamais en Débutant/Intermédiaire
+  /// (où ils n'ont pas d'interface pour les régler, donc pas de raison
+  /// qu'un réglage antérieur les affecte silencieusement).
+  ScoreWeights get effectiveScoreWeights =>
+      niveau == NiveauMode.experimente ? (scoreWeights ?? ScoreWeights.defaut) : ScoreWeights.defaut;
+
+  void setScoreWeights(ScoreWeights? weights) {
+    scoreWeights = weights;
+    notifyListeners();
+  }
+
   List<SavedProperty> biens = [];
   bool loaded = false;
   bool showOnboarding = false;
@@ -160,7 +182,13 @@ class RendementState extends ChangeNotifier {
     );
   }
 
-  ScoreResult get score => computeScore(form, core, refInfoAjuste);
+  // Les biens enregistrés (`biens`, voir `_decodeSaved` plus bas) gardent
+  // volontairement le barème par défaut, même en mode Expérimenté : leur
+  // score est calculé une fois au chargement, pas à la volée — mélanger
+  // des scores calculés avec des poids différents selon le moment où
+  // chaque bien a été chargé serait trompeur dans le Comparatif. Seul le
+  // bien EN COURS d'étude (ici) reflète la pondération personnalisée.
+  ScoreResult get score => computeScore(form, core, refInfoAjuste, weights: effectiveScoreWeights);
   CompareResult get comparaison => compareModes(form);
   TriResult get tri => computeTri(form, core);
 

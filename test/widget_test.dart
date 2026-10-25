@@ -73,6 +73,10 @@ void main() {
     // structures..., et la liste classique plutôt que l'assistant).
     await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
     for (final label in tabs) {
@@ -110,6 +114,10 @@ void main() {
     // propre navigation, voir calc_screen.dart `_buildWizard`) — ce test
     // vise le comportement de la liste, pas celui de l'assistant.
     await tester.tap(find.text('Intermédiaire'));
+    await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
     await tester.pumpAndSettle();
 
     // Bien 1 (longue durée, par défaut) — enregistré tel quel. Le bouton est
@@ -279,6 +287,10 @@ void main() {
     // Débutant — voir calc_screen.dart `_buildWizard`).
     await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.dashboard_customize_outlined));
     await tester.pumpAndSettle();
@@ -389,6 +401,10 @@ void main() {
     // liste classique défilante (voir calc_screen.dart `_buildWizard`).
     await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
+    await tester.pumpAndSettle();
 
     // Avant tout enregistrement, le bouton d'export PDF reste désactivé
     // (calcul en cours, pas encore un bien enregistré) et aucune
@@ -471,6 +487,10 @@ void main() {
     // liste classique défilante (voir calc_screen.dart `_buildWizard`).
     await tester.tap(find.text('Intermédiaire'));
     await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
+    await tester.pumpAndSettle();
 
     // Avant tout enregistrement : la rentabilité reste verrouillée, pas de
     // bandeau "Étudier un nouveau bien" (rien à réinitialiser sur un bien
@@ -517,6 +537,10 @@ void main() {
     // Mode Débutant par défaut : bascule en Intermédiaire pour retrouver la
     // liste classique défilante (voir calc_screen.dart `_buildWizard`).
     await tester.tap(find.text('Intermédiaire'));
+    await tester.pumpAndSettle();
+    // Changer de profil affiche une pop-up qui explique ce profil (voir
+    // `showNiveauInfoDialog`) — on la referme avant de continuer.
+    await tester.tap(find.text('Compris'));
     await tester.pumpAndSettle();
 
     await _scrollToAndTap(tester, find.text('Enregistrer pour voir la rentabilité'));
