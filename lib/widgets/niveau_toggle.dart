@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../state/rendement_state.dart';
 import '../theme/app_theme.dart';
+import 'niveau_info_dialog.dart';
 
 /// Sélecteur des 3 profils — équivalent de `NiveauToggle`.
 class NiveauToggle extends StatelessWidget {
@@ -27,7 +28,15 @@ class NiveauToggle extends StatelessWidget {
         children: options.map((o) {
           final active = niveau == o.mode;
           return GestureDetector(
-            onTap: () => onChanged(o.mode),
+            // Un clic sur un profil DIFFÉRENT du courant bascule dessus, puis
+            // explique à quoi il sert (voir `showNiveauInfoDialog`) —
+            // demandé par l'utilisateur. Re-cliquer le profil déjà actif ne
+            // fait rien (pas de pop-up répétée pour un choix déjà en place).
+            onTap: () {
+              if (active) return;
+              onChanged(o.mode);
+              showNiveauInfoDialog(context, o.mode);
+            },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
