@@ -1136,6 +1136,18 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   Widget _sectionSave(RendementState state) {
+    // Demandé par l'utilisateur après avoir eu du mal à retrouver le
+    // stress-test/les seuils de rentabilité sur un bien déjà enregistré :
+    // dire clairement, ici, que ces outils existent, où ils se trouvent et
+    // comment y revenir — plutôt que de les laisser silencieusement
+    // apparaître plus haut une fois le bien enregistré. Absent en
+    // Débutant, qui n'a accès à aucun des deux (voir `_buildSection`).
+    final avantages = switch (state.niveau) {
+      NiveauMode.debutant => '',
+      NiveauMode.intermediaire => " Tu pourras aussi le stress-tester (scénarios dégradés : taux, vacance, travaux imprévus) juste au-dessus, ou en le rouvrant plus tard depuis Comparer.",
+      NiveauMode.experimente => " Tu pourras aussi le stress-tester et consulter ses seuils de rentabilité (jusqu'où le prix, le taux, le loyer ou l'occupation peuvent se dégrader) juste au-dessus, ou en le rouvrant plus tard depuis Comparer.",
+    };
+
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Container(
         padding: const EdgeInsets.all(14),
@@ -1146,7 +1158,7 @@ class _CalcScreenState extends State<CalcScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              "Tu hésites entre plusieurs biens ? Une fois enregistré, celui-ci apparaît dans l'onglet Comparer, aux côtés de tes autres projets.",
+              "Tu hésites entre plusieurs biens ? Une fois enregistré, celui-ci apparaît dans l'onglet Comparer, aux côtés de tes autres projets.$avantages",
               style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.75)),
             ),
           ),
