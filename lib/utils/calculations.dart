@@ -1010,7 +1010,15 @@ const String _goodHex = '#4A7C59';
 
 ScoreResult computeScore(PropertyInput f, CoreResult core, RefInfo? refInfo, {ScoreWeights weights = ScoreWeights.defaut}) {
   final rendement = min(weights.rendement, max(0.0, (core.net / 8) * weights.rendement));
-  final cashflow = core.cashflowMensuel >= 0 ? weights.cashflow : max(0.0, weights.cashflow + core.cashflowMensuel / 8);
+  // `* (1 + cashflowMensuel / 200)` plutôt que `+ cashflowMensuel / 8` : à
+  // poids par défaut (25) les deux formules coïncident exactement
+  // (25 * cashflowMensuel/200 == cashflowMensuel/8), mais seule la forme
+  // multiplicative dégrade le composant PROPORTIONNELLEMENT au poids
+  // choisi en Expérimenté (voir `ScoreWeights`) — avec `+ delta/8`, un
+  // poids doublé ne devenait pas deux fois plus sensible à un cash-flow
+  // négatif, contrairement à rendement/marché/occupation ci-dessus et
+  // ci-dessous, tous déjà multiplicatifs.
+  final cashflow = core.cashflowMensuel >= 0 ? weights.cashflow : max(0.0, weights.cashflow * (1 + core.cashflowMensuel / 200));
   double marche;
   if (refInfo != null && f.surface > 0 && core.prixM2 > 0) {
     final ratio = refInfo.ref.prixM2 / core.prixM2;
@@ -1545,12 +1553,18 @@ CityInvestScore computeCityInvestScore(CityRef city, {double? evolution1AnPct}) 
   // disponible (pas de valeur inventée).
   double ptsDynamisme;
   if (evolution1AnPct != null) {
-    if (evolution1AnPct >= 0 && evolution1AnPct <= 5) {
-      ptsDynamisme = 25;
-    } else if (evolution1AnPct <= 10) {
-      ptsDynamisme = 18;
-    } else if (evolution1AnPct > 10) {
+    // Les branches négatives doivent être testées AVANT `<= 10` : sans
+    // cela (ordre précédent), cette condition bien trop large attrapait
+    // aussi tous les repli de prix (n'importe quelle valeur négative est
+    // `<= 10`), rendant les deux dernières branches ci-dessous
+    // inatteignables et faisant noter un marché en net recul (ex. -20 %)
+    // presque comme une hausse saine (18 pts au lieu de 5).
+    if (evolution1AnPct > 10) {
       ptsDynamisme = 10;
+    } else if (evolution1AnPct > 5) {
+      ptsDynamisme = 18;
+    } else if (evolution1AnPct >= 0) {
+      ptsDynamisme = 25;
     } else if (evolution1AnPct >= -5) {
       ptsDynamisme = 15;
     } else {
@@ -1673,7 +1687,15 @@ TriResult computeTri(PropertyInput f, CoreResult core, {int? years}) {
   final valeurRevente = core.prixTotal * pow(1 + f.croissanceValeur / 100, n);
   final pv = computePlusValue(f, core, valeurRevente, n);
   final capitalRestant = remainingBalance(core.montantEmprunte, f.tauxPct, f.dureePretAns, n.toDouble());
-  final netRevente = pv.plusValueNette + core.prixTotal - capitalRestant;
+  // `pv.prixVenteNet - impôts`, pas `pv.plusValueNette + core.prixTotal` :
+  // les deux coïncident quand il y a une vraie plus-value, mais
+  // `plusValueBrute` (donc `plusValueNette`) est plafonnée à 0 dès que le
+  // prix de revente net d'agence ne dépasse pas le prix d'acquisition —
+  // un cas très courant sur une courte durée de détention (frais d'agence
+  // qui mangent une croissance modeste). Repartir de `core.prixTotal`
+  // dans ce cas revenait à surestimer le produit net de la revente (donc
+  // le TRI) du montant exact de la moins-value, jamais retranché.
+  final netRevente = pv.prixVenteNet - pv.impotIR - pv.impotPS - capitalRestant;
   flows.add(cashFlowAnnuel + netRevente);
 
   final r = _solveIrr(flows);
