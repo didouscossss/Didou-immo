@@ -35,7 +35,7 @@ jobs:
           echo "appConfig/android.latestVersionCode -> $VERSION_CODE"
           mkdir -p "$RUNNER_TEMP/set-version" && cd "$RUNNER_TEMP/set-version"
           npm install firebase-admin@^12 --no-audit --no-fund
-          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
           GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json" node -e "
             const admin = require('firebase-admin');
             admin.initializeApp();
@@ -43,3 +43,10 @@ jobs:
               .then(() => { console.log('OK : latestVersionCode =', ${VERSION_CODE}); process.exit(0); })
               .catch((e) => { console.error(e); process.exit(1); });
           "
+        env:
+          # Passé par `env:` plutôt qu'interpolé directement dans le script
+          # (comme le fait correctement `deploy-firestore-rules.yml`) : la
+          # clé JSON contient des guillemets et des retours à la ligne qui
+          # cassaient la commande `echo` une fois collés tels quels dans le
+          # YAML, corrompant le fichier généré.
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
