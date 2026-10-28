@@ -41,9 +41,14 @@ bool isVilleEncadrementLoyers(String? nomCommune) {
 // tant que l'utilisateur n'a pas saisi son propre chiffre (voir
 // `PropertyInput.notaireAuto` / `travauxAuto`).
 const double notaireDefaultPct = 8; // frais de notaire dans l'ancien, ~7-8 % du prix
+// Demandé par l'utilisateur : un bouton pour basculer l'estimation
+// automatique sur le neuf (~2-3 %) — reste sur `notaireDefaultPct` par
+// défaut (voir `PropertyInput.notairePct`), la plupart des projets portant
+// sur de l'ancien.
+const double notaireNeufDefaultPct = 3; // frais de notaire dans le neuf, ~2-3 % du prix
 const double travauxDefaultParM2 = 300; // rafraîchissement moyen (peinture, sols...), €/m²
 
-double defaultNotaire(double prix) => (prix * notaireDefaultPct / 100).roundToDouble();
+double defaultNotaire(double prix, {double pct = notaireDefaultPct}) => (prix * pct / 100).roundToDouble();
 double defaultTravaux(double surface) => (surface * travauxDefaultParM2).roundToDouble();
 
 // ---------------------------------------------------------------------------
@@ -292,6 +297,12 @@ class PropertyInput {
   /// `false` dès que l'utilisateur saisit lui-même le champ, pour ne plus
   /// écraser sa valeur.
   final bool notaireAuto, travauxAuto;
+  /// Base (%) utilisée par le calcul automatique de [notaire] — bascule
+  /// entre [notaireDefaultPct] (ancien, par défaut) et
+  /// [notaireNeufDefaultPct] (neuf) via le bouton de `calc_screen.dart`.
+  /// Reste sur l'ancien par défaut : demandé par l'utilisateur, la plupart
+  /// des projets portant sur de l'ancien.
+  final double notairePct;
 
   /// `true` une fois l'achat conclu — distingue, dans les biens enregistrés,
   /// le patrimoine réellement détenu des projets encore à l'étude/en
@@ -378,6 +389,7 @@ class PropertyInput {
     required this.travaux,
     this.notaireAuto = true,
     this.travauxAuto = true,
+    this.notairePct = notaireDefaultPct,
     this.achete = false,
     this.dateAchat,
     this.vendu = false,
@@ -479,6 +491,7 @@ class PropertyInput {
     double? travaux,
     bool? notaireAuto,
     bool? travauxAuto,
+    double? notairePct,
     bool? achete,
     DateTime? dateAchat,
     bool? vendu,
@@ -537,6 +550,7 @@ class PropertyInput {
       travaux: travaux ?? this.travaux,
       notaireAuto: notaireAuto ?? this.notaireAuto,
       travauxAuto: travauxAuto ?? this.travauxAuto,
+      notairePct: notairePct ?? this.notairePct,
       achete: achete ?? this.achete,
       dateAchat: dateAchat ?? this.dateAchat,
       vendu: vendu ?? this.vendu,

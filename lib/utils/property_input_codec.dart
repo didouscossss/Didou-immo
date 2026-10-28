@@ -26,6 +26,7 @@ extension PropertyInputCodec on PropertyInput {
         'travaux': travaux,
         'notaireAuto': notaireAuto,
         'travauxAuto': travauxAuto,
+        'notairePct': notairePct,
         'achete': achete,
         'dateAchat': dateAchat?.toIso8601String(),
         'vendu': vendu,
@@ -118,6 +119,7 @@ extension PropertyInputCodec on PropertyInput {
       // saisie lui-même.
       notaireAuto: json['notaireAuto'] as bool? ?? false,
       travauxAuto: json['travauxAuto'] as bool? ?? false,
+      notairePct: (json['notairePct'] as num?)?.toDouble() ?? notaireDefaultPct,
       achete: json['achete'] as bool? ?? false,
       dateAchat: json['dateAchat'] != null ? DateTime.tryParse(json['dateAchat'] as String) : null,
       vendu: json['vendu'] as bool? ?? false,

@@ -537,7 +537,7 @@ class _CalcScreenState extends State<CalcScreen> {
                 // Tant que les frais de notaire n'ont pas été ajustés à la
                 // main, ils suivent automatiquement le prix (voir
                 // `notaireAuto`).
-                onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v) : null)),
+                onChanged: (v) => set((f) => f.copyWith(prix: v, notaire: f.notaireAuto ? defaultNotaire(v, pct: f.notairePct) : null)),
               ),
             ),
             const SizedBox(width: 12),
@@ -1287,8 +1287,9 @@ class _CalcScreenState extends State<CalcScreen> {
   }
 
   /// Champs "Frais de notaire" / "Travaux" — calculés automatiquement (8 %
-  /// du prix, 300 €/m²) tant que l'utilisateur ne les a pas modifiés à la
-  /// main ; un lien permet de revenir au calcul auto après un ajustement.
+  /// du prix dans l'ancien par défaut, 300 €/m²) tant que l'utilisateur ne
+  /// les a pas modifiés à la main ; un lien permet de revenir au calcul
+  /// auto après un ajustement.
   Widget _fraisAnnexesFields(PropertyInput form, void Function(PropertyInput Function(PropertyInput f) updater) set) {
     final anyManual = !form.notaireAuto || !form.travauxAuto;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1298,7 +1299,7 @@ class _CalcScreenState extends State<CalcScreen> {
             label: 'Frais de notaire',
             value: form.notaire,
             suffix: '€',
-            hint: form.notaireAuto ? '${notaireDefaultPct.round()} % auto' : null,
+            hint: form.notaireAuto ? '${form.notairePct.round()} % auto' : null,
             glossaryDefinition: 'Malgré leur nom, l\'essentiel revient à l\'État (droits de mutation) et aux collectivités, pas au notaire lui-même — environ 7-8 % du prix dans l\'ancien, 2-3 % dans le neuf.',
             onChanged: (v) => set((f) => f.copyWith(notaire: v, notaireAuto: false)),
           ),
@@ -1317,6 +1318,20 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ),
       ]),
+      // Demandé par l'utilisateur : rester sur l'ancien (8 %) par défaut,
+      // la plupart des projets portant sur de l'ancien — le bouton ne sert
+      // qu'à basculer ponctuellement sur le neuf, jamais l'inverse.
+      // N'a de sens que tant que le calcul reste automatique.
+      if (form.notaireAuto)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Row(children: [
+            Text('Base : ', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+            _notairePctChip(form, set, label: 'Ancien', pct: notaireDefaultPct),
+            const SizedBox(width: 6),
+            _notairePctChip(form, set, label: 'Neuf', pct: notaireNeufDefaultPct),
+          ]),
+        ),
       if (anyManual)
         Padding(
           padding: const EdgeInsets.only(top: 8),
@@ -1324,7 +1339,7 @@ class _CalcScreenState extends State<CalcScreen> {
             onTap: () => set((f) => f.copyWith(
                   notaireAuto: true,
                   travauxAuto: true,
-                  notaire: defaultNotaire(f.prix),
+                  notaire: defaultNotaire(f.prix, pct: f.notairePct),
                   travaux: defaultTravaux(f.surface),
                 )),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1335,6 +1350,24 @@ class _CalcScreenState extends State<CalcScreen> {
           ),
         ),
     ]);
+  }
+
+  Widget _notairePctChip(PropertyInput form, void Function(PropertyInput Function(PropertyInput f) updater) set, {required String label, required double pct}) {
+    final active = form.notairePct == pct;
+    return InkWell(
+      borderRadius: BorderRadius.circular(999),
+      onTap: () => set((f) => f.copyWith(notairePct: pct, notaire: defaultNotaire(f.prix, pct: pct))),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: active ? AppColors.accent.withValues(alpha: 0.12) : AppColors.border,
+          borderRadius: BorderRadius.circular(999),
+          border: active ? Border.all(color: AppColors.accent.withValues(alpha: 0.4)) : null,
+        ),
+        child: Text('$label (${pct.round()} %)',
+            style: AppTextStyles.sans(fontSize: 10, fontWeight: FontWeight.w600, color: active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.6))),
+      ),
+    );
   }
 
   /// Ouvre l'aperçu natif d'impression/partage/enregistrement du PDF,
