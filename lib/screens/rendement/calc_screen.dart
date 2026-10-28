@@ -1310,6 +1310,9 @@ class _CalcScreenState extends State<CalcScreen> {
             value: form.travaux,
             suffix: '€',
             hint: form.travauxAuto ? '${travauxDefaultParM2.round()} €/m² auto' : null,
+            glossaryDefinition: '${travauxDefaultParM2.round()} €/m² correspond à un simple rafraîchissement (peinture, sols...). '
+                'À titre indicatif, compte plutôt ~700 €/m² pour une rénovation (cuisine, salle de bain, électricité...), '
+                'et ~1200 €/m² pour une remise à neuf complète (tout refaire, gros œuvre inclus).',
             onChanged: (v) => set((f) => f.copyWith(travaux: v, travauxAuto: false)),
           ),
         ),
