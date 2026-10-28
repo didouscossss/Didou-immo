@@ -47,6 +47,10 @@ const double notaireDefaultPct = 8; // frais de notaire dans l'ancien, ~7-8 % du
 // sur de l'ancien.
 const double notaireNeufDefaultPct = 3; // frais de notaire dans le neuf, ~2-3 % du prix
 const double travauxDefaultParM2 = 300; // rafraîchissement moyen (peinture, sols...), €/m²
+// Repères indicatifs affichés à côté du calcul auto (pas utilisés dans un
+// calcul) : demandé par l'utilisateur en complément de `travauxDefaultParM2`.
+const double travauxRenovationParM2 = 700; // rénovation (cuisine, salle de bain, électricité...), €/m²
+const double travauxRemiseANeufParM2 = 1200; // remise à neuf complète (tout refaire, gros œuvre inclus), €/m²
 
 double defaultNotaire(double prix, {double pct = notaireDefaultPct}) => (prix * pct / 100).roundToDouble();
 double defaultTravaux(double surface) => (surface * travauxDefaultParM2).roundToDouble();
