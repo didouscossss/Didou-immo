@@ -446,6 +446,33 @@ class _RendementHomeState extends State<RendementHome> {
     // ensuite pointer vers le bien créé, pour que tout enregistrement
     // suivant sur ce même brouillon soit traité comme une mise à jour).
     final isNewProperty = state.editingId == null;
+    // Demandé par l'utilisateur : une mise à jour écrasait directement les
+    // valeurs déjà enregistrées au premier tap, sans confirmation — un
+    // missclic ou une erreur de frappe pouvait remplacer de bonnes données
+    // par une saisie accidentelle, sans retour en arrière possible. Pas de
+    // confirmation sur un tout nouveau bien : rien n'est encore enregistré,
+    // donc rien à écraser.
+    if (!isNewProperty) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.paper,
+          title: Text('Mettre à jour ce bien ?', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          content: Text(
+            'Les valeurs déjà enregistrées pour "${state.form.nom.isEmpty ? 'ce bien' : state.form.nom}" seront remplacées par celles que tu viens de saisir.',
+            style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.7)),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Mettre à jour'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
     if (!widget.firebaseReady) {
       await state.saveCurrentProperty();
       if (!mounted) return;

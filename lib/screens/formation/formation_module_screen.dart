@@ -49,33 +49,35 @@ class _FormationModuleScreenState extends State<FormationModuleScreen> {
       appBar: AppBar(
         title: Text(module.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
-      body: Column(children: [
-        _buildProgressDots(module.color),
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            itemCount: _totalPages,
-            onPageChanged: (p) => setState(() => _page = p),
-            itemBuilder: (context, index) {
-              if (index < _lessonCount) {
-                return _LessonPage(lesson: module.lessons[index], module: module, index: index);
-              }
-              if (index < _lessonCount + _quizCount) {
-                final quizIndex = index - _lessonCount;
-                return _QuizPage(
-                  key: ValueKey('quiz-$quizIndex'),
-                  question: module.quiz[quizIndex],
-                  module: module,
-                  index: quizIndex,
-                  total: _quizCount,
-                );
-              }
-              return _TakeawaysPage(module: module);
-            },
+      body: SafeArea(
+        child: Column(children: [
+          _buildProgressDots(module.color),
+          Expanded(
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _totalPages,
+              onPageChanged: (p) => setState(() => _page = p),
+              itemBuilder: (context, index) {
+                if (index < _lessonCount) {
+                  return _LessonPage(lesson: module.lessons[index], module: module, index: index);
+                }
+                if (index < _lessonCount + _quizCount) {
+                  final quizIndex = index - _lessonCount;
+                  return _QuizPage(
+                    key: ValueKey('quiz-$quizIndex'),
+                    question: module.quiz[quizIndex],
+                    module: module,
+                    index: quizIndex,
+                    total: _quizCount,
+                  );
+                }
+                return _TakeawaysPage(module: module);
+              },
+            ),
           ),
-        ),
-        _buildNavBar(),
-      ]),
+          _buildNavBar(),
+        ]),
+      ),
     );
   }
 

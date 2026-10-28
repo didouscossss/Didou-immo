@@ -33,6 +33,7 @@ extension PropertyInputCodec on PropertyInput {
         'prixVente': prixVente,
         'suivi': suivi
             .map((s) => {
+                  'id': s.id,
                   'dateDebut': s.dateDebut.toIso8601String(),
                   'dateFin': s.dateFin?.toIso8601String(),
                   'loyerPercu': s.loyerPercu,
@@ -124,6 +125,14 @@ extension PropertyInputCodec on PropertyInput {
       prixVente: (json['prixVente'] as num?)?.toDouble(),
       suivi: (json['suivi'] as List?)
               ?.map((s) => SuiviEntry(
+                    // Relevés enregistrés avant l'ajout de `id` (voir sa
+                    // doc sur `SuiviEntry`) : repli sur la date de début
+                    // brute telle que stockée dans le JSON — stable d'un
+                    // décodage à l'autre (contrairement à un id généré ici
+                    // à la volée), donc toujours la même pour UN relevé
+                    // donné tant qu'il n'est pas lui-même modifié (ce qui
+                    // lui donne alors un vrai `id`, voir `_SuiviDialog`).
+                    id: s['id'] as String? ?? (s['dateDebut'] ?? s['date']) as String? ?? '',
                     // `date` : ancien format (avant l'introduction des
                     // périodes dateDebut/dateFin) — les relevés déjà
                     // enregistrés deviennent des périodes ponctuelles sans

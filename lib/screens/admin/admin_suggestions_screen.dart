@@ -15,7 +15,8 @@ class AdminSuggestionsScreen extends StatelessWidget {
     final firestore = FirestoreService();
     return Scaffold(
       appBar: AppBar(title: const Text('Suggestions')),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      body: SafeArea(
+        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: firestore.watchSuggestions(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -76,6 +77,7 @@ class AdminSuggestionsScreen extends StatelessWidget {
             },
           );
         },
+        ),
       ),
     );
   }

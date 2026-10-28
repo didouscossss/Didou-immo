@@ -164,6 +164,18 @@ class LoanOffer {
 /// Tous les montants sont facultatifs (`null` = non renseigné), sauf
 /// [dateDebut].
 class SuiviEntry {
+  /// Identifiant stable, indépendant de l'identité d'objet Dart — demandé
+  /// par l'utilisateur : modifier un relevé via `_SuiviDialog`
+  /// (`patrimoine_screen.dart`) rouvre la boîte de dialogue, qui prend du
+  /// temps à remplir ; entre-temps, le flux Firestore (`watchProperties`)
+  /// peut parfaitement redécoder tout `biens` en objets flambant neufs (même
+  /// valeurs, instances différentes). Sans cet `id`, `RendementState.
+  /// updateSuiviEntry`/`deleteSuiviEntry` comparaient l'ancien relevé par
+  /// égalité d'OBJET (`==` par défaut, jamais surchargé ici) : une fois
+  /// l'instance capturée devenue obsolète, plus aucune entrée ne
+  /// correspondait, et la modification/suppression échouait silencieusement
+  /// — ce qui obligeait à tout supprimer et ressaisir pour s'en sortir.
+  final String id;
   final DateTime dateDebut;
   /// `null` = période toujours en cours (le relevé le plus récent, pas
   /// encore clôturé par un nouveau relevé qui prendrait le relais) — traitée
@@ -187,6 +199,7 @@ class SuiviEntry {
   final String? note;
 
   const SuiviEntry({
+    required this.id,
     required this.dateDebut,
     this.dateFin,
     this.loyerPercu,
@@ -435,7 +448,7 @@ class PropertyInput {
         ameublementAnnuel: 400,
         taxeSejour: 1.5,
         taxeFonciere: 1100,
-        assurance: 250,
+        assurance: 150,
         dpe: 'D',
         apport: 20000,
         tauxPct: 3.7,

@@ -729,6 +729,9 @@ class _SuiviDialogState extends State<_SuiviDialog> {
         ArrivalBounce(
           child: TextButton(
             onPressed: () => Navigator.of(context).pop(SuiviEntry(
+              // Même id en éditant (pour que `updateSuiviEntry` retrouve
+              // bien CE relevé, voir sa doc) ; un nouveau en ajoutant.
+              id: widget.existant?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
               dateDebut: _dateDebut,
               dateFin: _dateFin,
               loyerPercu: _vacant ? null : _parse(_loyerController.text),
