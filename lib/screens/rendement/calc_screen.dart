@@ -546,7 +546,7 @@ class _CalcScreenState extends State<CalcScreen> {
                 label: 'Surface',
                 value: form.surface,
                 suffix: 'm²',
-                onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v) : null)),
+                onChanged: (v) => set((f) => f.copyWith(surface: v, travaux: f.travauxAuto ? defaultTravaux(v, parM2: f.travauxParM2) : null)),
               ),
             ),
           ]),
@@ -1310,9 +1310,7 @@ class _CalcScreenState extends State<CalcScreen> {
             label: 'Travaux',
             value: form.travaux,
             suffix: '€',
-            hint: form.travauxAuto
-                ? '${travauxDefaultParM2.round()} / ${travauxRenovationParM2.round()} / ${travauxRemiseANeufParM2.round()} €/m² auto'
-                : null,
+            hint: form.travauxAuto ? '${form.travauxParM2.round()} €/m² auto' : null,
             glossaryDefinition: '${travauxDefaultParM2.round()} €/m² correspond à un simple rafraîchissement (peinture, sols...). '
                 'À titre indicatif, compte plutôt ~${travauxRenovationParM2.round()} €/m² pour une rénovation (cuisine, salle de bain, électricité...), '
                 'et ~${travauxRemiseANeufParM2.round()} €/m² pour une remise à neuf complète (tout refaire, gros œuvre inclus).',
@@ -1329,9 +1327,43 @@ class _CalcScreenState extends State<CalcScreen> {
           padding: const EdgeInsets.only(top: 8),
           child: Row(children: [
             Text('Base : ', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
-            _notairePctChip(form, set, label: 'Ancien', pct: notaireDefaultPct),
+            _basisChip(
+              label: 'Ancien (${notaireDefaultPct.round()} %)',
+              active: form.notairePct == notaireDefaultPct,
+              onTap: () => set((f) => f.copyWith(notairePct: notaireDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireDefaultPct))),
+            ),
             const SizedBox(width: 6),
-            _notairePctChip(form, set, label: 'Neuf', pct: notaireNeufDefaultPct),
+            _basisChip(
+              label: 'Neuf (${notaireNeufDefaultPct.round()} %)',
+              active: form.notairePct == notaireNeufDefaultPct,
+              onTap: () => set((f) => f.copyWith(notairePct: notaireNeufDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireNeufDefaultPct))),
+            ),
+          ]),
+        ),
+      // Demandé par l'utilisateur : 3 boutons pour choisir le niveau de
+      // travaux (rafraîchissement/rénovation/remise à neuf) plutôt que de
+      // se contenter d'afficher les 3 repères en texte. N'a de sens que
+      // tant que le calcul reste automatique.
+      if (form.travauxAuto)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            Text('Niveau : ', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
+            _basisChip(
+              label: 'Rafraîchissement (${travauxDefaultParM2.round()} €/m²)',
+              active: form.travauxParM2 == travauxDefaultParM2,
+              onTap: () => set((f) => f.copyWith(travauxParM2: travauxDefaultParM2, travaux: defaultTravaux(f.surface, parM2: travauxDefaultParM2))),
+            ),
+            _basisChip(
+              label: 'Rénovation (${travauxRenovationParM2.round()} €/m²)',
+              active: form.travauxParM2 == travauxRenovationParM2,
+              onTap: () => set((f) => f.copyWith(travauxParM2: travauxRenovationParM2, travaux: defaultTravaux(f.surface, parM2: travauxRenovationParM2))),
+            ),
+            _basisChip(
+              label: 'Remise à neuf (${travauxRemiseANeufParM2.round()} €/m²)',
+              active: form.travauxParM2 == travauxRemiseANeufParM2,
+              onTap: () => set((f) => f.copyWith(travauxParM2: travauxRemiseANeufParM2, travaux: defaultTravaux(f.surface, parM2: travauxRemiseANeufParM2))),
+            ),
           ]),
         ),
       if (anyManual)
@@ -1342,7 +1374,7 @@ class _CalcScreenState extends State<CalcScreen> {
                   notaireAuto: true,
                   travauxAuto: true,
                   notaire: defaultNotaire(f.prix, pct: f.notairePct),
-                  travaux: defaultTravaux(f.surface),
+                  travaux: defaultTravaux(f.surface, parM2: f.travauxParM2),
                 )),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.refresh, size: 13, color: AppColors.accent),
@@ -1354,11 +1386,10 @@ class _CalcScreenState extends State<CalcScreen> {
     ]);
   }
 
-  Widget _notairePctChip(PropertyInput form, void Function(PropertyInput Function(PropertyInput f) updater) set, {required String label, required double pct}) {
-    final active = form.notairePct == pct;
+  Widget _basisChip({required String label, required bool active, required VoidCallback onTap}) {
     return InkWell(
       borderRadius: BorderRadius.circular(999),
-      onTap: () => set((f) => f.copyWith(notairePct: pct, notaire: defaultNotaire(f.prix, pct: pct))),
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
@@ -1366,8 +1397,7 @@ class _CalcScreenState extends State<CalcScreen> {
           borderRadius: BorderRadius.circular(999),
           border: active ? Border.all(color: AppColors.accent.withValues(alpha: 0.4)) : null,
         ),
-        child: Text('$label (${pct.round()} %)',
-            style: AppTextStyles.sans(fontSize: 10, fontWeight: FontWeight.w600, color: active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.6))),
+        child: Text(label, style: AppTextStyles.sans(fontSize: 10, fontWeight: FontWeight.w600, color: active ? AppColors.accent : AppColors.ink.withValues(alpha: 0.6))),
       ),
     );
   }
