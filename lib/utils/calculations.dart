@@ -53,7 +53,7 @@ const double travauxRenovationParM2 = 700; // rénovation (cuisine, salle de bai
 const double travauxRemiseANeufParM2 = 1200; // remise à neuf complète (tout refaire, gros œuvre inclus), €/m²
 
 double defaultNotaire(double prix, {double pct = notaireDefaultPct}) => (prix * pct / 100).roundToDouble();
-double defaultTravaux(double surface) => (surface * travauxDefaultParM2).roundToDouble();
+double defaultTravaux(double surface, {double parM2 = travauxDefaultParM2}) => (surface * parM2).roundToDouble();
 
 // ---------------------------------------------------------------------------
 // Helpers financiers
@@ -307,6 +307,11 @@ class PropertyInput {
   /// Reste sur l'ancien par défaut : demandé par l'utilisateur, la plupart
   /// des projets portant sur de l'ancien.
   final double notairePct;
+  /// Base (€/m²) utilisée par le calcul automatique de [travaux] — bascule
+  /// entre [travauxDefaultParM2] (rafraîchissement, par défaut),
+  /// [travauxRenovationParM2] (rénovation) et [travauxRemiseANeufParM2]
+  /// (remise à neuf) via les boutons de `calc_screen.dart`.
+  final double travauxParM2;
 
   /// `true` une fois l'achat conclu — distingue, dans les biens enregistrés,
   /// le patrimoine réellement détenu des projets encore à l'étude/en
@@ -394,6 +399,7 @@ class PropertyInput {
     this.notaireAuto = true,
     this.travauxAuto = true,
     this.notairePct = notaireDefaultPct,
+    this.travauxParM2 = travauxDefaultParM2,
     this.achete = false,
     this.dateAchat,
     this.vendu = false,
@@ -496,6 +502,7 @@ class PropertyInput {
     bool? notaireAuto,
     bool? travauxAuto,
     double? notairePct,
+    double? travauxParM2,
     bool? achete,
     DateTime? dateAchat,
     bool? vendu,
@@ -555,6 +562,7 @@ class PropertyInput {
       notaireAuto: notaireAuto ?? this.notaireAuto,
       travauxAuto: travauxAuto ?? this.travauxAuto,
       notairePct: notairePct ?? this.notairePct,
+      travauxParM2: travauxParM2 ?? this.travauxParM2,
       achete: achete ?? this.achete,
       dateAchat: dateAchat ?? this.dateAchat,
       vendu: vendu ?? this.vendu,
