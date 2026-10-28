@@ -195,7 +195,7 @@ class _BiensScreenState extends State<BiensScreen> {
                         if (b.form.achete && !b.form.vendu)
                           InkWell(
                             borderRadius: BorderRadius.circular(999),
-                            onTap: () => _marquerVendu(context, state, b),
+                            onTap: () => _editVente(context, state, b),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: AppColors.border)),
@@ -368,29 +368,47 @@ class _BiensScreenState extends State<BiensScreen> {
   /// Marquer un bien "acquis" demande la date d'achat (préremplie avec la
   /// précédente si déjà renseignée) — annuler le sélecteur n'a aucun effet.
   /// Revenir à "à l'étude" ne demande rien.
+  /// Marque comme acquis (première fois) OU modifie la date d'achat déjà
+  /// enregistrée — demandé par l'utilisateur : avant, taper sur un bien
+  /// déjà "Acquis" le repassait directement "à l'étude" au premier tap,
+  /// sans aucun moyen de corriger juste la date. "Marquer comme non
+  /// acquis" reste possible, mais comme option secondaire DANS la boîte de
+  /// dialogue (visible seulement en édition), avec sa propre confirmation.
   Future<void> _toggleAchete(BuildContext context, RendementState state, SavedProperty b) async {
-    if (b.form.achete) {
-      state.setPropertyAchete(b.id, false);
+    final result = await showDialog<_AchatResult>(
+      context: context,
+      builder: (_) => _AchatDialog(dateInitiale: b.form.dateAchat, editing: b.form.achete),
+    );
+    if (result == null) return;
+    if (result.nonAcquis) {
+      final confirme = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.paper,
+          title: Text('Marquer comme non acquis ?', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+          content: Text('Le bien redevient "à l\'étude".', style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.7))),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Garder')),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: Text('Confirmer', style: TextStyle(color: AppColors.alert))),
+          ],
+        ),
+      );
+      if (confirme == true) state.setPropertyAchete(b.id, false);
       return;
     }
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: b.form.dateAchat ?? now,
-      firstDate: DateTime(2000),
-      lastDate: now,
-      helpText: "Date d'achat",
-      cancelText: 'Annuler',
-      confirmText: 'Valider',
-    );
-    if (picked != null) {
-      state.setPropertyAchete(b.id, true, dateAchat: picked);
+    if (result.date != null) {
+      state.setPropertyAchete(b.id, true, dateAchat: result.date);
     }
   }
 
-  /// Badge de statut — à l'étude / acquis / vendu. Taper sur "Vendu" propose
-  /// d'annuler la vente (retour à "acquis"), taper sur "À l'étude"/"Acquis"
-  /// bascule l'un vers l'autre comme avant.
+  /// Badge de statut — à l'étude / acquis / vendu. Demandé par
+  /// l'utilisateur : pouvoir corriger une date déjà saisie (achat ou vente)
+  /// sans passer par un aller-retour destructeur — taper sur "Acquis" ou
+  /// "Vendu" rouvre désormais directement la boîte de dialogue
+  /// correspondante, préremplie, pour MODIFIER la date (et le prix pour une
+  /// vente) ; "Marquer comme non acquis"/"Annuler la vente" restent
+  /// possibles, mais comme une option secondaire DANS cette même boîte de
+  /// dialogue plutôt que l'action immédiate d'un tap.
   Widget _statusBadge(BuildContext context, RendementState state, SavedProperty b) {
     final label = b.form.vendu
         ? 'Vendu${b.form.dateVente != null ? ' le ${dateFr(b.form.dateVente!)}' : ''}${b.form.prixVente != null ? ' · ${eur(b.form.prixVente)}' : ''}'
@@ -401,7 +419,7 @@ class _BiensScreenState extends State<BiensScreen> {
     final icon = b.form.vendu ? Icons.sell_outlined : (b.form.achete ? Icons.check_circle : Icons.hourglass_top);
     return InkWell(
       borderRadius: BorderRadius.circular(999),
-      onTap: () => b.form.vendu ? _annulerVente(context, state, b) : _toggleAchete(context, state, b),
+      onTap: () => b.form.vendu ? _editVente(context, state, b) : _toggleAchete(context, state, b),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
@@ -417,19 +435,27 @@ class _BiensScreenState extends State<BiensScreen> {
     );
   }
 
-  /// Demande le prix et la date de vente (préremplis si déjà renseignés une
-  /// fois) via une mini boîte de dialogue — annuler n'a aucun effet.
-  Future<void> _marquerVendu(BuildContext context, RendementState state, SavedProperty b) async {
-    final result = await showDialog<({double prix, DateTime date})>(
+  /// Marque comme vendu (première fois) OU modifie le prix/la date de
+  /// vente déjà enregistrés — même principe que [_toggleAchete] : "Annuler
+  /// la vente" reste possible, mais comme option secondaire DANS la boîte
+  /// de dialogue (visible seulement en édition, voir `_VenteDialog`), pas
+  /// l'action immédiate d'un tap sur le badge.
+  Future<void> _editVente(BuildContext context, RendementState state, SavedProperty b) async {
+    final result = await showDialog<_VenteResult>(
       context: context,
       builder: (_) => _VenteDialog(prixInitial: b.form.prixVente, dateInitiale: b.form.dateVente, dateAchat: b.form.dateAchat),
     );
-    if (result != null) {
+    if (result == null) return;
+    if (result.annuler) {
+      await _confirmAnnulerVente(context, state, b);
+      return;
+    }
+    if (result.prix != null && result.date != null) {
       state.setPropertyVendu(b.id, true, dateVente: result.date, prixVente: result.prix);
     }
   }
 
-  Future<void> _annulerVente(BuildContext context, RendementState state, SavedProperty b) async {
+  Future<void> _confirmAnnulerVente(BuildContext context, RendementState state, SavedProperty b) async {
     final confirme = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -444,7 +470,7 @@ class _BiensScreenState extends State<BiensScreen> {
       ),
     );
     if (confirme == true) {
-      state.setPropertyVendu(b.id, false);
+      state.setPropertyVendu(b.id, false, clearVenteInfo: true);
     }
   }
 
@@ -515,8 +541,18 @@ class _BiensScreenState extends State<BiensScreen> {
   }
 }
 
-/// Boîte de dialogue "Marquer vendu" — prix et date de vente. Renvoie `null`
-/// si annulée, sinon le couple validé.
+/// Résultat de [_VenteDialog] — soit un prix/date validés, soit une demande
+/// d'annulation de la vente (voir le bouton "Annuler la vente", visible
+/// seulement en édition).
+class _VenteResult {
+  final double? prix;
+  final DateTime? date;
+  final bool annuler;
+  const _VenteResult({this.prix, this.date, this.annuler = false});
+}
+
+/// Boîte de dialogue "Marquer vendu"/"Modifier la vente" — prix et date de
+/// vente. Renvoie `null` si fermée sans rien faire.
 class _VenteDialog extends StatefulWidget {
   final double? prixInitial;
   final DateTime? dateInitiale;
@@ -555,9 +591,11 @@ class _VenteDialogState extends State<_VenteDialog> {
   Widget build(BuildContext context) {
     final prix = double.tryParse(_prixController.text.replaceAll(',', '.').replaceAll(' ', ''));
     final valide = prix != null && prix > 0;
+    final editing = widget.prixInitial != null;
     return AlertDialog(
       backgroundColor: AppColors.paper,
-      title: Text('Marquer ce bien vendu', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+      title: Text(editing ? 'Modifier la vente' : 'Marquer ce bien vendu',
+          style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Prix de vente', style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
         const SizedBox(height: 6),
@@ -593,12 +631,94 @@ class _VenteDialogState extends State<_VenteDialog> {
         ),
       ]),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
+        if (editing)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(const _VenteResult(annuler: true)),
+            child: Text('Annuler la vente', style: TextStyle(color: AppColors.alert)),
+          ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Fermer')),
         ArrivalBounce(
           active: valide,
           child: TextButton(
-            onPressed: valide ? () => Navigator.of(context).pop((prix: prix, date: _date)) : null,
-            child: const Text('Valider'),
+            onPressed: valide ? () => Navigator.of(context).pop(_VenteResult(prix: prix, date: _date)) : null,
+            child: Text(editing ? 'Enregistrer' : 'Valider'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Résultat de [_AchatDialog] — soit une date validée, soit une demande de
+/// repasser le bien "à l'étude" (voir le bouton "Marquer comme non
+/// acquis", visible seulement en édition).
+class _AchatResult {
+  final DateTime? date;
+  final bool nonAcquis;
+  const _AchatResult({this.date, this.nonAcquis = false});
+}
+
+/// Boîte de dialogue "Marquer acquis"/"Modifier la date d'achat" — même
+/// principe que [_VenteDialog], en plus simple (une seule date).
+class _AchatDialog extends StatefulWidget {
+  final DateTime? dateInitiale;
+  final bool editing;
+  const _AchatDialog({this.dateInitiale, required this.editing});
+
+  @override
+  State<_AchatDialog> createState() => _AchatDialogState();
+}
+
+class _AchatDialogState extends State<_AchatDialog> {
+  late DateTime _date = widget.dateInitiale ?? DateTime.now();
+
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _date,
+      firstDate: DateTime(2000),
+      lastDate: now,
+      helpText: "Date d'achat",
+      cancelText: 'Annuler',
+      confirmText: 'Valider',
+    );
+    if (picked != null) setState(() => _date = picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.paper,
+      title: Text(widget.editing ? "Modifier la date d'achat" : 'Marquer ce bien acquis',
+          style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+      content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text("Date d'achat", style: AppTextStyles.sans(fontSize: 12.5, fontWeight: FontWeight.w500, color: AppColors.ink)),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: _pickDate,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
+            child: Row(children: [
+              Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.ink.withValues(alpha: 0.5)),
+              const SizedBox(width: 8),
+              Text(dateFr(_date), style: AppTextStyles.mono(fontSize: 14, color: AppColors.ink)),
+            ]),
+          ),
+        ),
+      ]),
+      actions: [
+        if (widget.editing)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(const _AchatResult(nonAcquis: true)),
+            child: Text('Marquer comme non acquis', style: TextStyle(color: AppColors.alert)),
+          ),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Fermer')),
+        ArrivalBounce(
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pop(_AchatResult(date: _date)),
+            child: Text(widget.editing ? 'Enregistrer' : 'Valider'),
           ),
         ),
       ],

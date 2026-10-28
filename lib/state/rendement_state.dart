@@ -667,10 +667,12 @@ class RendementState extends ChangeNotifier {
       _updateSavedProperty(id, (f) => f.copyWith(achete: achete, dateAchat: dateAchat));
 
   /// Marque un bien acquis comme vendu (ou annule une vente enregistrée par
-  /// erreur) — un bien vendu sort du patrimoine actuellement détenu mais
-  /// garde son historique d'achat/revente (voir l'onglet Comparer).
-  Future<void> setPropertyVendu(String id, bool vendu, {DateTime? dateVente, double? prixVente}) =>
-      _updateSavedProperty(id, (f) => f.copyWith(vendu: vendu, dateVente: dateVente, prixVente: prixVente));
+  /// erreur, avec [clearVenteInfo]) — un bien vendu sort du patrimoine
+  /// actuellement détenu mais garde son historique d'achat/revente (voir
+  /// l'onglet Comparer).
+  Future<void> setPropertyVendu(String id, bool vendu, {DateTime? dateVente, double? prixVente, bool clearVenteInfo = false}) =>
+      _updateSavedProperty(
+          id, (f) => f.copyWith(vendu: vendu, dateVente: dateVente, prixVente: prixVente, clearVenteInfo: clearVenteInfo));
 
   /// Ajoute un relevé réel (onglet Patrimoine) sur un bien acquis — trié par
   /// date de début à l'insertion pour que le graphique/l'historique restent
