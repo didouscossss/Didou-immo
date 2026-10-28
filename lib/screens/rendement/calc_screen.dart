@@ -1293,79 +1293,83 @@ class _CalcScreenState extends State<CalcScreen> {
   Widget _fraisAnnexesFields(PropertyInput form, void Function(PropertyInput Function(PropertyInput f) updater) set) {
     final anyManual = !form.notaireAuto || !form.travauxAuto;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Expanded(
-          child: NumberField(
-            label: 'Frais de notaire',
-            value: form.notaire,
-            suffix: '€',
-            hint: form.notaireAuto ? '${form.notairePct.round()} % auto' : null,
-            glossaryDefinition: 'Malgré leur nom, l\'essentiel revient à l\'État (droits de mutation) et aux collectivités, pas au notaire lui-même — environ 7-8 % du prix dans l\'ancien, 2-3 % dans le neuf.',
-            onChanged: (v) => set((f) => f.copyWith(notaire: v, notaireAuto: false)),
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            NumberField(
+              label: 'Frais de notaire',
+              value: form.notaire,
+              suffix: '€',
+              hint: form.notaireAuto ? '${form.notairePct.round()} % auto' : null,
+              glossaryDefinition: 'Malgré leur nom, l\'essentiel revient à l\'État (droits de mutation) et aux collectivités, pas au notaire lui-même — environ 7-8 % du prix dans l\'ancien, 2-3 % dans le neuf.',
+              onChanged: (v) => set((f) => f.copyWith(notaire: v, notaireAuto: false)),
+            ),
+            // Demandé par l'utilisateur : rester sur l'ancien (8 %) par
+            // défaut, la plupart des projets portant sur de l'ancien — le
+            // bouton ne sert qu'à basculer ponctuellement sur le neuf,
+            // jamais l'inverse. N'a de sens que tant que le calcul reste
+            // automatique. Sous le champ "Frais de notaire" (à gauche),
+            // comme demandé.
+            if (form.notaireAuto)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Wrap(spacing: 6, runSpacing: 6, children: [
+                  _basisChip(
+                    label: 'Ancien (${notaireDefaultPct.round()} %)',
+                    active: form.notairePct == notaireDefaultPct,
+                    onTap: () => set((f) => f.copyWith(notairePct: notaireDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireDefaultPct))),
+                  ),
+                  _basisChip(
+                    label: 'Neuf (${notaireNeufDefaultPct.round()} %)',
+                    active: form.notairePct == notaireNeufDefaultPct,
+                    onTap: () => set((f) => f.copyWith(notairePct: notaireNeufDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireNeufDefaultPct))),
+                  ),
+                ]),
+              ),
+          ]),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: NumberField(
-            label: 'Travaux',
-            value: form.travaux,
-            suffix: '€',
-            hint: form.travauxAuto ? '${form.travauxParM2.round()} €/m² auto' : null,
-            glossaryDefinition: '${travauxDefaultParM2.round()} €/m² correspond à un simple rafraîchissement (peinture, sols...). '
-                'À titre indicatif, compte plutôt ~${travauxRenovationParM2.round()} €/m² pour une rénovation (cuisine, salle de bain, électricité...), '
-                'et ~${travauxRemiseANeufParM2.round()} €/m² pour une remise à neuf complète (tout refaire, gros œuvre inclus).',
-            onChanged: (v) => set((f) => f.copyWith(travaux: v, travauxAuto: false)),
-          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            NumberField(
+              label: 'Travaux',
+              value: form.travaux,
+              suffix: '€',
+              hint: form.travauxAuto ? '${form.travauxParM2.round()} €/m² auto' : null,
+              glossaryDefinition: '${travauxDefaultParM2.round()} €/m² correspond à un simple rafraîchissement (peinture, sols...). '
+                  'À titre indicatif, compte plutôt ~${travauxRenovationParM2.round()} €/m² pour une rénovation (cuisine, salle de bain, électricité...), '
+                  'et ~${travauxRemiseANeufParM2.round()} €/m² pour une remise à neuf complète (tout refaire, gros œuvre inclus).',
+              onChanged: (v) => set((f) => f.copyWith(travaux: v, travauxAuto: false)),
+            ),
+            // Demandé par l'utilisateur : 3 boutons pour choisir le niveau
+            // de travaux (rafraîchissement/rénovation/remise à neuf)
+            // plutôt que de se contenter d'afficher les 3 repères en
+            // texte. N'a de sens que tant que le calcul reste automatique.
+            // Sous le champ "Travaux" (à droite), comme demandé.
+            if (form.travauxAuto)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Wrap(spacing: 6, runSpacing: 6, children: [
+                  _basisChip(
+                    label: 'Rafraîchissement (${travauxDefaultParM2.round()} €/m²)',
+                    active: form.travauxParM2 == travauxDefaultParM2,
+                    onTap: () => set((f) => f.copyWith(travauxParM2: travauxDefaultParM2, travaux: defaultTravaux(f.surface, parM2: travauxDefaultParM2))),
+                  ),
+                  _basisChip(
+                    label: 'Rénovation (${travauxRenovationParM2.round()} €/m²)',
+                    active: form.travauxParM2 == travauxRenovationParM2,
+                    onTap: () => set((f) => f.copyWith(travauxParM2: travauxRenovationParM2, travaux: defaultTravaux(f.surface, parM2: travauxRenovationParM2))),
+                  ),
+                  _basisChip(
+                    label: 'Remise à neuf (${travauxRemiseANeufParM2.round()} €/m²)',
+                    active: form.travauxParM2 == travauxRemiseANeufParM2,
+                    onTap: () => set((f) => f.copyWith(travauxParM2: travauxRemiseANeufParM2, travaux: defaultTravaux(f.surface, parM2: travauxRemiseANeufParM2))),
+                  ),
+                ]),
+              ),
+          ]),
         ),
       ]),
-      // Demandé par l'utilisateur : rester sur l'ancien (8 %) par défaut,
-      // la plupart des projets portant sur de l'ancien — le bouton ne sert
-      // qu'à basculer ponctuellement sur le neuf, jamais l'inverse.
-      // N'a de sens que tant que le calcul reste automatique.
-      if (form.notaireAuto)
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Row(children: [
-            Text('Base : ', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
-            _basisChip(
-              label: 'Ancien (${notaireDefaultPct.round()} %)',
-              active: form.notairePct == notaireDefaultPct,
-              onTap: () => set((f) => f.copyWith(notairePct: notaireDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireDefaultPct))),
-            ),
-            const SizedBox(width: 6),
-            _basisChip(
-              label: 'Neuf (${notaireNeufDefaultPct.round()} %)',
-              active: form.notairePct == notaireNeufDefaultPct,
-              onTap: () => set((f) => f.copyWith(notairePct: notaireNeufDefaultPct, notaire: defaultNotaire(f.prix, pct: notaireNeufDefaultPct))),
-            ),
-          ]),
-        ),
-      // Demandé par l'utilisateur : 3 boutons pour choisir le niveau de
-      // travaux (rafraîchissement/rénovation/remise à neuf) plutôt que de
-      // se contenter d'afficher les 3 repères en texte. N'a de sens que
-      // tant que le calcul reste automatique.
-      if (form.travauxAuto)
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-            Text('Niveau : ', style: AppTextStyles.sans(fontSize: 11, color: AppColors.ink.withValues(alpha: 0.5))),
-            _basisChip(
-              label: 'Rafraîchissement (${travauxDefaultParM2.round()} €/m²)',
-              active: form.travauxParM2 == travauxDefaultParM2,
-              onTap: () => set((f) => f.copyWith(travauxParM2: travauxDefaultParM2, travaux: defaultTravaux(f.surface, parM2: travauxDefaultParM2))),
-            ),
-            _basisChip(
-              label: 'Rénovation (${travauxRenovationParM2.round()} €/m²)',
-              active: form.travauxParM2 == travauxRenovationParM2,
-              onTap: () => set((f) => f.copyWith(travauxParM2: travauxRenovationParM2, travaux: defaultTravaux(f.surface, parM2: travauxRenovationParM2))),
-            ),
-            _basisChip(
-              label: 'Remise à neuf (${travauxRemiseANeufParM2.round()} €/m²)',
-              active: form.travauxParM2 == travauxRemiseANeufParM2,
-              onTap: () => set((f) => f.copyWith(travauxParM2: travauxRemiseANeufParM2, travaux: defaultTravaux(f.surface, parM2: travauxRemiseANeufParM2))),
-            ),
-          ]),
-        ),
       if (anyManual)
         Padding(
           padding: const EdgeInsets.only(top: 8),
