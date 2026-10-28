@@ -308,7 +308,8 @@ class _AdminScreenState extends State<AdminScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Administration')),
-      body: ListView(
+      body: SafeArea(
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const Text('Codes cadeaux', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -590,6 +591,7 @@ class _AdminScreenState extends State<AdminScreen> {
             label: const Text('Voir les suggestions'),
           ),
         ],
+        ),
       ),
     );
   }

@@ -152,7 +152,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Passer en illimité')),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -283,6 +284,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               child: const Text('Voir les conditions générales de vente'),
             ),
           ],
+        ),
         ),
       ),
     );

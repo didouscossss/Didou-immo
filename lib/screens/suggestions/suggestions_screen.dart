@@ -40,7 +40,8 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Proposer une amélioration')),
-      body: Padding(
+      body: SafeArea(
+        child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -81,6 +82,7 @@ class _SuggestionsScreenState extends State<SuggestionsScreen> {
                     style: TextStyle(color: Colors.green)),
               ),
           ],
+        ),
         ),
       ),
     );

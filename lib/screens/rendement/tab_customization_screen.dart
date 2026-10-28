@@ -30,7 +30,8 @@ class TabCustomizationScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Column(children: [
+      body: SafeArea(
+        child: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
           child: Text(
@@ -108,6 +109,7 @@ class TabCustomizationScreen extends StatelessWidget {
           ),
         ),
       ]),
+      ),
     );
   }
 }

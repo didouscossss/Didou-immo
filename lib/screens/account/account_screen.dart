@@ -32,7 +32,8 @@ class AccountScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mon compte')),
-      body: ListView(
+      body: SafeArea(
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(user.email ?? user.displayName ?? 'Compte', style: AppTextStyles.sans(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.ink)),
@@ -127,6 +128,7 @@ class AccountScreen extends StatelessWidget {
             child: Text('Supprimer mon compte', style: AppTextStyles.sans(fontSize: 13, color: AppColors.alert)),
           ),
         ],
+        ),
       ),
     );
   }

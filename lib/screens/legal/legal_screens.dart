@@ -20,27 +20,29 @@ class LegalHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Informations légales')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _HubTile(
-            icon: Icons.gavel_outlined,
-            title: 'Mentions légales',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MentionsLegalesScreen())),
-          ),
-          const SizedBox(height: 12),
-          _HubTile(
-            icon: Icons.privacy_tip_outlined,
-            title: 'Politique de confidentialité',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConfidentialiteScreen())),
-          ),
-          const SizedBox(height: 12),
-          _HubTile(
-            icon: Icons.description_outlined,
-            title: "Conditions générales d'utilisation et de vente",
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CgvScreen())),
-          ),
-        ],
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            _HubTile(
+              icon: Icons.gavel_outlined,
+              title: 'Mentions légales',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MentionsLegalesScreen())),
+            ),
+            const SizedBox(height: 12),
+            _HubTile(
+              icon: Icons.privacy_tip_outlined,
+              title: 'Politique de confidentialité',
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConfidentialiteScreen())),
+            ),
+            const SizedBox(height: 12),
+            _HubTile(
+              icon: Icons.description_outlined,
+              title: "Conditions générales d'utilisation et de vente",
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CgvScreen())),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -92,20 +94,22 @@ class _LegalPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text('Dernière mise à jour : $_lastUpdated',
-              style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
-          const SizedBox(height: 20),
-          for (final s in sections) ...[
-            Text(s.heading, style: AppTextStyles.serif(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
-            const SizedBox(height: 6),
-            Text(s.body,
-                style: AppTextStyles.sans(fontSize: 13.5, color: AppColors.ink.withValues(alpha: 0.85)).copyWith(height: 1.5)),
-            const SizedBox(height: 22),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            Text('Dernière mise à jour : $_lastUpdated',
+                style: AppTextStyles.sans(fontSize: 12, color: AppColors.ink.withValues(alpha: 0.5))),
+            const SizedBox(height: 20),
+            for (final s in sections) ...[
+              Text(s.heading, style: AppTextStyles.serif(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.ink)),
+              const SizedBox(height: 6),
+              Text(s.body,
+                  style: AppTextStyles.sans(fontSize: 13.5, color: AppColors.ink.withValues(alpha: 0.85)).copyWith(height: 1.5)),
+              const SizedBox(height: 22),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

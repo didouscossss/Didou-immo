@@ -209,7 +209,7 @@ class _BiensScreenState extends State<BiensScreen> {
                 ]),
               ),
               IconButton(
-                onPressed: () => state.deleteProperty(b.id),
+                onPressed: () => _confirmDelete(context, state, b),
                 icon: const Icon(Icons.delete_outline, size: 19),
                 color: AppColors.ink.withValues(alpha: 0.3),
               ),
@@ -305,6 +305,34 @@ class _BiensScreenState extends State<BiensScreen> {
       ]),
       const SizedBox(height: 20),
     ]);
+  }
+
+  /// Demandé par l'utilisateur : un seul tap sur l'icône corbeille
+  /// supprimait le bien directement, sans aucune confirmation — un
+  /// missclic (liste qui défile, doigt qui glisse...) suffisait à perdre
+  /// un bien enregistré pour de bon. Même style de pop-up que
+  /// `_confirmDelete` d'`AdminSuggestionsScreen`.
+  Future<void> _confirmDelete(BuildContext context, RendementState state, SavedProperty b) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.paper,
+        title: Text('Supprimer ce bien ?', style: AppTextStyles.serif(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.ink)),
+        content: Text(
+          '"${b.form.nom.isEmpty ? 'Bien sans nom' : b.form.nom}" sera définitivement supprimé, avec tout son historique de suivi. '
+          'Cette action est irréversible.',
+          style: AppTextStyles.sans(fontSize: 13, color: AppColors.ink.withValues(alpha: 0.7)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('Supprimer', style: TextStyle(color: AppColors.alert)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) state.deleteProperty(b.id);
   }
 
   /// Ouvre [b] dans le formulaire de l'onglet "Bien" pour le modifier —

@@ -74,7 +74,8 @@ class _ReferralScreenState extends State<ReferralScreen> {
     return Scaffold(
       appBar: AppBar(
           title: Text(ReferralScreen.referralEnabled ? 'Codes & parrainage' : 'Code cadeau')),
-      body: ListView(
+      body: SafeArea(
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           if (ReferralScreen.referralEnabled) ...[
@@ -225,6 +226,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   Text(_cadeauMessage!, style: const TextStyle(fontSize: 12.5)),
             ),
         ],
+        ),
       ),
     );
   }

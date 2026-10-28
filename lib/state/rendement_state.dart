@@ -678,16 +678,20 @@ class RendementState extends ChangeNotifier {
   Future<void> addSuiviEntry(String id, SuiviEntry entry) => _updateSavedProperty(
       id, (f) => f.copyWith(suivi: [...f.suivi, entry]..sort((a, b) => a.dateDebut.compareTo(b.dateDebut))));
 
-  /// Remplace un relevé existant (édition) — identifié par référence
-  /// d'objet, comme [deleteSuiviEntry].
+  /// Remplace un relevé existant (édition) — identifié par [SuiviEntry.id]
+  /// (stable), jamais par égalité d'objet : le flux Firestore
+  /// (`watchProperties`) peut redécoder tout [biens] en instances neuves
+  /// pendant que la boîte de dialogue d'édition est ouverte, ce qui rendrait
+  /// une comparaison par référence obsolète (voir la doc de [SuiviEntry.id]
+  /// pour le détail du bug que ça causait).
   Future<void> updateSuiviEntry(String id, SuiviEntry ancien, SuiviEntry nouveau) => _updateSavedProperty(
       id,
       (f) => f.copyWith(
-          suivi: [for (final s in f.suivi) if (s == ancien) nouveau else s]
+          suivi: [for (final s in f.suivi) if (s.id == ancien.id) nouveau else s]
             ..sort((a, b) => a.dateDebut.compareTo(b.dateDebut))));
 
   Future<void> deleteSuiviEntry(String id, SuiviEntry entry) =>
-      _updateSavedProperty(id, (f) => f.copyWith(suivi: f.suivi.where((s) => s != entry).toList()));
+      _updateSavedProperty(id, (f) => f.copyWith(suivi: f.suivi.where((s) => s.id != entry.id).toList()));
 
   /// Marque un bien acquis comme résidence principale (ou revient en
   /// arrière) — exclu du cash-flow réel du portefeuille et de la
