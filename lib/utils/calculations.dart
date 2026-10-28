@@ -484,6 +484,12 @@ class PropertyInput {
     bool? vendu,
     DateTime? dateVente,
     double? prixVente,
+    // `copyWith(dateVente: x ?? this.dateVente)` ne peut jamais exprimer
+    // "remets dateVente/prixVente à null" (un argument `null` est
+    // indiscernable de "non fourni") — nécessaire pour `_annulerVente`
+    // (`biens_screen.dart`), qui promet explicitement à l'utilisateur que
+    // ces deux valeurs seront perdues en annulant une vente.
+    bool clearVenteInfo = false,
     List<SuiviEntry>? suivi,
     bool? residencePrincipale,
     double? loyer,
@@ -534,8 +540,8 @@ class PropertyInput {
       achete: achete ?? this.achete,
       dateAchat: dateAchat ?? this.dateAchat,
       vendu: vendu ?? this.vendu,
-      dateVente: dateVente ?? this.dateVente,
-      prixVente: prixVente ?? this.prixVente,
+      dateVente: clearVenteInfo ? null : (dateVente ?? this.dateVente),
+      prixVente: clearVenteInfo ? null : (prixVente ?? this.prixVente),
       suivi: suivi ?? this.suivi,
       residencePrincipale: residencePrincipale ?? this.residencePrincipale,
       loyer: loyer ?? this.loyer,
