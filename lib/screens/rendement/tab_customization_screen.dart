@@ -9,9 +9,10 @@ import 'app_tab_meta.dart';
 import 'section_customization_screen.dart';
 
 /// "Personnaliser mon affichage" — réordonne (glisser via la poignée) et
-/// masque/affiche les onglets principaux de l'app. [RendementState.tabOrder]
-/// garde toujours les 7 onglets (masqué ou non), pour ne jamais perdre la
-/// position d'un onglet qu'on masque puis réaffiche plus tard.
+/// masque/affiche les onglets de la barre du bas. [RendementState.tabOrder]
+/// garde toujours ces onglets (masqué ou non), pour ne jamais perdre la
+/// position d'un onglet qu'on masque puis réaffiche plus tard — "Guide" et
+/// "Formation" n'y figurent pas, ayant leur propre icône en haut de l'écran.
 class TabCustomizationScreen extends StatelessWidget {
   const TabCustomizationScreen({super.key});
 
