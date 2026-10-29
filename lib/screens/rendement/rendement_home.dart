@@ -250,10 +250,10 @@ class _RendementHomeState extends State<RendementHome> {
           ),
           Padding(
             padding: const EdgeInsets.all(12),
-            // Les 4 boutons à leur taille normale (56px chacun) ne tiennent
-            // pas dans les 232px du menu latéral — ils débordaient du cadre
-            // du menu, par-dessus le contenu. Même filet de sécurité que le
-            // badge juste au-dessus : réduit au lieu de déborder.
+            // Les boutons à leur taille normale (56px chacun) ne tiennent
+            // pas tous dans les 232px du menu latéral — ils débordaient du
+            // cadre du menu, par-dessus le contenu. Même filet de sécurité
+            // que le badge juste au-dessus : réduit au lieu de déborder.
             child: SizedBox(
               width: double.infinity,
               child: FittedBox(
@@ -269,6 +269,11 @@ class _RendementHomeState extends State<RendementHome> {
                   ),
                   _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
                   _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+                  // Demandé par l'utilisateur : "Guide" et "Formation" en
+                  // icônes dédiées plutôt qu'en onglets de la barre du bas
+                  // (voir `kDefaultTabOrder`), pour désencombrer celle-ci.
+                  _headerIconButton(icon: kTabMeta[AppTab.guide]!.icon, onTap: _openGuide),
+                  _headerIconButton(icon: kTabMeta[AppTab.formation]!.icon, onTap: _openFormation),
                 ]),
               ),
             ),
@@ -323,6 +328,14 @@ class _RendementHomeState extends State<RendementHome> {
                 _headerIconButton(icon: Icons.person_outline, onTap: _openAccount),
                 const SizedBox(width: 10),
                 _headerIconButton(icon: Icons.help_outline, onTap: () => setState(() => _showMethodo = true)),
+                const SizedBox(width: 10),
+                // Demandé par l'utilisateur : "Guide" et "Formation" en
+                // icônes dédiées en haut de l'écran plutôt qu'en onglets
+                // de la barre du bas (voir `kDefaultTabOrder`), pour
+                // désencombrer celle-ci.
+                _headerIconButton(icon: kTabMeta[AppTab.guide]!.icon, onTap: _openGuide),
+                const SizedBox(width: 10),
+                _headerIconButton(icon: kTabMeta[AppTab.formation]!.icon, onTap: _openFormation),
                 const SizedBox(width: 10),
                 NiveauToggle(niveau: state.niveau, onChanged: state.setNiveau),
               ]),
@@ -421,6 +434,40 @@ class _RendementHomeState extends State<RendementHome> {
       return;
     }
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AccountScreen()));
+  }
+
+  /// "Guide" et "Formation" ne sont plus des onglets de la barre du bas
+  /// (voir `kDefaultTabOrder`) : poussés comme un écran à part, avec leur
+  /// propre `Scaffold`/`AppBar` (comme `AccountScreen`), plutôt qu'affichés
+  /// tels quels sans habillage (ce qu'ils attendent quand ils vivaient dans
+  /// le `PageView` de la barre du bas).
+  void _openGuide() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Guide')),
+        // Les chips "Onglet X" du guide doivent toujours pouvoir basculer
+        // sur l'onglet concerné : on referme ce guide (poussé par-dessus)
+        // puis on bascule, plutôt que de naviguer "dans" un écran qui n'a
+        // plus sa place dans la barre du bas.
+        body: SafeArea(
+          child: GuideCompletScreen(
+            onGoToTab: (tab) {
+              Navigator.of(context).pop();
+              _setActive(tab);
+            },
+          ),
+        ),
+      ),
+    ));
+  }
+
+  void _openFormation() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(title: const Text('Formation')),
+        body: const SafeArea(child: FormationScreen()),
+      ),
+    ));
   }
 
   /// Enregistre le bien courant — en mode local (pas de compte), c'est

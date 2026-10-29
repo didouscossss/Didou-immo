@@ -104,9 +104,11 @@ class RendementState extends ChangeNotifier {
   /// un compte lié via [attachAccount], synchronisée en plus avec ce
   /// compte (voir [_pushLayoutToCloud]/[_applyCloudLayout]) pour se
   /// retrouver identique sur un autre appareil connecté au même compte.
-  /// [tabOrder] contient TOUJOURS les 7 onglets (jamais un sous-ensemble) :
-  /// la visibilité passe uniquement par [hiddenTabs], pour ne jamais perdre
-  /// la position d'un onglet masqué.
+  /// [tabOrder] contient TOUJOURS tous les onglets de [kDefaultTabOrder]
+  /// (jamais un sous-ensemble) — "guide" et "formation" n'en font pas
+  /// partie, affichés séparément via leur propre icône (voir
+  /// `RendementHome`). La visibilité passe uniquement par [hiddenTabs],
+  /// pour ne jamais perdre la position d'un onglet masqué.
   List<AppTab> tabOrder = List.of(kDefaultTabOrder);
   Set<AppTab> hiddenTabs = {};
 
@@ -264,7 +266,12 @@ class RendementState extends ChangeNotifier {
       final known = <AppTab>[];
       for (final name in storedOrder) {
         for (final t in AppTab.values) {
-          if (t.name == name && !known.contains(t)) known.add(t);
+          // `kDefaultTabOrder.contains(t)` : exclut `guide`/`formation` d'un
+          // ordre restauré depuis un ancien enregistrement (d'avant leur
+          // passage en icônes du haut, voir `kDefaultTabOrder`) — sans ce
+          // filtre, ils réapparaîtraient dans la barre du bas d'un
+          // utilisateur qui avait déjà personnalisé son affichage.
+          if (t.name == name && kDefaultTabOrder.contains(t) && !known.contains(t)) known.add(t);
         }
       }
       for (final t in kDefaultTabOrder) {

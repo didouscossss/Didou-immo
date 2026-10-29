@@ -5,17 +5,19 @@
 /// les préférences déjà enregistrées sur l'appareil des utilisateurs.
 enum AppTab { guide, calc, marche, carte, fisc, proj, biens, patrimoine, formation }
 
-/// Ordre par défaut (celui d'origine, avant toute personnalisation) — sert
-/// aussi de filet de sécurité : toute valeur absente d'un ordre personnalisé
-/// invalide (ex. après une mise à jour qui ajouterait un onglet) est
-/// rajoutée à la fin dans cet ordre-là.
+/// Ordre par défaut (celui d'origine, avant toute personnalisation) de la
+/// barre du bas — sert aussi de filet de sécurité : toute valeur absente
+/// d'un ordre personnalisé invalide (ex. après une mise à jour qui
+/// ajouterait un onglet) est rajoutée à la fin dans cet ordre-là.
 ///
-/// `guide` en première position (plutôt qu'à la fin, où atterrirait un
-/// onglet ajouté pour un utilisateur ayant déjà personnalisé son
-/// affichage) : pour un nouvel utilisateur, c'est le point d'entrée avant
-/// même de remplir "Bien".
+/// `guide` et `formation` n'y figurent PAS : demandé par l'utilisateur, ils
+/// ont leur propre icône en haut de l'écran (voir `RendementHome`) plutôt
+/// qu'une place dans une barre du bas déjà chargée — `RendementState`
+/// filtre aussi ces deux valeurs de tout ordre personnalisé restauré d'un
+/// ancien enregistrement (voir `_applyTabLayout`), pour qu'elles ne
+/// réapparaissent pas dans la barre du bas d'un utilisateur qui les y avait
+/// avant ce changement.
 const List<AppTab> kDefaultTabOrder = [
-  AppTab.guide,
   AppTab.calc,
   AppTab.marche,
   AppTab.carte,
@@ -23,9 +25,4 @@ const List<AppTab> kDefaultTabOrder = [
   AppTab.proj,
   AppTab.biens,
   AppTab.patrimoine,
-  // En dernier (voir la doc du filet de sécurité ci-dessus) : pour un compte
-  // ayant déjà personnalisé l'ordre de ses onglets avant l'ajout de la
-  // formation, ce nouvel onglet est rajouté en fin de liste plutôt
-  // qu'inséré arbitrairement quelque part au milieu.
-  AppTab.formation,
 ];
